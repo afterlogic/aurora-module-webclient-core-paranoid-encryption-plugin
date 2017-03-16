@@ -1,16 +1,17 @@
 'use strict';
 
-var $ = require('jquery');
-var _ = require('underscore');
-var App = require('%PathToCoreWebclientModule%/js/App.js');
-var FileSaver = require('modules/%ModuleName%/js/vendors/FileSaver.js');
-var StreamSaver = require('modules/%ModuleName%/js/vendors/StreamSaver.js');
-var Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js');
-var Storage = require('%PathToCoreWebclientModule%/js/Storage.js');
-var Browser = require('%PathToCoreWebclientModule%/js/Browser.js');
-var Screens = require('%PathToCoreWebclientModule%/js/Screens.js');
-
-var oCrypto = new CCrypto();
+var	
+	$ = require('jquery'),
+	_ = require('underscore'),
+	App = require('%PathToCoreWebclientModule%/js/App.js'),
+	FileSaver = require('modules/%ModuleName%/js/vendors/FileSaver.js'),
+	StreamSaver = require('modules/%ModuleName%/js/vendors/StreamSaver.js'),
+	Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js'),
+	Storage = require('%PathToCoreWebclientModule%/js/Storage.js'),
+	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
+	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
+	oCrypto = new CCrypto()
+;
 
 function CCrypto()
 {
@@ -58,30 +59,26 @@ CCrypto.prototype.getKey = function ()
 
 CCrypto.prototype.createKey = function (sPassword)
 {
-	var crpt = require('crypto');
-	var hash = crpt.createHash('md5').update(sPassword).digest();
+	var
+		crpt = require('crypto'),
+		hash = crpt.createHash('md5').update(sPassword).digest()
+	;
 	Storage.setData('criptKey', hash);
 }
 
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
-{
-	var iStart = this.iChunkSize * this.iCurrChunk;
-	var iEnd = (this.iCurrChunk < (this.iChunkNumber - 1)) ? this.iChunkSize * (this.iCurrChunk + 1) : this.oFile.size;
-	var oReader = new FileReader();
-	var oBlob = null;
+{ 
+	var
+		iStart = this.iChunkSize * this.iCurrChunk,
+		iEnd = (this.iCurrChunk < (this.iChunkNumber - 1)) ? this.iChunkSize * (this.iCurrChunk + 1) : this.oFile.size,
+		oReader = new FileReader(),
+		oBlob = null
+	;
 
 	if (this.oFile.slice)
 	{
 		oBlob = this.oFile.slice(iStart, iEnd);
 	}
-//	else if (this.oFile.webkitSlice)
-//	{ console.log("_2");
-//		oBlob = this.this.oFile.webkitSlice(iStart, iEnd);
-//	}
-//	else if (this.oFile.mozSlice)
-//	{ console.log("_3");
-//		oBlob = this.oFile.mozSlice(iStart, iEnd);
-//	}
 
 	if (oBlob)
 	{
@@ -103,17 +100,17 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.oCriptCKey, this.oChunk)
 		.then(_.bind(function (oEncryptedContent) {
 			var
-				oEncryptedFile = new File([oEncryptedContent], this.iCurrChunk + this.oFileInfo['FileName'] + '.encrypted', {type: "text/plain", lastModified: new Date()})
+				oEncryptedFile = new Blob([oEncryptedContent], {type: "text/plain", lastModified: new Date()}),
+				fProcessNextChunkCallback = _.bind(function (sUid, fOnChunkEncryptCallback) {
+					if (this.iCurrChunk < this.iChunkNumber)
+					{
+						this.readChunk(sUid, fOnChunkEncryptCallback);
+					}
+				}, this)
 			;
 
 			this.oFileInfo['FileName'] = this.oFile.name + '.encrypted.part' + this.iCurrChunk;
 			this.oFileInfo['File'] = oEncryptedFile;
-			var fProcessNextChunkCallback = _.bind(function (sUid, fOnChunkEncryptCallback) {
-				if (this.iCurrChunk < this.iChunkNumber)
-				{
-					this.readChunk(sUid, fOnChunkEncryptCallback);
-				}
-			}, this);
 			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback);
 		}, this))
 		.catch(console.error)
@@ -123,17 +120,16 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 {
 	var
-		oFileStream = StreamSaver.createWriteStream(sFileName),
-		oWriter = oFileStream.getWriter(),
+		oWriter = Browser.chrome ? new CChromeWriter(sFileName) : new CWriter(sFileName),
 		iCurrChunk = 1
 	;
-	
+
 	function WriteChunk(oDecryptedUint8Array)
 	{
 		oWriter.write(oDecryptedUint8Array);
 		if (iCurrChunk < aChunksLinks.length)
 		{
-			DecryptChunk(aChunksLinks[iCurrChunk], sFileName);
+			DecryptChunk(aChunksLinks[iCurrChunk]);
 			iCurrChunk++
 		}
 		else
@@ -142,15 +138,15 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 		}
 	}
 
-	function DecryptChunk(sDownloadLink, sFileName)
+	function DecryptChunk(sDownloadLink)
 	{
 		var oReq = new XMLHttpRequest();
-//		oReq.open('GET', './files/' + iCurrChunk + oCryptoTest.sName + '.encrypted', true);
 		oReq.open("GET", sDownloadLink, true);
-		
+
 		oReq.responseType = 'arraybuffer';
 
-		oReq.onload = function (oEvent) {
+		oReq.onload = function (oEvent)
+		{
 
 			var oArrayBuffer = oReq.response;
 			if (oReq.status === 200 && oArrayBuffer)
@@ -164,11 +160,42 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 				;
 			}
 		};
-
 		oReq.send(null);				
 	}
 
-	DecryptChunk(aChunksLinks[iCurrChunk++], sFileName);
+	function CWriter(sFileName)
+	{
+		this.sName = sFileName.replace(/\.encrypted$/, '');
+		this.aBuffer = [];
+
+	}
+	CWriter.prototype.write = function (oDecryptedUint8Array)
+	{
+		this.aBuffer.push(oDecryptedUint8Array);
+	}
+	CWriter.prototype.close = function ()
+	{
+		var file =new Blob(this.aBuffer); //NS_ERROR_OUT_OF_MEMORY
+		FileSaver.saveAs(file, this.sName);
+		file = null;
+	}
+
+	function CChromeWriter(sFileName)
+	{
+		var oFileStream = StreamSaver.createWriteStream(sFileName.replace(/\.encrypted$/, ''));
+		this.oWriter = oFileStream.getWriter();
+
+	}
+	CChromeWriter.prototype.write = function (oDecryptedUint8Array)
+	{
+		this.oWriter.write(oDecryptedUint8Array);
+	}
+	CChromeWriter.prototype.close = function ()
+	{
+		this.oWriter.close();
+	}
+
+	DecryptChunk(aChunksLinks[iCurrChunk++]);
 }
 
 oCrypto.getKey();
@@ -182,46 +209,55 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
-			App.subscribeEvent('FilesView::onGetFilesResponse', function (oFileList) {
-				var aFileList = oFileList.list;
-				var aFilesParts = _.filter(aFileList, function (oFile) {
-					return oFile.fileName().match(/\.part(\d)+$/) !== null;
-				});
-				var aFilesNames = _.map(aFilesParts,  function (oFile) {
-					return oFile.fileName().replace(/\.part(\d)+$/, '');
-				});
-				var aFilesNamesUnique = aFilesNames.filter(function (value, index, self) {
-					return self.indexOf(value) === index;
-				});
-				var oFilesPartsGroup = new Object;
-				_.each(aFilesNamesUnique, function(sFileName) {
-					oFilesPartsGroup[sFileName] = _.filter(aFilesParts, function (oFile) {
-						var pattern = sFileName + '\\.part(\\d)+$';
-						return oFile.fileName().match(new RegExp(pattern, "i")) !== null;
+			App.subscribeEvent('FilesView::onGetFilesResponse', function (oFileList) { // show parts like one file
+				var 
+					aFileList = oFileList.list,
+					aFilesParts = _.filter(aFileList, function (oFile) {
+						return oFile.fileName().match(/\.part(\d)+$/) !== null;
+					}),
+					aFilesNames = _.map(aFilesParts,  function (oFile) {
+						return oFile.fileName().replace(/\.part(\d)+$/, '');
+					}),
+					aFilesNamesUnique = aFilesNames.filter(function (value, index, self) {
+						return self.indexOf(value) === index;
+					}),
+					oFilesPartsGroup = new Object,
+					oGluedFiles = new Object,
+					aFiles = [];
+				;
+					_.each(aFilesNamesUnique, function(sFileName) {
+						oFilesPartsGroup[sFileName] = _.filter(aFilesParts, function (oFile) {
+							var pattern = sFileName + '\\.part(\\d)+$';
+							return oFile.fileName().match(new RegExp(pattern, "i")) !== null;
+						});
 					});
-				});
-
-				var oGluedFiles = new Object;
-				_.each(oFilesPartsGroup, function(aFiles, key, list) {
-					var iFileSize = 0;
-					var aLinks = [];
-					_.each(aFiles, function(oFile) {
-						iFileSize += oFile.size();
-						aLinks[oFile.fileName().match(/\.part(\d+)$/)[1]] = oFile.getActionUrl('download');
+					_.each(oFilesPartsGroup, function(aFiles, key, list) {
+						var 
+							iFileSize = 0,
+							aLinks = []
+						;
+						_.each(aFiles, function(oFile) {
+							iFileSize += oFile.size();
+							aLinks[oFile.fileName().match(/\.part(\d+)$/)[1]] = oFile.getActionUrl('download');
+						});
+						oGluedFiles[key] = list[key][0];
+						oGluedFiles[key].size(iFileSize);
+						oGluedFiles[key].chunksLinks = aLinks;
+						oGluedFiles[key].fileName(key);
 					});
-					oGluedFiles[key] = list[key][0];
-					oGluedFiles[key].size(iFileSize);
-					oGluedFiles[key].chanksLinks = aLinks;
-					oGluedFiles[key].fileName(key);
-				});
-				
-				var aFiles = _.filter(aFileList, function (oFile) {
-					return oFile.fileName().match(/\.part(\d)+$/) === null;
-				});
+					aFiles = _.filter(aFileList, function (oFile) {
+						return oFile.fileName().match(/\.part(\d)+$/) === null;
+					})
+				;
 				oFileList.list = aFiles;
 			});
 		},
 		decryptFile: function (sDownloadLink, sFileName, aChunksLinks = null) {
+			var
+				oReq = new XMLHttpRequest(),
+				sName = sFileName
+			;
+						
 			if (aChunksLinks)
 			{
 				oCrypto.downloadDividedFile(sFileName, aChunksLinks);
@@ -235,20 +271,18 @@ module.exports = function (oAppData) {
 			{
 				sFileName = sFileName.replace(/\.encrypted$/, '');
 			}
-			var oReq = new XMLHttpRequest();
 
 			oReq.open("GET", sDownloadLink, true);
 			oReq.responseType = "arraybuffer";
 
-			var sName = sFileName;
-
-			oReq.onload = function (oEvent) {
+			oReq.onload = function (oEvent)
+			{
 				var arrayBuffer = oReq.response;
 				if (arrayBuffer)
 				{
 					crypto.subtle.decrypt({ name: 'AES-CBC', iv: oCrypto.iv }, oCrypto.oCriptCKey, arrayBuffer)
-						.then(decrypted => {
-							var file =new Blob([decrypted]);
+						.then(function (decrypted) {
+							var file = new Blob([decrypted]);
 							FileSaver.saveAs(file, sName);
 							file = null;
 							decrypted = null;
@@ -264,31 +298,8 @@ module.exports = function (oAppData) {
 			oReq.send(null);
 		},
 		encryptFile: function (sUid, oFileInfo, fOnChunkEncryptCallback) {
-			var reader = new FileReader();
-			if (true)//(Browser.chrome)
-			{
-				oCrypto.start(oFileInfo);
-				oCrypto.readChunk(sUid, fOnChunkEncryptCallback);
-			}
-			else
-			{
-			reader.onload = function(e) {
-				var oFileArrayBuffer = e.target.result;
-				crypto.subtle.encrypt({ name: 'AES-CBC', iv: oCrypto.iv }, oCrypto.oCriptCKey, oFileArrayBuffer)
-					.then(oEncryptedArrayBuffer => {
-						var oEncryptedFile = new Blob([oEncryptedArrayBuffer], {type: "text/plain"});
-
-						oFileArrayBuffer = null;							
-						oFileInfo['FileName'] = oFileInfo['FileName'] + '.encrypted';
-						oFileInfo['File'] = oEncryptedFile;
-						fOnChunkEncryptCallback(sUid, oFileInfo, null);
-					})
-					.catch(function(err){
-						Screens.showError(err);
-					});
-			}
-			reader.readAsArrayBuffer(oFileInfo['File']);
-			}
+			oCrypto.start(oFileInfo);
+			oCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 		}
 	};
 };
