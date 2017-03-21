@@ -1,0 +1,56 @@
+<div class="panel_top">
+	<h2 class="settings_heading" data-bind="i18n: {'key': '%MODULENAME%/HEADING_SETTINGS_TAB'}"></h2>
+</div>
+
+<div class="panel_center">
+	<div class="fields">
+		<div class="fieldset">
+			<div class="row">
+				<span class="value offset">
+					<label class="custom_checkbox" data-bind="css: {'checked': enableJscrypto}">
+						<span class="icon"></span>
+						<input type="checkbox" id="enableJscrypto" data-bind="checked: enableJscrypto" />
+					</label>
+					<label for="enableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
+				</span>
+			</div>
+		</div>
+		<div class="buttons">
+			<span class="button" data-bind="">
+				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, visible: !isSaving()"></span>
+				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}, visible: isSaving()"></span>
+			</span>
+		</div>
+			
+		<div class="fieldset" data-bind="visible: enableJscrypto">
+			<div class="row keys_label">
+				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_JSCRYPTO_KEY'}"></span>
+				<span class="value" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !key()"></span>
+			</div>
+			<div class="row folders items_list">
+				<div class="item" data-bind="visible: key()">
+					<span class="title">
+						<span class="controls">
+							<span class="button delete" data-bind="customTooltip: '%MODULENAME%/ACTION_DELETE_KEY', click: function () {removeJscryptoKey(); }"></span>
+						</span>
+						<span class="name">
+							<span class="text" data-bind="">Key</span>
+						</span>
+					</span>
+				</div>
+			</div>
+		</div>
+		<div class="buttons" data-bind="visible: enableJscrypto">
+			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': 'crypt_key.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
+			<span data-bind="click: importKey, visible: !key()" class="button">
+				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_KEY'}"></span>
+			</span>
+			<span data-bind="click: generateNewKey, visible: !key()" class="button">
+				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_GENERATE_NEW_KEY'}"></span>
+			</span>
+			<div style="height:0px;overflow:hidden">
+				<input data-bind="event: { change: readKeyFromFile }" type="file" id="import-key-file" name="import-key-file" />
+			 </div>
+		</div>
+	</div>
+</div>
