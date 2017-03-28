@@ -28,29 +28,54 @@ module.exports = function (oAppData) {
 			IsJscryptoSupported()
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
+				
+				App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
+					var
+						oFile = oParams.oFile,
+						fRegularDownloadFileCallback = oParams.fRegularDownloadFileCallback,
+						sFileName = oFile.fileName(),
+						iFileSize = oFile.size(),
+						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
+						sDownloadLink = oFile.getActionUrl('download')
+					;
+					if (!iv)
+					{
+						fRegularDownloadFileCallback(sDownloadLink);
+					}
+					else if (!CCrypto.getCriptKey())
+					{
+						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+					}
+					else
+					{
+						CCrypto.downloadDividedFile(sFileName, iFileSize, sDownloadLink, iv);
+					}
+				});
+				
+				App.subscribeEvent('Jua::FileUpload::before', function (oParams) {
+					var
+						sUid = oParams.sUid,
+						sModuleName = oParams.sModuleName,
+						oFileInfo = oParams.oFileInfo,
+						fOnChunkEncryptCallback = oParams.fOnChunkReadyCallback,
+						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback
+					;
+					
+					if (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
+					{
+						fRegularUploadFileCallback(sUid, oFileInfo);
+					}
+					else if (!CCrypto.getCriptKey())
+					{
+						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+					}
+					else
+					{
+						CCrypto.start(oFileInfo);
+						CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
+					}
+				});
 			}
-		},
-		decryptFile: function (sDownloadLink, sFileName, iFileSize, iv) {
-			if (!CCrypto.getCriptKey())
-			{
-				Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
-				return;
-			}
-			CCrypto.downloadDividedFile(sFileName, iFileSize, sDownloadLink, iv);
-			return;
-		},
-		encryptFile: function (sUid, oFileInfo, fOnChunkEncryptCallback, sFileName) {
-			if (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sFileName))
-			{
-				return false;
-			}
-			if (!CCrypto.getCriptKey())
-			{
-				Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
-				return false;
-			}
-			CCrypto.start(oFileInfo);
-			CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 		}
 	};
 };
