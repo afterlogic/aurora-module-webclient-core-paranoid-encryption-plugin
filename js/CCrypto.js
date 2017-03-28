@@ -18,9 +18,10 @@ function CCrypto()
 {
 	this.iChunkNumber = 10;
 	this.iChunkSize = 5 * 1024 * 1024;
+	this.iChunkHeader = 16;
 	this.iCurrChunk = 0;
 	this.oChunk = null;
-	this.iv = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7]);
+	this.iv = null;
 	this.key = null;
 	this.criptKey = ko.observable(JscryptoKey.getKey());
 	JscryptoKey.getKeyObservable().subscribe(function () {
@@ -34,13 +35,14 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.iChunkNumber = Math.ceil(oFileInfo['File'].size/this.iChunkSize);
 	this.iCurrChunk = 0;
 	this.oChunk = null;
+	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
 }
 CCrypto.prototype.getCriptKey = function (oFileInfo)
 {
 	return this.criptKey();
 }
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
-{ 
+{
 	var
 		iStart = this.iChunkSize * this.iCurrChunk,
 		iEnd = (this.iCurrChunk < (this.iChunkNumber - 1)) ? this.iChunkSize * (this.iCurrChunk + 1) : this.oFile.size,
@@ -81,10 +83,9 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 					}
 				}, this)
 			;
-
-			this.oFileInfo['FileName'] = this.oFile.name + '.encrypted.part' + this.iCurrChunk;
+			this.oFileInfo['FileName'] = this.oFile.name;
 			this.oFileInfo['File'] = oEncryptedFile;
-			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback);
+			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, this.iv);
 		}, this))
 		.catch(function(err) {
 			Screens.showError(err);
@@ -92,22 +93,24 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
+CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloadLink, iv)
 {
 	var
 		oWriter = Browser.chrome ? new CChromeWriter(sFileName) : new CWriter(sFileName),
-		iCurrChunk = 1,
-		iv = this.iv,
-		key = this.criptKey()
+		iCurrChunk = 0,
+		iv = new Uint8Array(iv),
+		key = this.criptKey(),
+		iChunkNumber = Math.ceil(iFileSize/this.iChunkSize),
+		iChunkSize = this.iChunkSize,
+		iChunkHeader = this.iChunkHeader
 	;
 
 	function writeChunk(oDecryptedUint8Array)
 	{
 		oWriter.write(oDecryptedUint8Array);
-		if (iCurrChunk < aChunksLinks.length)
-		{ 
-			decryptChunk(aChunksLinks[iCurrChunk]);
-			iCurrChunk++
+		if (iCurrChunk < iChunkNumber)
+		{
+			decryptChunk(getChunkLink(sDownloadLink));
 		}
 		else
 		{
@@ -143,7 +146,7 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 
 	function CWriter(sFileName)
 	{
-		this.sName = sFileName.replace(/\.encrypted$/, '');
+		this.sName = sFileName;
 		this.aBuffer = [];
 
 	}
@@ -153,14 +156,14 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 	}
 	CWriter.prototype.close = function ()
 	{
-		var file =new Blob(this.aBuffer); //NS_ERROR_OUT_OF_MEMORY
+		var file =new Blob(this.aBuffer);
 		FileSaver.saveAs(file, this.sName);
 		file = null;
 	}
 
 	function CChromeWriter(sFileName)
 	{
-		var oFileStream = StreamSaver.createWriteStream(sFileName.replace(/\.encrypted$/, ''));
+		var oFileStream = StreamSaver.createWriteStream(sFileName);
 		this.oWriter = oFileStream.getWriter();
 
 	}
@@ -172,8 +175,12 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, aChunksLinks)
 	{
 		this.oWriter.close();
 	}
-
-	decryptChunk(aChunksLinks[iCurrChunk++]);
+	
+	function getChunkLink (sDownloadLink)
+	{
+		return sDownloadLink + '/download/' + iCurrChunk++ + '/' + (iChunkSize + iChunkHeader);
+	}
+	decryptChunk(getChunkLink(sDownloadLink));
 }
 
 module.exports = new  CCrypto();
