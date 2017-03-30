@@ -5,7 +5,7 @@ var
 	ko = require('knockout'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
-	FileSaver = require('modules/%ModuleName%/js/vendors/FileSaver.js'),
+	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	StreamSaver = require('modules/%ModuleName%/js/vendors/StreamSaver.min.js'),
 	Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
