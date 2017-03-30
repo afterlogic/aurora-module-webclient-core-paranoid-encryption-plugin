@@ -16,6 +16,11 @@ function IsJscryptoSupported()
 	return !!window.crypto.subtle;
 }
 
+function IsHttpsEnable()
+{
+	return window.location.protocol === "https:";
+}
+
 module.exports = function (oAppData) {
 	
 	return {
@@ -25,7 +30,7 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
-			IsJscryptoSupported()
+			if (IsJscryptoSupported() && IsHttpsEnable())
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
 				
@@ -58,9 +63,14 @@ module.exports = function (oAppData) {
 						sModuleName = oParams.sModuleName,
 						oFileInfo = oParams.oFileInfo,
 						fOnChunkEncryptCallback = oParams.fOnChunkReadyCallback,
-						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback
+						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback,
+						fStartUploadCallback = function (oFileInfo, sUid, fOnChunkEncryptCallback) {
+							CCrypto.oChunkQueue.isProcessed = true;
+							CCrypto.start(oFileInfo);
+							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
+						}
 					;
-					
+
 					if (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
 					{
 						fRegularUploadFileCallback(sUid, oFileInfo);
@@ -69,10 +79,20 @@ module.exports = function (oAppData) {
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 					}
+					else if (CCrypto.oChunkQueue.isProcessed === true)
+					{
+						CCrypto.oChunkQueue.aFiles.push({
+							fStartUploadCallback: fStartUploadCallback,
+							args: [	
+								oFileInfo, 
+								sUid, 
+								fOnChunkEncryptCallback 
+							]
+						});
+					}
 					else
 					{
-						CCrypto.start(oFileInfo);
-						CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
+						fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
 					}
 				});
 			}
