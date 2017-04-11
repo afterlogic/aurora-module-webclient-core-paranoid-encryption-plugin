@@ -7,7 +7,7 @@ var
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
-	StreamSaver = require('modules/%ModuleName%/js/vendors/streamsaver/StreamSaver.js'),
+	StreamSaver = require('modules/%ModuleName%/js/vendors/streamsaver/StreamSaver.min.js'),
 	Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
