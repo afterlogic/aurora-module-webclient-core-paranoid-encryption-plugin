@@ -109,7 +109,6 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 					}
 				}, this)
 			;
-			this.oFileInfo['FileName'] = this.oFile.name;
 			this.oFileInfo['File'] = oEncryptedFile;
 			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, this.iv);
 		}, this))
