@@ -17,8 +17,7 @@
 		}
 	}
 
-	streamSaver.mitm = 'https://jimmywarting.github.io/StreamSaver.js/mitm.html?version=' +
-		streamSaver.version.full
+	streamSaver.mitm = '?stream-mitm';
 
 	try {
 		// Some browser has it but ain't allowed to construct a stream yet
@@ -53,6 +52,7 @@
 				iframe = document.createElement('iframe')
 				iframe.src = streamSaver.mitm
 				iframe.hidden = true
+				iframe.name = 'stream'
 				document.body.appendChild(iframe)
 			}
 
@@ -112,6 +112,7 @@
 			},
 			abort(e) {
 				channel.port1.postMessage('abort')
+				console.log('abort')
 			}
 		}, queuingStrategy)
 	}

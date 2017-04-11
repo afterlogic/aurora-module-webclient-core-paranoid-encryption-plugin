@@ -1,12 +1,13 @@
 'use strict';
 
 var
+	$ = require('jquery'),
 	_ = require('underscore'),
 	ko = require('knockout'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
-	StreamSaver = require('modules/%ModuleName%/js/vendors/StreamSaver.min.js'),
+	StreamSaver = require('modules/%ModuleName%/js/vendors/streamsaver/StreamSaver.js'),
 	Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
@@ -16,7 +17,7 @@ var
  * @constructor
  */
 function CCrypto()
-{
+{ 
 	this.iChunkNumber = 10;
 	this.iChunkSize = 5 * 1024 * 1024;
 	this.iChunkHeader = 16;
@@ -31,7 +32,7 @@ function CCrypto()
 	this.oChunkQueue = {
 		isProcessed: false,
 		aFiles: []
-	}
+	};
 }
 CCrypto.prototype.start = function (oFileInfo)
 {
@@ -41,11 +42,11 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
-}
+};
 CCrypto.prototype.getCriptKey = function (oFileInfo)
 {
 	return this.criptKey();
-}
+};
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 {
 	var
@@ -118,10 +119,13 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloadLink, iv)
+CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAvailable)
 {
 	var
-		oWriter = Browser.chrome ? new CChromeWriter(sFileName) : new CWriter(sFileName),
+		sFileName = oFile.fileName(),
+		iFileSize = oFile.size(),
+		sDownloadLink = oFile.getActionUrl('download'),
+		oWriter = (Browser.chrome && bIsServiceWorkerAvailable) ? new CChromeWriter(sFileName) : new CWriter(sFileName),
 		iCurrChunk = 0,
 		iv = new Uint8Array(iv),
 		key = this.criptKey(),
@@ -129,13 +133,11 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloa
 		iChunkSize = this.iChunkSize,
 		iChunkHeader = this.iChunkHeader
 	;
-	
+
 	function writeChunk(oDecryptedUint8Array)
 	{
-		if (!Browser.chrome)
-		{
-			Screens.showLoading(TextUtils.i18n('%MODULENAME%/INFO_DOWNLOAD', {'PERCENT': ((iCurrChunk/iChunkNumber) * 100).toFixed(0)}));
-		}
+		oFile.onUploadProgress(iCurrChunk, iChunkNumber);
+		Screens.showLoading(TextUtils.i18n('%MODULENAME%/INFO_DOWNLOAD', {'PERCENT': ((iCurrChunk/iChunkNumber) * 100).toFixed(0)}));
 		oWriter.write(oDecryptedUint8Array);
 		if (iCurrChunk < iChunkNumber)
 		{
@@ -143,10 +145,7 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloa
 		}
 		else
 		{
-			if (!Browser.chrome)
-			{
-				Screens.hideLoading();
-			}
+			Screens.hideLoading();
 			oWriter.close();
 		}
 	}
@@ -186,13 +185,13 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloa
 	CWriter.prototype.write = function (oDecryptedUint8Array)
 	{
 		this.aBuffer.push(oDecryptedUint8Array);
-	}
+	};
 	CWriter.prototype.close = function ()
 	{
 		var file =new Blob(this.aBuffer);
 		FileSaver.saveAs(file, this.sName);
 		file = null;
-	}
+	};
 
 	function CChromeWriter(sFileName)
 	{
@@ -202,19 +201,29 @@ CCrypto.prototype.downloadDividedFile = function (sFileName, iFileSize, sDownloa
 	}
 	CChromeWriter.prototype.write = function (oDecryptedUint8Array)
 	{
-		this.oWriter.write(oDecryptedUint8Array);
-	}
+		try
+		{
+			this.oWriter.write(oDecryptedUint8Array);
+		}
+		catch(err)
+		{
+			Screens.showError(err);
+		}
+	};
 	CChromeWriter.prototype.close = function ()
 	{
 		this.oWriter.close();
-	}
-	
+	};
+	CChromeWriter.prototype.abort = function ()
+	{
+		this.oWriter.abort(0);
+	};
 	function getChunkLink (sDownloadLink)
 	{
 		return sDownloadLink + '/download/' + iCurrChunk++ + '/' + (iChunkSize + iChunkHeader);
 	}
 	decryptChunk(getChunkLink(sDownloadLink));
-}
+};
 
 CCrypto.prototype.checkQueue = function ()
 {
@@ -224,6 +233,6 @@ CCrypto.prototype.checkQueue = function ()
 		aNode = this.oChunkQueue.aFiles.shift();
 		aNode.fStartUploadCallback.apply(aNode.fStartUploadCallback, aNode.args);
 	}
-}
-
+};
+		  
 module.exports = new  CCrypto();

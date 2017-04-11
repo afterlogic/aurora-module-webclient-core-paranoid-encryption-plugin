@@ -36,4 +36,34 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			'EnableModule' => true
 		);
 	}
+
+	public function init() {
+		$this->AddEntries(
+				array(
+					'stream-mitm' => 'GetMitm',
+					'stream-worker' => 'GetWorker'
+				)
+		);
+	}
+
+	public function GetMitm()
+	{
+		@\header('Content-Type: text/html; charset=utf-8', true);
+		$mitm = @file_get_contents($this->GetPath() . '/js/vendors/streamsaver/mitm.html');
+		if ($mitm !== false)
+		{
+			$mitm = str_replace('%HOST%', $_SERVER['SERVER_NAME'], $mitm);
+			echo $mitm;
+		}
+	}
+
+	public function GetWorker()
+	{
+		@\header('Content-Type: text/javascript; charset=utf-8', true);
+		$worker = @file_get_contents($this->GetPath() . '/js/vendors/streamsaver/sw.js');
+		if ($worker !== false)
+		{
+			echo $worker;
+		}
+	}
 }

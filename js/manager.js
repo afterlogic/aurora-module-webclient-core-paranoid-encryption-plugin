@@ -30,6 +30,7 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
+			var bIsServiceWorkerAvailable = false;
 			if (IsJscryptoSupported() && IsHttpsEnable())
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
@@ -38,8 +39,6 @@ module.exports = function (oAppData) {
 					var
 						oFile = oParams.oFile,
 						fRegularDownloadFileCallback = oParams.fRegularDownloadFileCallback,
-						sFileName = oFile.fileName(),
-						iFileSize = oFile.size(),
 						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
 						sDownloadLink = oFile.getActionUrl('download')
 					;
@@ -53,7 +52,7 @@ module.exports = function (oAppData) {
 					}
 					else
 					{
-						CCrypto.downloadDividedFile(sFileName, iFileSize, sDownloadLink, iv);
+						CCrypto.downloadDividedFile(oFile, iv, bIsServiceWorkerAvailable);
 					}
 				});
 				
@@ -95,6 +94,15 @@ module.exports = function (oAppData) {
 						fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
 					}
 				});
+				
+				navigator.serviceWorker.register('?stream-worker', {scope: './'})
+					.then(function (swReg) {
+						bIsServiceWorkerAvailable = true;
+						swReg.unregister();
+					})
+					.catch(function (err) {
+						Screens.showError(err);
+					});
 			}
 		}
 	};
