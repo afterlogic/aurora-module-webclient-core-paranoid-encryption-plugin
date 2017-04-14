@@ -33,6 +33,9 @@ function CCrypto()
 		isProcessed: false,
 		aFiles: []
 	};
+	this.aStopList = [];
+	this.fOnUploadCancelCallback = null;
+	
 }
 CCrypto.prototype.start = function (oFileInfo)
 {
@@ -55,38 +58,51 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 		oReader = new FileReader(),
 		oBlob = null
 	;
-
-	if (this.oFile.slice)
+	
+	if (this.aStopList.indexOf(sUid) !== -1)
 	{
-		oBlob = this.oFile.slice(iStart, iEnd);
-	}
-	else if (this.oFile.webkitSlice)
-	{
-		oBlob = this.oFile.webkitSlice(iStart, iEnd);
-	}
-	else if (this.oFile.mozSlice)
-	{
-		oBlob = this.oFile.mozSlice(iStart, iEnd);
-	}
-
-	if (oBlob)
-	{
-		try
+		this.aStopList.splice(this.aStopList.indexOf(sUid), 1);
+		if (this.fOnUploadCancelCallback !== null)
 		{
-			oReader.onloadend = _.bind(function(evt) {
-				if (evt.target.readyState == FileReader.DONE)
-				{
-					this.oChunk = evt.target.result;
-					this.iCurrChunk++;
-					this.encryptChunk(sUid, fOnChunkEncryptCallback);
-				}
-			}, this);
-
-			oReader.readAsArrayBuffer(oBlob);
+			this.fOnUploadCancelCallback(sUid, this.oFileInfo.FileName);
 		}
-		catch(err)
+		this.checkQueue();
+		return;
+	}
+	else
+	{
+		if (this.oFile.slice)
 		{
-			Screens.showError(err);
+			oBlob = this.oFile.slice(iStart, iEnd);
+		}
+		else if (this.oFile.webkitSlice)
+		{
+			oBlob = this.oFile.webkitSlice(iStart, iEnd);
+		}
+		else if (this.oFile.mozSlice)
+		{
+			oBlob = this.oFile.mozSlice(iStart, iEnd);
+		}
+
+		if (oBlob)
+		{
+			try
+			{
+				oReader.onloadend = _.bind(function(evt) {
+					if (evt.target.readyState == FileReader.DONE)
+					{
+						this.oChunk = evt.target.result;
+						this.iCurrChunk++;
+						this.encryptChunk(sUid, fOnChunkEncryptCallback);
+					}
+				}, this);
+
+				oReader.readAsArrayBuffer(oBlob);
+			}
+			catch(err)
+			{
+				Screens.showError(err);
+			}
 		}
 	}
 };
@@ -135,17 +151,24 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAva
 
 	function writeChunk(oDecryptedUint8Array)
 	{
-		oFile.onUploadProgress(iCurrChunk, iChunkNumber);
-		Screens.showLoading(TextUtils.i18n('%MODULENAME%/INFO_DOWNLOAD', {'PERCENT': ((iCurrChunk/iChunkNumber) * 100).toFixed(0)}));
-		oWriter.write(oDecryptedUint8Array);
-		if (iCurrChunk < iChunkNumber)
+		if (oFile.downloading() !== true)
 		{
-			decryptChunk(getChunkLink(sDownloadLink));
+			oWriter.abort();
+			return;
 		}
 		else
 		{
-			Screens.hideLoading();
-			oWriter.close();
+			oFile.onDownloadProgress(iCurrChunk, iChunkNumber);
+			oWriter.write(oDecryptedUint8Array);
+			if (iCurrChunk < iChunkNumber)
+			{
+				decryptChunk(getChunkLink(sDownloadLink));
+			}
+			else
+			{
+				oFile.stopDownloading();
+				oWriter.close();
+			}
 		}
 	}
 
@@ -184,6 +207,9 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAva
 	CWriter.prototype.write = function (oDecryptedUint8Array)
 	{
 		this.aBuffer.push(oDecryptedUint8Array);
+	};
+	CWriter.prototype.abort = function ()
+	{
 	};
 	CWriter.prototype.close = function ()
 	{
@@ -232,6 +258,12 @@ CCrypto.prototype.checkQueue = function ()
 		aNode = this.oChunkQueue.aFiles.shift();
 		aNode.fStartUploadCallback.apply(aNode.fStartUploadCallback, aNode.args);
 	}
+};
+
+CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
+{	
+	this.aStopList.push(sUid);
+	this.fOnUploadCancelCallback = fOnUploadCancelCallback;
 };
 		  
 module.exports = new  CCrypto();

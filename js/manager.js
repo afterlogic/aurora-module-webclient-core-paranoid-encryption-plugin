@@ -8,7 +8,8 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	CCrypto = require('modules/%ModuleName%/js/CCrypto.js'),
-	Settings = require('modules/%ModuleName%/js/Settings.js')
+	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	Browser = require('%PathToCoreWebclientModule%/js/Browser.js')
 ;
 
 function IsJscryptoSupported()
@@ -52,6 +53,7 @@ module.exports = function (oAppData) {
 					}
 					else
 					{
+						oFile.startDownloading();
 						CCrypto.downloadDividedFile(oFile, iv, bIsServiceWorkerAvailable);
 					}
 				});
@@ -95,14 +97,24 @@ module.exports = function (oAppData) {
 					}
 				});
 				
-				navigator.serviceWorker.register('?stream-worker', {scope: './'})
-					.then(function (swReg) {
-						bIsServiceWorkerAvailable = true;
-						swReg.unregister();
-					})
-					.catch(function (err) {
-						Screens.showError(err);
-					});
+				App.subscribeEvent('CFilseView::FileDownloadCancel', function (oParams) {
+					oParams.oFile.stopDownloading();
+				});
+				
+				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {		
+					CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
+				});
+				
+				if (Browser.chrome)
+				{
+					navigator.serviceWorker.register('?stream-worker', {scope: './'})
+						.then(function (swReg) {
+							bIsServiceWorkerAvailable = true;
+							swReg.unregister();
+						})
+						.catch(function (err) {
+						});
+				}
 			}
 		}
 	};
