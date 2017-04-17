@@ -5,11 +5,7 @@ var
 	_ = require('underscore'),
 	ko = require('knockout'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
-	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
-	StreamSaver = require('modules/%ModuleName%/js/vendors/streamsaver/StreamSaver.min.js'),
-	Polyfill = require('modules/%ModuleName%/js/vendors/polyfill.min.js'),
-	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
 ;
 
@@ -18,13 +14,12 @@ var
  */
 function CCrypto()
 { 
-	this.iChunkNumber = 10;
+	this.iChunkNumber = 0;
 	this.iChunkSize = 5 * 1024 * 1024;
 	this.iChunkHeader = 16;
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = null;
-	this.key = null;
 	this.criptKey = ko.observable(JscryptoKey.getKey());
 	JscryptoKey.getKeyObservable().subscribe(function () {
 		this.criptKey(JscryptoKey.getKey());
@@ -35,18 +30,17 @@ function CCrypto()
 	};
 	this.aStopList = [];
 	this.fOnUploadCancelCallback = null;
-	
 }
 CCrypto.prototype.start = function (oFileInfo)
 {
 	this.oFileInfo = oFileInfo;
-	this.oFile = oFileInfo['File'];
-	this.iChunkNumber = Math.ceil(oFileInfo['File'].size/this.iChunkSize);
+	this.oFile = oFileInfo.File;
+	this.iChunkNumber = Math.ceil(oFileInfo.File.size/this.iChunkSize);
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
 };
-CCrypto.prototype.getCriptKey = function (oFileInfo)
+CCrypto.prototype.getCriptKey = function ()
 {
 	return this.criptKey();
 };
@@ -60,7 +54,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 	
 	if (this.aStopList.indexOf(sUid) !== -1)
-	{
+	{ //if user canceled uploading file with uid = sUid
 		this.aStopList.splice(this.aStopList.indexOf(sUid), 1);
 		if (this.fOnUploadCancelCallback !== null)
 		{
@@ -89,7 +83,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 			try
 			{
 				oReader.onloadend = _.bind(function(evt) {
-					if (evt.target.readyState == FileReader.DONE)
+					if (evt.target.readyState === FileReader.DONE)
 					{
 						this.oChunk = evt.target.result;
 						this.iCurrChunk++;
@@ -134,13 +128,13 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAvailable)
+CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 {
 	var
 		sFileName = oFile.fileName(),
 		iFileSize = oFile.size(),
 		sDownloadLink = oFile.getActionUrl('download'),
-		oWriter = (Browser.chrome && bIsServiceWorkerAvailable) ? new CChromeWriter(sFileName) : new CWriter(sFileName),
+		oWriter = new CWriter(sFileName),
 		iCurrChunk = 0,
 		iv = new Uint8Array(iv),
 		key = this.criptKey(),
@@ -153,7 +147,6 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAva
 	{
 		if (oFile.downloading() !== true)
 		{
-			oWriter.abort();
 			return;
 		}
 		else
@@ -195,7 +188,7 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAva
 				;
 			}
 		};
-		oReq.send(null);				
+		oReq.send(null);
 	}
 
 	function CWriter(sFileName)
@@ -208,40 +201,11 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv, bIsServiceWorkerAva
 	{
 		this.aBuffer.push(oDecryptedUint8Array);
 	};
-	CWriter.prototype.abort = function ()
-	{
-	};
 	CWriter.prototype.close = function ()
 	{
 		var file =new Blob(this.aBuffer);
 		FileSaver.saveAs(file, this.sName);
 		file = null;
-	};
-
-	function CChromeWriter(sFileName)
-	{
-		var oFileStream = StreamSaver.createWriteStream(sFileName);
-		this.oWriter = oFileStream.getWriter();
-
-	}
-	CChromeWriter.prototype.write = function (oDecryptedUint8Array)
-	{
-		try
-		{
-			this.oWriter.write(oDecryptedUint8Array);
-		}
-		catch(err)
-		{
-			Screens.showError(err);
-		}
-	};
-	CChromeWriter.prototype.close = function ()
-	{
-		this.oWriter.close();
-	};
-	CChromeWriter.prototype.abort = function ()
-	{
-		this.oWriter.abort(0);
 	};
 	function getChunkLink (sDownloadLink)
 	{
@@ -261,9 +225,9 @@ CCrypto.prototype.checkQueue = function ()
 };
 
 CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
-{	
+{
 	this.aStopList.push(sUid);
 	this.fOnUploadCancelCallback = fOnUploadCancelCallback;
 };
-		  
+
 module.exports = new  CCrypto();

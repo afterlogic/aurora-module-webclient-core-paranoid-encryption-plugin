@@ -8,8 +8,7 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	CCrypto = require('modules/%ModuleName%/js/CCrypto.js'),
-	Settings = require('modules/%ModuleName%/js/Settings.js'),
-	Browser = require('%PathToCoreWebclientModule%/js/Browser.js')
+	Settings = require('modules/%ModuleName%/js/Settings.js')
 ;
 
 function IsJscryptoSupported()
@@ -31,7 +30,6 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
-			var bIsServiceWorkerAvailable = false;
 			if (IsJscryptoSupported() && IsHttpsEnable())
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
@@ -54,7 +52,7 @@ module.exports = function (oAppData) {
 					else
 					{
 						oFile.startDownloading();
-						CCrypto.downloadDividedFile(oFile, iv, bIsServiceWorkerAvailable);
+						CCrypto.downloadDividedFile(oFile, iv);
 					}
 				});
 				
@@ -66,6 +64,7 @@ module.exports = function (oAppData) {
 						fOnChunkEncryptCallback = oParams.fOnChunkReadyCallback,
 						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback,
 						fStartUploadCallback = function (oFileInfo, sUid, fOnChunkEncryptCallback) {
+							//Starts uploading an encrypted file
 							CCrypto.oChunkQueue.isProcessed = true;
 							CCrypto.start(oFileInfo);
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
@@ -81,10 +80,10 @@ module.exports = function (oAppData) {
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 					}
 					else if (CCrypto.oChunkQueue.isProcessed === true)
-					{
+					{ //if another file uploading now - add a file to the queue
 						CCrypto.oChunkQueue.aFiles.push({
 							fStartUploadCallback: fStartUploadCallback,
-							args: [	
+							args: [
 								oFileInfo, 
 								sUid, 
 								fOnChunkEncryptCallback 
@@ -92,7 +91,7 @@ module.exports = function (oAppData) {
 						});
 					}
 					else
-					{
+					{ //If the queue is not busy - start uploading
 						fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
 					}
 				});
@@ -101,20 +100,9 @@ module.exports = function (oAppData) {
 					oParams.oFile.stopDownloading();
 				});
 				
-				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {		
+				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {
 					CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
 				});
-				
-				if (Browser.chrome)
-				{
-					navigator.serviceWorker.register('?stream-worker', {scope: './'})
-						.then(function (swReg) {
-							bIsServiceWorkerAvailable = true;
-							swReg.unregister();
-						})
-						.catch(function (err) {
-						});
-				}
 			}
 		}
 	};
