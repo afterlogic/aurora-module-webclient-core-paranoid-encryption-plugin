@@ -20,10 +20,11 @@ function CCrypto()
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = null;
-	this.criptKey = ko.observable(JscryptoKey.getKey());
+	this.cryptoKey = ko.observable(JscryptoKey.getKey());
 	JscryptoKey.getKeyObservable().subscribe(function () {
-		this.criptKey(JscryptoKey.getKey());
+		this.cryptoKey(JscryptoKey.getKey());
 	}, this);
+	// Queue of files awaiting upload
 	this.oChunkQueue = {
 		isProcessed: false,
 		aFiles: []
@@ -40,10 +41,12 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
 };
-CCrypto.prototype.getCriptKey = function ()
+
+CCrypto.prototype.getCryptoKey = function ()
 {
-	return this.criptKey();
+	return this.cryptoKey();
 };
+
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 {
 	var
@@ -54,7 +57,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 	
 	if (this.aStopList.indexOf(sUid) !== -1)
-	{ //if user canceled uploading file with uid = sUid
+	{ // if user canceled uploading file with uid = sUid
 		this.aStopList.splice(this.aStopList.indexOf(sUid), 1);
 		if (this.fOnUploadCancelCallback !== null)
 		{
@@ -65,6 +68,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 	}
 	else
 	{
+		// Get file chunk
 		if (this.oFile.slice)
 		{
 			oBlob = this.oFile.slice(iStart, iEnd);
@@ -81,7 +85,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 		if (oBlob)
 		{
 			try
-			{
+			{ //Encrypt file chunk
 				oReader.onloadend = _.bind(function(evt) {
 					if (evt.target.readyState === FileReader.DONE)
 					{
@@ -103,23 +107,25 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 
 CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 {
-	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.criptKey(), this.oChunk)
+	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.cryptoKey(), this.oChunk)
 		.then(_.bind(function (oEncryptedContent) {
 			var
 				oEncryptedFile = new Blob([oEncryptedContent], {type: "text/plain", lastModified: new Date()}),
+				//fProcessNextChunkCallback runs after previous chunk uploading
 				fProcessNextChunkCallback = _.bind(function (sUid, fOnChunkEncryptCallback) {
 					if (this.iCurrChunk < this.iChunkNumber)
-					{
+					{// if it was not last chunk - read another chunk
 						this.readChunk(sUid, fOnChunkEncryptCallback);
 					}
 					else
-					{
+					{// if it was last chunk - check Queue for files awaiting upload
 						this.oChunkQueue.isProcessed = false;
 						this.checkQueue();
 					}
 				}, this)
 			;
-			this.oFileInfo['File'] = oEncryptedFile;
+			this.oFileInfo.File = oEncryptedFile;
+			// call upload of encrypted chunk
 			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, this.iv);
 		}, this))
 		.catch(function(err) {
@@ -137,7 +143,7 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 		oWriter = new CWriter(sFileName),
 		iCurrChunk = 0,
 		iv = new Uint8Array(iv),
-		key = this.criptKey(),
+		key = this.cryptoKey(),
 		iChunkNumber = Math.ceil(iFileSize/this.iChunkSize),
 		iChunkSize = this.iChunkSize,
 		iChunkHeader = this.iChunkHeader
@@ -146,15 +152,15 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 	function writeChunk(oDecryptedUint8Array)
 	{
 		if (oFile.downloading() !== true)
-		{
+		{ // if download was canceled
 			return;
 		}
 		else
 		{
 			oFile.onDownloadProgress(iCurrChunk, iChunkNumber);
-			oWriter.write(oDecryptedUint8Array);
+			oWriter.write(oDecryptedUint8Array); //write decrypted chunk
 			if (iCurrChunk < iChunkNumber)
-			{
+			{ //if it was not last chunk - decrypting another chunk
 				decryptChunk(getChunkLink(sDownloadLink));
 			}
 			else
@@ -191,6 +197,12 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 		oReq.send(null);
 	}
 
+	/**
+	 * Writing chunks in file
+	 * 
+	 * @constructor
+	 * @param {String} sFileName
+	 */
 	function CWriter(sFileName)
 	{
 		this.sName = sFileName;
@@ -203,31 +215,56 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 	};
 	CWriter.prototype.close = function ()
 	{
-		var file =new Blob(this.aBuffer);
+		var file = new Blob(this.aBuffer);
 		FileSaver.saveAs(file, this.sName);
 		file = null;
 	};
+	/**
+	 * Generate link for downloading current chunk
+	 * @param {String} sDownloadLink
+	 */
 	function getChunkLink (sDownloadLink)
 	{
 		return sDownloadLink + '/download/' + iCurrChunk++ + '/' + (iChunkSize + iChunkHeader);
 	}
 	decryptChunk(getChunkLink(sDownloadLink));
 };
-
+/**
+* Checking Queue for files awaiting upload
+*/
 CCrypto.prototype.checkQueue = function ()
 {
 	var aNode = null;
 	if (this.oChunkQueue.aFiles.length > 0)
 	{
 		aNode = this.oChunkQueue.aFiles.shift();
-		aNode.fStartUploadCallback.apply(aNode.fStartUploadCallback, aNode.args);
+		aNode.fStartUploadCallback.apply(aNode.fStartUploadCallback, [aNode.oFileInfo, aNode.sUid, aNode.fOnChunkEncryptCallback]);
 	}
 };
-
+/**
+* Stop file uploading
+* 
+* @param {String} sUid
+* @param {Function} fOnUploadCancelCallback
+*/
 CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 {
-	this.aStopList.push(sUid);
-	this.fOnUploadCancelCallback = fOnUploadCancelCallback;
+	var bFileInQueue = false;
+	 // If file await to be uploaded - delete it from queue
+	this.oChunkQueue.aFiles.forEach(function (oData, index, array) {
+		if (oData.sUid === sUid)
+		{
+			fOnUploadCancelCallback(sUid, oData.oFileInfo.FileName);
+			array.splice(index, 1);
+			bFileInQueue = true;
+		}
+	});
+	if (!bFileInQueue)
+	{
+		this.aStopList.push(sUid);
+		this.oChunkQueue.isProcessed = false;
+		this.fOnUploadCancelCallback = fOnUploadCancelCallback;
+	}
 };
 
 module.exports = new  CCrypto();

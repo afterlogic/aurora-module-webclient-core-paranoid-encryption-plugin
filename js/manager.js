@@ -10,7 +10,7 @@ var
 	CCrypto = require('modules/%ModuleName%/js/CCrypto.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js')
 ;
-
+		
 function IsJscryptoSupported()
 {
 	return !!window.crypto.subtle;
@@ -22,6 +22,8 @@ function IsHttpsEnable()
 }
 
 module.exports = function (oAppData) {
+	var oSettings = _.extend({}, oAppData[Settings.ServerModuleName] || {}, oAppData['%ModuleName%'] || {});
+	Settings.init(oSettings);
 	
 	return {
 		/**
@@ -41,11 +43,11 @@ module.exports = function (oAppData) {
 						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
 						sDownloadLink = oFile.getActionUrl('download')
 					;
-					if (!iv)
+					if (!Settings.EnableJscrypto() || !iv)
 					{
 						fRegularDownloadFileCallback(sDownloadLink);
 					}
-					else if (!CCrypto.getCriptKey())
+					else if (!CCrypto.getCryptoKey())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 					}
@@ -64,44 +66,55 @@ module.exports = function (oAppData) {
 						fOnChunkEncryptCallback = oParams.fOnChunkReadyCallback,
 						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback,
 						fStartUploadCallback = function (oFileInfo, sUid, fOnChunkEncryptCallback) {
-							//Starts uploading an encrypted file
+							// Starts upload an encrypted file
 							CCrypto.oChunkQueue.isProcessed = true;
 							CCrypto.start(oFileInfo);
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 						}
 					;
 
-					if (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
+					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
 					{
 						fRegularUploadFileCallback(sUid, oFileInfo);
 					}
-					else if (!CCrypto.getCriptKey())
+					else if (!CCrypto.getCryptoKey())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 					}
 					else if (CCrypto.oChunkQueue.isProcessed === true)
-					{ //if another file uploading now - add a file to the queue
+					{ // if another file is being uploaded now - add a file to the queue
 						CCrypto.oChunkQueue.aFiles.push({
 							fStartUploadCallback: fStartUploadCallback,
-							args: [
-								oFileInfo, 
-								sUid, 
-								fOnChunkEncryptCallback 
-							]
+							oFileInfo: oFileInfo, 
+							sUid: sUid, 
+							fOnChunkEncryptCallback: fOnChunkEncryptCallback
 						});
 					}
 					else
-					{ //If the queue is not busy - start uploading
+					{ // If the queue is not busy - start uploading
 						fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
 					}
 				});
 				
 				App.subscribeEvent('CFilseView::FileDownloadCancel', function (oParams) {
-					oParams.oFile.stopDownloading();
+					if (Settings.EnableJscrypto())
+					{
+						oParams.oFile.stopDownloading();
+					}
 				});
 				
 				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {
-					CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
+					if (Settings.EnableJscrypto())
+					{
+						CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
+					}
+				});
+				App.subscribeEvent('Jua::FileUploadingError', function () {
+					if (Settings.EnableJscrypto())
+					{
+						CCrypto.oChunkQueue.isProcessed = false;
+						CCrypto.checkQueue();
+					}
 				});
 			}
 		}

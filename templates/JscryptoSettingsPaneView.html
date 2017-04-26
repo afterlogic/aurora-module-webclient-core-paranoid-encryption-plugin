@@ -7,22 +7,22 @@
 		<div class="fieldset">
 			<div class="row">
 				<span class="value offset">
-					<label class="custom_checkbox" data-bind="css: {'checked': enableJscrypto}">
+					<label class="custom_checkbox" data-bind="css: {'checked': EnableJscrypto}">
 						<span class="icon"></span>
-						<input type="checkbox" id="enableJscrypto" data-bind="checked: enableJscrypto" />
+						<input type="checkbox" id="EnableJscrypto" data-bind="checked: EnableJscrypto" />
 					</label>
-					<label for="enableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
+					<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
 				</span>
 			</div>
 		</div>
 		<div class="buttons">
-			<span class="button" data-bind="">
+			<span class="button" data-bind="click: save">
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, visible: !isSaving()"></span>
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}, visible: isSaving()"></span>
 			</span>
 		</div>
 			
-		<div class="fieldset" data-bind="visible: enableJscrypto">
+		<div class="fieldset" data-bind="visible: EnableJscrypto">
 			<div class="row keys_label">
 				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_JSCRYPTO_KEY'}"></span>
 				<span class="value" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !key()"></span>
@@ -40,7 +40,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="buttons" data-bind="visible: enableJscrypto">
+		<div class="buttons" data-bind="visible: EnableJscrypto">
 			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': 'crypt_key.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
 			<span data-bind="click: importKey, visible: !key()" class="button">
 				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_KEY'}"></span>

@@ -37,12 +37,15 @@ CJscryptoKey.prototype.getKeyObservable = function ()
 	return this.key;
 };
 
+/**
+ *  import key from data in local storage
+ */
 CJscryptoKey.prototype.loadKeyFromStorage = function ()
 {
 	var oKey = null;
-	if (Storage.hasData(this.sPrefix + 'criptKey'))
+	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
 	{
-		oKey = Storage.getData(this.sPrefix + 'criptKey');
+		oKey = Storage.getData(this.sPrefix + 'cryptoKey');
 		window.crypto.subtle.importKey(
 			"jwk",
 			oKey,
@@ -61,23 +64,26 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 	}
 };
 
+/**
+ *  generate new key
+ */
 CJscryptoKey.prototype.generateKey = function ()
 {
 	window.crypto.subtle.generateKey(
 		{
 			name: "AES-CBC",
-			length: 256,
+			length: 256
 		},
 		true,
 		["encrypt", "decrypt"]
 	)
-	.then(_.bind(function(key) {
+	.then(_.bind(function (key) {
 		window.crypto.subtle.exportKey(
 			"jwk",
 			key
 		)
 		.then(_.bind(function(keydata) {
-			Storage.setData(this.sPrefix + 'criptKey', keydata);
+			Storage.setData(this.sPrefix + 'cryptoKey', keydata);
 			this.loadKeyFromStorage();
 		}, this))
 		.catch(function(err) {
@@ -106,7 +112,7 @@ CJscryptoKey.prototype.importKeyFromString = function (sKey)
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
 		return;
 	}
-	Storage.setData(this.sPrefix + 'criptKey', oKey);
+	Storage.setData(this.sPrefix + 'cryptoKey', oKey);
 	this.loadKeyFromStorage();
 }
 
@@ -123,7 +129,7 @@ CJscryptoKey.prototype.deleteKey = function ()
 	try
 	{
 		this.key(null);
-		Storage.removeData(this.sPrefix + 'criptKey');
+		Storage.removeData(this.sPrefix + 'cryptoKey');
 	}
 	catch (e)
 	{

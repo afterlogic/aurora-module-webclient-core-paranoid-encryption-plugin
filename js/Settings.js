@@ -3,16 +3,21 @@
 var ko = require('knockout');
 
 module.exports = {
-	ServerModuleName: 'Jscrypto',
+	ServerModuleName: '%ModuleName%',
 	HashModuleName: 'jscrypto',
 	EncryptionAllowedModules: ['Files'],
 	
-	enableJscrypto: ko.observable(true),
+	EnableJscrypto: ko.observable(true),
 	
 	init: function (oAppDataSection) {
 		if (oAppDataSection)
 		{
-			this.enableJscrypto(!!oAppDataSection.EnableModule);
+			this.EnableJscrypto(!!oAppDataSection.EnableModule);
 		}
+	},
+	
+	update: function (bEnableJscrypto)
+	{
+		this.EnableJscrypto(bEnableJscrypto);
 	}
 };

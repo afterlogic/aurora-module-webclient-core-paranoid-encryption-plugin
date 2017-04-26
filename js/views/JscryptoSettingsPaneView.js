@@ -27,7 +27,7 @@ function CJscryptoSettingsPaneView()
 {
 	CAbstractSettingsFormView.call(this, Settings.ServerModuleName);
 	
-	this.enableJscrypto = ko.observable(Settings.enableJscrypto());
+	this.EnableJscrypto = ko.observable(Settings.EnableJscrypto());
 	
 	this.key = ko.observable(JscryptoKey.getKey());
 	
@@ -127,25 +127,25 @@ CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
 CJscryptoSettingsPaneView.prototype.getCurrentValues = function ()
 {
 	return [
-		this.enableJscrypto()
+		this.EnableJscrypto()
 	];
 };
 
 CJscryptoSettingsPaneView.prototype.revertGlobalValues = function ()
 {
-	this.enableJscrypto(Settings.enableJscrypto());
+	this.EnableJscrypto(Settings.EnableJscrypto());
 };
 
 CJscryptoSettingsPaneView.prototype.getParametersForSave = function ()
 {
 	return {
-		'EnableJscrypto': this.enableJscrypto()
+		'EnableModule': this.EnableJscrypto()
 	};
 };
 
-CJscryptoSettingsPaneView.prototype.applySavedValues = function (oParameters)
+CJscryptoSettingsPaneView.prototype.applySavedValues = function ()
 {
-	Settings.update(oParameters.EnableJscrypto);
+	Settings.update(this.EnableJscrypto());
 };
 
 module.exports = new CJscryptoSettingsPaneView();
