@@ -65,6 +65,7 @@ module.exports = function (oAppData) {
 						oFileInfo = oParams.oFileInfo,
 						fOnChunkEncryptCallback = oParams.fOnChunkReadyCallback,
 						fRegularUploadFileCallback = oParams.fRegularUploadFileCallback,
+						fCancelFunction = oParams.fCancelFunction,
 						fStartUploadCallback = function (oFileInfo, sUid, fOnChunkEncryptCallback) {
 							// Starts upload an encrypted file
 							CCrypto.oChunkQueue.isProcessed = true;
@@ -80,6 +81,7 @@ module.exports = function (oAppData) {
 					else if (!CCrypto.getCryptoKey())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+						fCancelFunction(sUid);
 					}
 					else if (CCrypto.oChunkQueue.isProcessed === true)
 					{ // if another file is being uploaded now - add a file to the queue
