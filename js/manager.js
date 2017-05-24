@@ -118,6 +118,21 @@ module.exports = function (oAppData) {
 						CCrypto.checkQueue();
 					}
 				});
+				App.subscribeEvent('FilesWebclient::ParseFile::after', function (oFile) {
+					var 
+						bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined'
+					;
+					
+					if (bIsEncrypted)
+					{
+						oFile.removeAction('view');
+					}
+				});
+				App.subscribeEvent('FileViewerWebclientPlugin::FilesCollection::after', function (oParams) {
+					oParams.aFilesCollection(_.filter(oParams.aFilesCollection(), function (sArg) {
+						return !(typeof(sArg.oExtendedProps) !== 'undefined' &&  typeof(sArg.oExtendedProps.InitializationVector) !== 'undefined');
+					}));
+				});
 			}
 		}
 	};
