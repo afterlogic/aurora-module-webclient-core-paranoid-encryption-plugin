@@ -189,6 +189,7 @@ CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 						writeChunk(oDecryptedUint8Array);
 					})
 					.catch(function(err) {
+						oFile.stopDownloading();
 						Screens.showError(err);
 					})
 				;
