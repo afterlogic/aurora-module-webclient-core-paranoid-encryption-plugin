@@ -5,18 +5,42 @@
 <div class="panel_center">
 	<div class="fields">
 		<div class="fieldset">
+			<div class="row" data-bind="visible: !bIsHttpsEnable">
+				<span data-bind="i18n: {'key': '%MODULENAME%/ERROR_HTTPS_NEEDED'}, style: {color: 'red'}"></span>
+			</div>	
 			<div class="row">
-				<span class="value offset">
-					<label class="custom_checkbox" data-bind="css: {'checked': EnableJscrypto}">
+				<label class="custom_checkbox" data-bind="css: {'checked': EnableJscrypto, 'disabled': !bIsHttpsEnable}">
+					<span class="icon"></span>
+					<input type="checkbox" id="EnableJscrypto" data-bind="checked: bIsHttpsEnable ? EnableJscrypto : false" />
+				</label>
+				<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
+			</div>
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_JSCRYPTO'}"></div>
+			<div class="row">
+				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>
+				<span class="value">
+					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.Always, 'disabled': !bIsHttpsEnable}">
 						<span class="icon"></span>
-						<input type="checkbox" id="EnableJscrypto" data-bind="checked: EnableJscrypto" />
+						<input type="radio" id="tab_always" data-bind="checked: bIsHttpsEnable ? defaultTab : false, attr: {'value': Enums.EncryptionMode.Always}" />
 					</label>
-					<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
+					<label for="tab_always" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ALWAYS'}"></label>
+
+					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.AskMe, 'disabled': !bIsHttpsEnable}">
+						<span class="icon"></span>
+						<input type="radio" id="tab_askme" data-bind="checked: bIsHttpsEnable ? defaultTab : false, attr: {'value': Enums.EncryptionMode.AskMe}" />
+					</label>
+					<label for="tab_askme" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ASK'}"></label>
+
+					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.Never, 'disabled': !bIsHttpsEnable}">
+						<span class="icon"></span>
+						<input type="radio" id="tab_never" data-bind="checked: bIsHttpsEnable ? defaultTab : false, attr: {'value': Enums.EncryptionMode.Never}" />
+					</label>
+					<label for="tab_never" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_NEVER'}"></label>
 				</span>
 			</div>
 		</div>
 		<div class="buttons">
-			<span class="button" data-bind="click: save">
+			<span class="button" data-bind="click: bIsHttpsEnable ? save : false, css: {'disabled': !bIsHttpsEnable}">
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, visible: !isSaving()"></span>
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}, visible: isSaving()"></span>
 			</span>
@@ -42,10 +66,13 @@
 		</div>
 		<div class="buttons" data-bind="visible: EnableJscrypto">
 			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': 'crypt_key.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
-			<span data-bind="click: importKey, visible: !key()" class="button">
-				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_KEY'}"></span>
+			<span data-bind="click: bIsHttpsEnable ? importFileKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable}" class="button">
+				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_FILE_KEY'}"></span>
 			</span>
-			<span data-bind="click: generateNewKey, visible: !key()" class="button">
+			<span data-bind="click: bIsHttpsEnable ? importStringKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable}" class="button">
+				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_STRING_KEY'}"></span>
+			</span>
+			<span data-bind="click: bIsHttpsEnable ? generateNewKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable}" class="button">
 				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_GENERATE_NEW_KEY'}"></span>
 			</span>
 			<div style="height:0px;overflow:hidden">

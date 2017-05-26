@@ -1,5 +1,6 @@
 'use strict';
 
+require('modules/%ModuleName%/js/enums.js');
 var	
 	$ = require('jquery'),
 	_ = require('underscore'),
@@ -32,7 +33,7 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
-			if (IsJscryptoSupported() && IsHttpsEnable())
+			if (IsJscryptoSupported())
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
 				
@@ -46,6 +47,10 @@ module.exports = function (oAppData) {
 					if (!Settings.EnableJscrypto() || !iv)
 					{
 						fRegularDownloadFileCallback(sDownloadLink);
+					}
+					else if (!IsHttpsEnable())
+					{
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 					}
 					else if (!CCrypto.getCryptoKey())
 					{
@@ -73,8 +78,12 @@ module.exports = function (oAppData) {
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 						}
 					;
-
-					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
+					if (!IsHttpsEnable())
+					{
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+						fCancelFunction(sUid);
+					}
+					else if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
 					{
 						fRegularUploadFileCallback(sUid, oFileInfo);
 					}
@@ -99,20 +108,20 @@ module.exports = function (oAppData) {
 				});
 				
 				App.subscribeEvent('CFilseView::FileDownloadCancel', function (oParams) {
-					if (Settings.EnableJscrypto())
+					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						oParams.oFile.stopDownloading();
 					}
 				});
 				
 				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {
-					if (Settings.EnableJscrypto())
+					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
 					}
 				});
 				App.subscribeEvent('Jua::FileUploadingError', function () {
-					if (Settings.EnableJscrypto())
+					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						CCrypto.oChunkQueue.isProcessed = false;
 						CCrypto.checkQueue();
