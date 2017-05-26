@@ -17,7 +17,8 @@ var
 	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
-	Settings = require('modules/%ModuleName%/js/Settings.js')
+	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	ImportKeyStringPopup = ModulesManager.run('CoreJscryptoWebclientPlugin', 'getImportKeyStringPopup')
 ;
 
 /**
@@ -60,7 +61,7 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function()
 		{
 			JscryptoKey.exportKey()
 				.then(_.bind(function(keydata) {
-					oBlob = new Blob([JSON.stringify(keydata)], {type: 'text/plain'});
+					oBlob = new Blob([keydata.k], {type: 'text/plain'});
 					sHref = window.URL.createObjectURL(oBlob);
 					this.downloadLinkHref(sHref);
 				}, this));
@@ -76,7 +77,7 @@ CJscryptoSettingsPaneView.prototype.importFileKey = function ()
 
 CJscryptoSettingsPaneView.prototype.importStringKey = function ()
 {
-	
+	Popups.showPopup(ImportKeyStringPopup, [false]);
 };
 
 CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()

@@ -97,21 +97,15 @@ CJscryptoKey.prototype.generateKey = function ()
 
 CJscryptoKey.prototype.importKeyFromString = function (sKey)
 {
-	var oKey = Object;
-	try
-	{
-		oKey = JSON.parse(sKey);
-	}
-	catch (e)
-	{
-		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
-		return;
-	}
-	if (typeof oKey !== 'object' || !oKey.alg || !oKey.ext || !oKey.k || !oKey.key_ops || !oKey.kty)
-	{
-		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
-		return;
-	}
+	var
+		oKey = {
+			alg: "A256CBC",
+			ext: true,
+			k: sKey,
+			key_ops: ["encrypt","decrypt"],
+			kty: "oct"
+		}
+	;
 	Storage.setData(this.sPrefix + 'cryptoKey', oKey);
 	this.loadKeyFromStorage();
 }

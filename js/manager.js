@@ -143,6 +143,9 @@ module.exports = function (oAppData) {
 					}));
 				});
 			}
+		},
+		getImportKeyStringPopup: function () {
+			return require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js');
 		}
 	};
 };
