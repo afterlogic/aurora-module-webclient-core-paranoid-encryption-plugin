@@ -135,6 +135,7 @@ module.exports = function (oAppData) {
 					if (bIsEncrypted)
 					{
 						oFile.removeAction('view');
+						oFile.bIsSecure(true);
 					}
 				});
 				App.subscribeEvent('FileViewerWebclientPlugin::FilesCollection::after', function (oParams) {
