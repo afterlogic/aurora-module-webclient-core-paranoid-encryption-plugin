@@ -18,7 +18,8 @@ var
 	
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
-	ImportKeyStringPopup = ModulesManager.run('CoreJscryptoWebclientPlugin', 'getImportKeyStringPopup')
+	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
+	ExportInformationPopup  =  require('modules/%ModuleName%/js/popups/ExportInformationPopup.js')
 ;
 
 /**
@@ -48,8 +49,8 @@ _.extendOwn(CJscryptoSettingsPaneView.prototype, CAbstractSettingsFormView.proto
 
 CJscryptoSettingsPaneView.prototype.ViewTemplate = '%ModuleName%_JscryptoSettingsPaneView';
 
-CJscryptoSettingsPaneView.prototype.setExportUrl =	function()
-{ 
+CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
+{
 	var
 		sHref = '#',
 		oBlob = null
@@ -65,6 +66,10 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function()
 					oBlob = new Blob([keydata.k], {type: 'text/plain'});
 					sHref = window.URL.createObjectURL(oBlob);
 					this.downloadLinkHref(sHref);
+					if (bShowDialog)
+					{
+						Popups.showPopup(ExportInformationPopup, [sHref])
+					}
 				}, this));
 		}
 	}
@@ -113,7 +118,7 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 
 CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
 {
-	JscryptoKey.generateKey();
+	JscryptoKey.generateKey(_.bind(CJscryptoSettingsPaneView.prototype.setExportUrl, this));
 };
 
 /**

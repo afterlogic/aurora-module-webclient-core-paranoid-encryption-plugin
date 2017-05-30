@@ -17,19 +17,12 @@ function CImportKeyStringPopup()
 	CAbstractPopup.call(this);
 	
 	this.newKey = ko.observable('');
-	
-	this.oParams = null;
 }
 
 _.extendOwn(CImportKeyStringPopup.prototype, CAbstractPopup.prototype);
 
 CImportKeyStringPopup.prototype.PopupTemplate = '%ModuleName%_ImportKeyStringPopup';
 
-/**
- * @param {Object} oParams
- * @param {String} oParams.sModule
- * @param {Function} oParams.fAfterPasswordChanged
- */
 CImportKeyStringPopup.prototype.onShow = function ()
 {
 	this.newKey('');

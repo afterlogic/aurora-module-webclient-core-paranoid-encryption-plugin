@@ -40,7 +40,7 @@ CJscryptoKey.prototype.getKeyObservable = function ()
 /**
  *  import key from data in local storage
  */
-CJscryptoKey.prototype.loadKeyFromStorage = function ()
+CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
 {
 	var oKey = null;
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
@@ -57,6 +57,10 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 		)
 		.then(_.bind(function(key) {
 			this.key(key);
+			if (fOnGenerateCallback)
+			{
+				fOnGenerateCallback(true);
+			}
 		}, this))
 		.catch(function(err) {
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
@@ -67,7 +71,7 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 /**
  *  generate new key
  */
-CJscryptoKey.prototype.generateKey = function ()
+CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback)
 {
 	window.crypto.subtle.generateKey(
 		{
@@ -84,7 +88,7 @@ CJscryptoKey.prototype.generateKey = function ()
 		)
 		.then(_.bind(function(keydata) {
 			Storage.setData(this.sPrefix + 'cryptoKey', keydata);
-			this.loadKeyFromStorage();
+			this.loadKeyFromStorage(fOnGenerateCallback);
 		}, this))
 		.catch(function(err) {
 			Screens.showError(err);
