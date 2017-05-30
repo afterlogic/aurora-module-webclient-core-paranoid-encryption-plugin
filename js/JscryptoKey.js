@@ -59,7 +59,7 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 			this.key(key);
 		}, this))
 		.catch(function(err) {
-			Screens.showError(err);
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
 		});
 	}
 };
@@ -106,7 +106,14 @@ CJscryptoKey.prototype.importKeyFromString = function (sKey)
 			kty: "oct"
 		}
 	;
-	Storage.setData(this.sPrefix + 'cryptoKey', oKey);
+	try
+	{
+		Storage.setData(this.sPrefix + 'cryptoKey', oKey);
+	}
+	catch (e)
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
+	}
 	this.loadKeyFromStorage();
 }
 

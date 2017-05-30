@@ -6,11 +6,11 @@
 		<div class="fields">
 			<div class="fieldset">
 				<div class="row">
-					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_NEW_KEY'}"></span>
+					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_YOUR_KEY'}"></span>
 					<input class="value input" type="text" spellcheck="false" maxlength="255" data-bind="value: newKey" />
 				</div>
 			</div>
-
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY'}"></div>
 			<div class="buttons">
 				<span class="button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, click: importKey"></span>
 				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancelPopup"></span>

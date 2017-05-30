@@ -41,6 +41,7 @@ function CJscryptoSettingsPaneView()
 	}, this);
 	this.bIsHttpsEnable = window.location.protocol === "https:";
 	this.defaultTab = ko.observable(Enums.EncryptionMode.Always);
+	this.isImporting = ko.observable(false);
 }
 
 _.extendOwn(CJscryptoSettingsPaneView.prototype, CAbstractSettingsFormView.prototype);
@@ -94,14 +95,20 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
 		return;
 	}
-
-	reader.onload = function(e)
-	{
+	this.isImporting(true);
+	reader.onload =_.bind( function(e) {
 		sContents = e.target.result;
 		JscryptoKey.importKeyFromString(sContents);
-	};
-	
-	reader.readAsText(file);
+		this.isImporting(false);
+	}, this);
+	try
+	{
+		reader.readAsText(file);
+	}
+	catch (e)
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
+	}
 };
 
 CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
