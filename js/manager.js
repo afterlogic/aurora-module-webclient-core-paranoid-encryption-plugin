@@ -78,14 +78,15 @@ module.exports = function (oAppData) {
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 						}
 					;
-					if (!IsHttpsEnable())
+					
+					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
+					{
+						fRegularUploadFileCallback(sUid, oFileInfo);
+					}
+					else if (!IsHttpsEnable())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 						fCancelFunction(sUid);
-					}
-					else if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
-					{
-						fRegularUploadFileCallback(sUid, oFileInfo);
 					}
 					else if (!CCrypto.getCryptoKey())
 					{

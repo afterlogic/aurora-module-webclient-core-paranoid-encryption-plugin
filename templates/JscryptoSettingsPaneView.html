@@ -9,9 +9,9 @@
 				<span data-bind="i18n: {'key': '%MODULENAME%/ERROR_HTTPS_NEEDED'}, style: {color: 'red'}"></span>
 			</div>	
 			<div class="row">
-				<label class="custom_checkbox" data-bind="css: {'checked': EnableJscrypto, 'disabled': !bIsHttpsEnable}">
+				<label class="custom_checkbox" data-bind="css: {'checked': EnableJscrypto}">
 					<span class="icon"></span>
-					<input type="checkbox" id="EnableJscrypto" data-bind="checked: bIsHttpsEnable ? EnableJscrypto : false" />
+					<input type="checkbox" id="EnableJscrypto" data-bind="checked: EnableJscrypto" />
 				</label>
 				<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
 			</div>
@@ -40,7 +40,7 @@
 			</div>
 		</div>
 		<div class="buttons">
-			<span class="button" data-bind="click: bIsHttpsEnable ? save : false, css: {'disabled': !bIsHttpsEnable}">
+			<span class="button" data-bind="click: save">
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, visible: !isSaving()"></span>
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}, visible: isSaving()"></span>
 			</span>
