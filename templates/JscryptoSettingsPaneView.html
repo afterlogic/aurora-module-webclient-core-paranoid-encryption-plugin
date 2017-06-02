@@ -19,21 +19,21 @@
 			<div class="row">
 				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>
 				<span class="value">
-					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.Always, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
+					<label class="custom_radio" data-bind="css: {'checked': EncryptionMode() == Enums.EncryptionMode.Always, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
 						<span class="icon"></span>
-						<input type="radio" id="tab_always" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? defaultTab : false, attr: {'value': Enums.EncryptionMode.Always}" />
+						<input type="radio" id="tab_always" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? EncryptionMode : false, attr: {'value': Enums.EncryptionMode.Always}" />
 					</label>
 					<label for="tab_always" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ALWAYS'}"></label>
 
-					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.AskMe, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
+					<label class="custom_radio" data-bind="css: {'checked': EncryptionMode() == Enums.EncryptionMode.AskMe, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
 						<span class="icon"></span>
-						<input type="radio" id="tab_askme" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? defaultTab : false, attr: {'value': Enums.EncryptionMode.AskMe}" />
+						<input type="radio" id="tab_askme" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? EncryptionMode : false, attr: {'value': Enums.EncryptionMode.AskMe}" />
 					</label>
 					<label for="tab_askme" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ASK'}"></label>
 
-					<label class="custom_radio" data-bind="css: {'checked': defaultTab() == Enums.EncryptionMode.Never, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
+					<label class="custom_radio" data-bind="css: {'checked': EncryptionMode() == Enums.EncryptionMode.Never, 'disabled': !bIsHttpsEnable || !EnableJscrypto()}">
 						<span class="icon"></span>
-						<input type="radio" id="tab_never" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? defaultTab : false, attr: {'value': Enums.EncryptionMode.Never}" />
+						<input type="radio" id="tab_never" data-bind="checked: bIsHttpsEnable && EnableJscrypto() ? EncryptionMode : false, attr: {'value': Enums.EncryptionMode.Never}" />
 					</label>
 					<label for="tab_never" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_NEVER'}"></label>
 				</span>

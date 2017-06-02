@@ -19,7 +19,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function init()
 	{
 		$this->extendObject('CUser', array(
-				'EnableModule' => array('bool', true)
+				'EnableModule' => array('bool', true),
+				'EncryptionMode' => array('int', 0)
 			)
 		);
 	}
@@ -37,7 +38,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if (!empty($oUser) && $oUser->Role === \Aurora\System\Enums\UserRole::NormalUser)
 		{
 			return array(
-				'EnableModule' => $oUser->{$this->GetName().'::EnableModule'}
+				'EnableModule' => $oUser->{$this->GetName().'::EnableModule'},
+				'EncryptionMode' => $oUser->{$this->GetName().'::EncryptionMode'}
 			);
 		}
 
@@ -50,7 +52,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 * @param boolean $EnableModule indicates if user turned on Jscrypto Module.
 	 * @return boolean
 	 */
-	public function UpdateSettings($EnableModule)
+	public function UpdateSettings($EnableModule, $EncryptionMode)
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 
@@ -60,6 +62,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			$oCoreDecorator = \Aurora\Modules\Core\Module::Decorator();
 			$oUser = $oCoreDecorator->GetUser($iUserId);
 			$oUser->{$this->GetName().'::EnableModule'} = $EnableModule;
+			$oUser->{$this->GetName().'::EncryptionMode'} = $EncryptionMode;
 			$oCoreDecorator->UpdateUserObject($oUser);
 		}
 		return true;

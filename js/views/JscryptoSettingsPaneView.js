@@ -6,6 +6,7 @@ var
 	ko = require('knockout'),
 	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
+	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js'),
 	
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
@@ -41,7 +42,7 @@ function CJscryptoSettingsPaneView()
 		this.setExportUrl();
 	}, this);
 	this.bIsHttpsEnable = window.location.protocol === "https:";
-	this.defaultTab = ko.observable(Enums.EncryptionMode.Always);
+	this.EncryptionMode = ko.observable(Settings.EncryptionMode());
 	this.isImporting = ko.observable(false);
 }
 
@@ -147,25 +148,28 @@ CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
 CJscryptoSettingsPaneView.prototype.getCurrentValues = function ()
 {
 	return [
-		this.EnableJscrypto()
+		this.EnableJscrypto(),
+		this.EncryptionMode()
 	];
 };
 
 CJscryptoSettingsPaneView.prototype.revertGlobalValues = function ()
 {
 	this.EnableJscrypto(Settings.EnableJscrypto());
+	this.EncryptionMode(Settings.EncryptionMode());
 };
 
 CJscryptoSettingsPaneView.prototype.getParametersForSave = function ()
 {
 	return {
-		'EnableModule': this.EnableJscrypto()
+		'EnableModule': this.EnableJscrypto(),
+		'EncryptionMode': Types.pInt(this.EncryptionMode())
 	};
 };
 
 CJscryptoSettingsPaneView.prototype.applySavedValues = function ()
 {
-	Settings.update(this.EnableJscrypto());
+	Settings.update(this.EnableJscrypto(), this.EncryptionMode());
 };
 
 module.exports = new CJscryptoSettingsPaneView();

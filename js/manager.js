@@ -9,7 +9,11 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	CCrypto = require('modules/%ModuleName%/js/CCrypto.js'),
-	Settings = require('modules/%ModuleName%/js/Settings.js')
+	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
+	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
+	isConfirmPopupShown = false
 ;
 		
 function IsJscryptoSupported()
@@ -76,10 +80,39 @@ module.exports = function (oAppData) {
 							CCrypto.oChunkQueue.isProcessed = true;
 							CCrypto.start(oFileInfo);
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
-						}
+						},
+						fUpload = _.bind(function (bEncrypt) {
+							if (bEncrypt)
+							{
+								AwaitConfirmationQueue.forEach(function (element) {
+									// if another file is being uploaded now - add a file to the queue
+									CCrypto.oChunkQueue.aFiles.push({
+										fStartUploadCallback: fStartUploadCallback,
+										oFileInfo: element.oFileInfo, 
+										sUid: element.sUid, 
+										fOnChunkEncryptCallback: fOnChunkEncryptCallback
+									});
+								});
+								AwaitConfirmationQueue = [];
+								if (!CCrypto.oChunkQueue.isProcessed)
+								{
+									CCrypto.oChunkQueue.isProcessed = true;
+									CCrypto.checkQueue();
+								}
+							}
+							else
+							{
+								AwaitConfirmationQueue.forEach(function (element) {
+									fRegularUploadFileCallback(element.sUid, element.oFileInfo);
+								});
+								AwaitConfirmationQueue = [];
+							}
+							isConfirmPopupShown = false;
+						}, this)
 					;
-					
-					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName)))
+
+					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
+						|| Settings.EncryptionMode() == Enums.EncryptionMode.Never)
 					{
 						fRegularUploadFileCallback(sUid, oFileInfo);
 					}
@@ -93,18 +126,43 @@ module.exports = function (oAppData) {
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 						fCancelFunction(sUid);
 					}
-					else if (CCrypto.oChunkQueue.isProcessed === true)
-					{ // if another file is being uploaded now - add a file to the queue
-						CCrypto.oChunkQueue.aFiles.push({
-							fStartUploadCallback: fStartUploadCallback,
-							oFileInfo: oFileInfo, 
-							sUid: sUid, 
-							fOnChunkEncryptCallback: fOnChunkEncryptCallback
-						});
-					}
-					else
-					{ // If the queue is not busy - start uploading
-						fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
+					else 
+					{
+						if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
+						{
+							if (isConfirmPopupShown)
+							{
+								AwaitConfirmationQueue.push({
+									sUid: sUid,
+									oFileInfo: oFileInfo
+								});
+							}
+							else
+							{
+								Popups.showPopup(ConfirmPopup, [TextUtils.i18n('%MODULENAME%/CONFIRM_ENCRYPT_FILE'), fUpload]);
+								isConfirmPopupShown = true;
+								AwaitConfirmationQueue.push({
+									sUid: sUid,
+									oFileInfo: oFileInfo
+								});
+							}
+						}
+						else
+						{
+							if (CCrypto.oChunkQueue.isProcessed === true)
+							{ // if another file is being uploaded now - add a file to the queue
+								CCrypto.oChunkQueue.aFiles.push({
+									fStartUploadCallback: fStartUploadCallback,
+									oFileInfo: oFileInfo, 
+									sUid: sUid, 
+									fOnChunkEncryptCallback: fOnChunkEncryptCallback
+								});
+							}
+							else
+							{ // If the queue is not busy - start uploading
+								fStartUploadCallback(oFileInfo, sUid, fOnChunkEncryptCallback);
+							}
+						}
 					}
 				});
 				
