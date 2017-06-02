@@ -40,6 +40,8 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
+	this.oFileInfo.Hidden = { 'RangeType': 1 };
+	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': this.iv };
 };
 
 CCrypto.prototype.getCryptoKey = function ()
@@ -125,8 +127,26 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 				}, this)
 			;
 			this.oFileInfo.File = oEncryptedFile;
+			
+			if (this.iCurrChunk === 1)
+			{ // for first chunk enable 'FirstChunk' attribute. This is necessary to solve the problem of simultaneous loading of files with the same name
+				this.oFileInfo.Hidden.ExtendedProps.FirstChunk = true;
+			}
+			else
+			{
+				delete this.oFileInfo.Hidden.ExtendedProps.FirstChunk;
+			}
+			
+			if (this.iCurrChunk == this.iChunkNumber)
+			{ // unmark file as loading
+				delete this.oFileInfo.Hidden.ExtendedProps.Loading;
+			}
+			else
+			{ // mark file as loading until upload doesn't finish
+				this.oFileInfo.Hidden.ExtendedProps.Loading = true;
+			}
 			// call upload of encrypted chunk
-			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, this.iv);
+			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber);
 		}, this))
 		.catch(function(err) {
 			Screens.showError(err);
