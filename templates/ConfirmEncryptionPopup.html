@@ -1,0 +1,16 @@
+<div class="popup" style="display: none;">
+	<div class="mask" data-bind="click: cancelPopup"></div>
+	<div class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<div class="fields">
+			<div class="hint" data-bind="text: message"></div>
+			<div class="hint confirm-file-list" data-bind="html: files"></div>
+			<div class="buttons">
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_ENCRYPT'}, click: encrypt"></span>
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_DONT_ENCRYPT'}, click: upload"></span>
+				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancelUpload"></span>
+			</div>
+		</div>
+	</div>
+	<span class="helper"></span>
+</div>

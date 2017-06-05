@@ -5,8 +5,7 @@ var
 	$ = require('jquery'),
 	ko = require('knockout'),
 	
-	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js'),
-	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
+	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js')
 ;
 
 /**

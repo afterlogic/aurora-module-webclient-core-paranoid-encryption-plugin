@@ -20,7 +20,7 @@ var
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
-	ExportInformationPopup  =  require('modules/%ModuleName%/js/popups/ExportInformationPopup.js')
+	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js')
 ;
 
 /**

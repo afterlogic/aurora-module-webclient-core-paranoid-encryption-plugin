@@ -11,7 +11,7 @@ var
 	CCrypto = require('modules/%ModuleName%/js/CCrypto.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
+	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false
 ;
@@ -81,34 +81,38 @@ module.exports = function (oAppData) {
 							CCrypto.start(oFileInfo);
 							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
 						},
-						fUpload = _.bind(function (bEncrypt) {
-							if (bEncrypt)
-							{
-								AwaitConfirmationQueue.forEach(function (element) {
-									// if another file is being uploaded now - add a file to the queue
-									CCrypto.oChunkQueue.aFiles.push({
-										fStartUploadCallback: fStartUploadCallback,
-										oFileInfo: element.oFileInfo, 
-										sUid: element.sUid, 
-										fOnChunkEncryptCallback: fOnChunkEncryptCallback
-									});
-								});
-								AwaitConfirmationQueue = [];
-								if (!CCrypto.oChunkQueue.isProcessed)
-								{
-									CCrypto.oChunkQueue.isProcessed = true;
-									CCrypto.checkQueue();
-								}
-							}
-							else
-							{
-								AwaitConfirmationQueue.forEach(function (element) {
-									fRegularUploadFileCallback(element.sUid, element.oFileInfo);
-								});
-								AwaitConfirmationQueue = [];
-							}
+						fUpload = _.bind(function () {
+							AwaitConfirmationQueue.forEach(function (element) {
+								fRegularUploadFileCallback(element.sUid, element.oFileInfo);
+							});
+							AwaitConfirmationQueue = [];
 							isConfirmPopupShown = false;
-						}, this)
+						}, this),
+						fEncrypt = _.bind(function () {
+							AwaitConfirmationQueue.forEach(function (element) {
+								// if another file is being uploaded now - add a file to the queue
+								CCrypto.oChunkQueue.aFiles.push({
+									fStartUploadCallback: fStartUploadCallback,
+									oFileInfo: element.oFileInfo, 
+									sUid: element.sUid, 
+									fOnChunkEncryptCallback: fOnChunkEncryptCallback
+								});
+							});
+							AwaitConfirmationQueue = [];
+							isConfirmPopupShown = false;
+							if (!CCrypto.oChunkQueue.isProcessed)
+							{
+								CCrypto.oChunkQueue.isProcessed = true;
+								CCrypto.checkQueue();
+							}
+						}),
+						fCancel = _.bind(function () {
+							AwaitConfirmationQueue.forEach(function (element) {
+								fCancelFunction(element.sUid);
+							});
+							AwaitConfirmationQueue = [];
+							isConfirmPopupShown = false;
+						})
 					;
 
 					if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
@@ -139,7 +143,17 @@ module.exports = function (oAppData) {
 							}
 							else
 							{
-								Popups.showPopup(ConfirmPopup, [TextUtils.i18n('%MODULENAME%/CONFIRM_ENCRYPT_FILE'), fUpload]);
+								setTimeout(function () {
+									Popups.showPopup(ConfirmEncryptionPopup, [
+										fEncrypt,
+										fUpload,
+										fCancel,
+										AwaitConfirmationQueue.length,
+										_.map(AwaitConfirmationQueue, function(element) {
+											return element.oFileInfo.FileName; 
+										})
+									]);
+								}, 10);
 								isConfirmPopupShown = true;
 								AwaitConfirmationQueue.push({
 									sUid: sUid,
