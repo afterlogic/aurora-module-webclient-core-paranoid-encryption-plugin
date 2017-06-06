@@ -5,6 +5,7 @@ var
 	$ = require('jquery'),
 	ko = require('knockout'),
 	
+	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
 ;
@@ -16,6 +17,7 @@ function CImportKeyStringPopup()
 {
 	CAbstractPopup.call(this);
 	
+	this.keyName = ko.observable(App.getUserPublicId());
 	this.newKey = ko.observable('');
 }
 
@@ -30,7 +32,7 @@ CImportKeyStringPopup.prototype.onShow = function ()
 
 CImportKeyStringPopup.prototype.importKey = function ()
 {	
-	JscryptoKey.importKeyFromString(this.newKey());
+	JscryptoKey.importKeyFromString(this.keyName(), this.newKey());
 	this.closePopup();
 };
 

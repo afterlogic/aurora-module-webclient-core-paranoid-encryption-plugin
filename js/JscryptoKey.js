@@ -18,8 +18,9 @@ var
 function CJscryptoKey()
 {
 	this.sPrefix = 'user_' + (UserSettings.UserId || '0') + '_';
-	
+
 	this.key = ko.observable();
+	this.sKeyName = ko.observable();
 
 	this.loadKeyFromStorage();
 }
@@ -30,6 +31,15 @@ CJscryptoKey.prototype.sPrefix = '';
 CJscryptoKey.prototype.getKey = function ()
 {
 	return this.key();
+};
+
+CJscryptoKey.prototype.getKeyName = function ()
+{
+	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
+	{
+		return Storage.getData(this.sPrefix + 'cryptoKey').keyname;
+	}
+	return false;
 };
 
 CJscryptoKey.prototype.getKeyObservable = function ()
@@ -45,7 +55,7 @@ CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
 	var oKey = null;
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
 	{
-		oKey = Storage.getData(this.sPrefix + 'cryptoKey');
+		oKey = Storage.getData(this.sPrefix + 'cryptoKey').keydata;
 		window.crypto.subtle.importKey(
 			"jwk",
 			oKey,
@@ -71,7 +81,7 @@ CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
 /**
  *  generate new key
  */
-CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback)
+CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 {
 	window.crypto.subtle.generateKey(
 		{
@@ -87,7 +97,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback)
 			key
 		)
 		.then(_.bind(function(keydata) {
-			Storage.setData(this.sPrefix + 'cryptoKey', keydata);
+			Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: keydata});
 			this.loadKeyFromStorage(fOnGenerateCallback);
 		}, this))
 		.catch(function(err) {
@@ -99,7 +109,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback)
 	});
 };
 
-CJscryptoKey.prototype.importKeyFromString = function (sKey)
+CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey)
 {
 	var
 		oKey = {
@@ -112,7 +122,8 @@ CJscryptoKey.prototype.importKeyFromString = function (sKey)
 	;
 	try
 	{
-		Storage.setData(this.sPrefix + 'cryptoKey', oKey);
+		this.sKeyName(sKeyName);
+		Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: oKey});
 	}
 	catch (e)
 	{

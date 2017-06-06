@@ -56,14 +56,15 @@
 						<span class="button delete" data-bind="customTooltip: '%MODULENAME%/ACTION_DELETE_KEY', click: function () {removeJscryptoKey(); }"></span>
 					</span>
 					<span class="name">
-						<span class="text" data-bind="">Key</span>
+						<span class="text" data-bind="i18n: {'key': '%MODULENAME%/LABEL_KEY'}"></span>: <span class="text" data-bind="text: keyName"></span>
 					</span>
 				</div>
+				<br/>
 				<span class="hint"  data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT'}, visible: key()"></span>
 			</div>
 		</div>
 		<div class="buttons">
-			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': 'crypt_key.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
+			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': keyName() + '.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
 			<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? importFileKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
 				<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_FILE_KEY'}, visible: !isImporting()"></span>
 				<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_KEY_IN_PROGRESS'}, visible: isImporting()"></span>

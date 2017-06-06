@@ -6,6 +6,10 @@
 		<div class="fields">
 			<div class="fieldset">
 				<div class="row">
+					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_KEY_NAME'}"></span>
+					<input class="value input" type="text" spellcheck="false" maxlength="255" data-bind="value: keyName" />
+				</div>
+				<div class="row">
 					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_YOUR_KEY'}"></span>
 					<input class="value input" type="text" spellcheck="false" maxlength="255" data-bind="value: newKey" />
 				</div>

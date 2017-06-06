@@ -20,6 +20,7 @@ var
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
+	GenerateKeyPopup = require('modules/%ModuleName%/js/popups/GenerateKeyPopup.js'),
 	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js')
 ;
 
@@ -33,12 +34,14 @@ function CJscryptoSettingsPaneView()
 	this.EnableJscrypto = ko.observable(Settings.EnableJscrypto());
 	
 	this.key = ko.observable(JscryptoKey.getKey());
+	this.keyName = ko.observable(JscryptoKey.getKeyName());
 	
 	this.downloadLinkHref = ko.observable('#');
 
 	this.setExportUrl();
 	JscryptoKey.getKeyObservable().subscribe(function () {
 		this.key(JscryptoKey.getKey());
+		this.keyName(JscryptoKey.getKeyName())
 		this.setExportUrl();
 	}, this);
 	this.bIsHttpsEnable = window.location.protocol === "https:";
@@ -69,7 +72,7 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
 					this.downloadLinkHref(sHref);
 					if (bShowDialog)
 					{
-						Popups.showPopup(ExportInformationPopup, [sHref])
+						Popups.showPopup(ExportInformationPopup, [sHref, this.keyName()])
 					}
 				}, this));
 		}
@@ -93,9 +96,12 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 		input = document.getElementById('import-key-file'),
 		file = input.files[0],
 		reader = new FileReader(),
-		sContents = ''
+		sContents = '',
+		aFileNameParts = input.files[0].name.split('.'),
+		sKeyName = ''
 	;
-
+	aFileNameParts.splice(aFileNameParts.length - 1, 1);
+	sKeyName = aFileNameParts.join('');
 	if (!file)
 	{
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
@@ -104,7 +110,7 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 	this.isImporting(true);
 	reader.onload =_.bind( function(e) {
 		sContents = e.target.result;
-		JscryptoKey.importKeyFromString(sContents);
+		JscryptoKey.importKeyFromString(sKeyName, sContents);
 		this.isImporting(false);
 	}, this);
 	try
@@ -119,7 +125,7 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 
 CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
 {
-	JscryptoKey.generateKey(_.bind(CJscryptoSettingsPaneView.prototype.setExportUrl, this));
+	Popups.showPopup(GenerateKeyPopup, [_.bind(CJscryptoSettingsPaneView.prototype.setExportUrl, this)]);
 };
 
 /**

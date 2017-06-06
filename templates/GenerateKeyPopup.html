@@ -2,13 +2,20 @@
 	<div class="mask" data-bind="click: cancelPopup"></div>
 	<div class="popup_panel">
 		<span class="close" data-bind="click: cancelPopup"></span>
+
 		<div class="fields">
-			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT_POPUP'}"></div>
+			<div class="fieldset">
+				<div class="row">
+					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_KEY_NAME'}"></span>
+					<input class="value input" type="text" spellcheck="false" maxlength="255" data-bind="value: keyName" />
+				</div>
+			</div>
 			<div class="buttons">
-				<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLink, 'download': keyName() + '.txt'}, click: closePopup(); return false;"></a>
+				<span class="button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}, click: generateKey"></span>
 				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancelPopup"></span>
 			</div>
 		</div>
 	</div>
 	<span class="helper"></span>
 </div>
+
