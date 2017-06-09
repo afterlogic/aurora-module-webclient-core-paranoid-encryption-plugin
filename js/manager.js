@@ -202,18 +202,30 @@ module.exports = function (oAppData) {
 				});
 				App.subscribeEvent('FilesWebclient::ParseFile::after', function (oFile) {
 					var 
-						bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined'
+						bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined',
+						iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false
 					;
 					
 					if (bIsEncrypted)
 					{
-						oFile.removeAction('view');
+						oFile.thumbnailSrc('');
+						if ((/\.(png|jpe?g|gif)$/).test(oFile.fileName()))
+						{// change view action for images
+							oFile.oActionsData.view.Handler = _.bind(function () {
+								CCrypto.viewEncryptedImage(this.oFile, this.iv);
+							}, {oFile: oFile, iv: iv});
+						}
+						else
+						{// remove view action for non-images
+							oFile.removeAction('view');
+						}
+						oFile.removeAction('list');
 						oFile.bIsSecure(true);
 					}
 				});
 				App.subscribeEvent('FileViewerWebclientPlugin::FilesCollection::after', function (oParams) {
-					oParams.aFilesCollection(_.filter(oParams.aFilesCollection(), function (sArg) {
-						return !(typeof(sArg.oExtendedProps) !== 'undefined' &&  typeof(sArg.oExtendedProps.InitializationVector) !== 'undefined');
+					oParams.aFilesCollection(_.filter(oParams.aFilesCollection(), function (oArg) {
+						return !(typeof(oArg.oExtendedProps) !== 'undefined' &&  typeof(oArg.oExtendedProps.InitializationVector) !== 'undefined');
 					}));
 				});
 			}

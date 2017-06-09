@@ -101,11 +101,11 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 			this.loadKeyFromStorage(fOnGenerateCallback);
 		}, this))
 		.catch(function(err) {
-			Screens.showError(err);
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_EXPORT_KEY'));
 		});
 	}, this))
 	.catch(function(err) {
-		Screens.showError(err);
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_GENERATE_KEY'));
 	});
 };
 

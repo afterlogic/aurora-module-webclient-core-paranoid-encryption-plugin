@@ -5,6 +5,7 @@ var
 	_ = require('underscore'),
 	ko = require('knockout'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
+	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
 ;
@@ -101,7 +102,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 			}
 			catch(err)
 			{
-				Screens.showError(err);
+				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_ENCRYPTION'));
 			}
 		}
 	}
@@ -149,106 +150,14 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber);
 		}, this))
 		.catch(function(err) {
-			Screens.showError(err);
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_ENCRYPTION'));
 		})
 	;
 };
 
 CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 {
-	var
-		sFileName = oFile.fileName(),
-		iFileSize = oFile.size(),
-		sDownloadLink = oFile.getActionUrl('download'),
-		oWriter = new CWriter(sFileName),
-		iCurrChunk = 0,
-		iv = new Uint8Array(iv),
-		key = this.cryptoKey(),
-		iChunkNumber = Math.ceil(iFileSize/this.iChunkSize),
-		iChunkSize = this.iChunkSize,
-		iChunkHeader = this.iChunkHeader
-	;
-
-	function writeChunk(oDecryptedUint8Array)
-	{
-		if (oFile.downloading() !== true)
-		{ // if download was canceled
-			return;
-		}
-		else
-		{
-			oFile.onDownloadProgress(iCurrChunk, iChunkNumber);
-			oWriter.write(oDecryptedUint8Array); //write decrypted chunk
-			if (iCurrChunk < iChunkNumber)
-			{ //if it was not last chunk - decrypting another chunk
-				decryptChunk(getChunkLink(sDownloadLink));
-			}
-			else
-			{
-				oFile.stopDownloading();
-				oWriter.close();
-			}
-		}
-	}
-
-	function decryptChunk(sDownloadLink)
-	{
-		var oReq = new XMLHttpRequest();
-		oReq.open("GET", sDownloadLink, true);
-
-		oReq.responseType = 'arraybuffer';
-
-		oReq.onload = function (oEvent)
-		{
-			var oArrayBuffer = oReq.response;
-			if (oReq.status === 200 && oArrayBuffer)
-			{
-				crypto.subtle.decrypt({ name: 'AES-CBC', iv: iv }, key, oArrayBuffer)
-					.then(function (oDecryptedArrayBuffer) {
-						var oDecryptedUint8Array = new Uint8Array(oDecryptedArrayBuffer);
-						writeChunk(oDecryptedUint8Array);
-					})
-					.catch(function(err) {
-						oFile.stopDownloading();
-						Screens.showError(err);
-					})
-				;
-			}
-		};
-		oReq.send(null);
-	}
-
-	/**
-	 * Writing chunks in file
-	 * 
-	 * @constructor
-	 * @param {String} sFileName
-	 */
-	function CWriter(sFileName)
-	{
-		this.sName = sFileName;
-		this.aBuffer = [];
-
-	}
-	CWriter.prototype.write = function (oDecryptedUint8Array)
-	{
-		this.aBuffer.push(oDecryptedUint8Array);
-	};
-	CWriter.prototype.close = function ()
-	{
-		var file = new Blob(this.aBuffer);
-		FileSaver.saveAs(file, this.sName);
-		file = null;
-	};
-	/**
-	 * Generate link for downloading current chunk
-	 * @param {String} sDownloadLink
-	 */
-	function getChunkLink (sDownloadLink)
-	{
-		return sDownloadLink + '/download/' + iCurrChunk++ + '/' + (iChunkSize + iChunkHeader);
-	}
-	decryptChunk(getChunkLink(sDownloadLink));
+	new CDownloadFile(oFile, iv, this.cryptoKey(), this.iChunkSize, this.iChunkHeader);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -288,4 +197,172 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 	}
 };
 
+CCrypto.prototype.viewEncryptedImage = function (oFile, iv)
+{
+	new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize, this.iChunkHeader);
+};
+
+function CDownloadFile(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
+{
+	this.oFile = oFile;
+	this.sFileName = oFile.fileName();
+	this.iFileSize = oFile.size();
+	this.sDownloadLink = oFile.getActionUrl('download');
+	this.oWriter = new CWriter(this.sFileName);
+	this.iCurrChunk = 0;
+	this.iv = new Uint8Array(iv);
+	this.key = cryptoKey;
+	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
+	this.iChunkSize = iChunkSize;
+	this.iChunkHeader = iChunkHeader;
+	this.decryptChunk();
+}
+CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
+{
+	if (this.oFile.downloading() !== true)
+	{ // if download was canceled
+		return;
+	}
+	else
+	{
+		this.oFile.onDownloadProgress(this.iCurrChunk, this.iChunkNumber);
+		this.oWriter.write(oDecryptedUint8Array); //write decrypted chunk
+		if (this.iCurrChunk < this.iChunkNumber)
+		{ //if it was not last chunk - decrypting another chunk
+			this.decryptChunk();
+		}
+		else
+		{
+			this.stopDownloading();
+			this.oWriter.close();
+		}
+	}
+}
+
+CDownloadFile.prototype.decryptChunk = function ()
+{
+	var oReq = new XMLHttpRequest();
+	oReq.open("GET", this.getChunkLink(), true);
+
+	oReq.responseType = 'arraybuffer';
+
+	oReq.onload =_.bind(function (oEvent)
+	{
+		var oArrayBuffer = oReq.response;
+		if (oReq.status === 200 && oArrayBuffer)
+		{
+			crypto.subtle.decrypt({ name: 'AES-CBC', iv: this.iv }, this.key, oArrayBuffer)
+				.then(_.bind(function (oDecryptedArrayBuffer) {
+					var oDecryptedUint8Array = new Uint8Array(oDecryptedArrayBuffer);
+					this.writeChunk(oDecryptedUint8Array);
+				}, this))
+				.catch(_.bind(function(err) {
+					this.stopDownloading();
+					Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
+				}, this)
+			);
+		}
+	}, this);
+	oReq.send(null);
+}
+
+CDownloadFile.prototype.stopDownloading = function ()
+{
+	this.oFile.stopDownloading();
+}
+
+/**
+ * Generate link for downloading current chunk
+ */
+CDownloadFile.prototype.getChunkLink = function ()
+{
+	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + (this.iChunkSize + this.iChunkHeader);
+}
+
+function CViewImage(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
+{
+	this.oFile = oFile;
+	this.sFileName = oFile.fileName();
+	this.iFileSize = oFile.size();
+	this.sDownloadLink = oFile.getActionUrl('download');
+	this.oWriter = new CBlobViewer(this.sFileName);
+	this.iCurrChunk = 0;
+	this.iv = new Uint8Array(iv);
+	this.key = cryptoKey;
+	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
+	this.iChunkSize = iChunkSize;
+	this.iChunkHeader = iChunkHeader;
+	this.decryptChunk();
+}
+CViewImage.prototype = Object.create(CDownloadFile.prototype);
+CViewImage.prototype.constructor = CViewImage;
+
+CViewImage.prototype.writeChunk = function (oDecryptedUint8Array)
+{
+		this.oWriter.write(oDecryptedUint8Array); //write decrypted chunk
+		if (this.iCurrChunk < this.iChunkNumber)
+		{ //if it was not last chunk - decrypting another chunk
+			this.decryptChunk();
+		}
+		else
+		{
+			this.stopDownloading();
+			this.oWriter.close();
+		}
+}
+
+CViewImage.prototype.stopDownloading = function ()
+{
+}
+/**
+* Writing chunks in file
+* 
+* @constructor
+* @param {String} sFileName
+*/
+function CWriter(sFileName)
+{
+	this.sName = sFileName;
+	this.aBuffer = [];
+}
+CWriter.prototype.write = function (oDecryptedUint8Array)
+{
+	this.aBuffer.push(oDecryptedUint8Array);
+};
+CWriter.prototype.close = function ()
+{
+	var file = new Blob(this.aBuffer);
+	FileSaver.saveAs(file, this.sName);
+	file = null;
+};
+
+/**
+* Writing chunks in blob for viewing
+* 
+* @constructor
+* @param {String} sFileName
+*/
+function CBlobViewer(sFileName) {
+	this.sName = sFileName;
+	this.aBuffer = [];
+}
+
+CBlobViewer.prototype = Object.create(CWriter.prototype);
+CBlobViewer.prototype.constructor = CBlobViewer;
+CBlobViewer.prototype.close = function ()
+{
+	var
+		file = new Blob(this.aBuffer),
+		link = window.URL.createObjectURL(file),
+		imgWindow = window.open("", "_blank", "height=auto, width=auto,toolbar=no,scrollbars=no,resizable=yes"),
+		img = null
+	;
+	imgWindow.document.write("<head><title>" + this.sName + '</title></head><body><img src="' + link + '" /></body>');
+
+	img = $(imgWindow.document.body).find('img');
+	img.on('load', function () {
+		//remove blob after showing image
+		window.URL.revokeObjectURL(link);
+	});
+};
 module.exports = new  CCrypto();
