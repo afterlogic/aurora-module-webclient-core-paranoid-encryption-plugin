@@ -17,7 +17,6 @@ function CCrypto()
 { 
 	this.iChunkNumber = 0;
 	this.iChunkSize = 5 * 1024 * 1024;
-	this.iChunkHeader = 16;
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = null;
@@ -112,6 +111,8 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 {
 	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.cryptoKey(), this.oChunk)
 		.then(_.bind(function (oEncryptedContent) {
+			//delete padding for all chunks except last one
+			oEncryptedContent = (this.iChunkNumber > 1 && this.iCurrChunk !== this.iChunkNumber) ? oEncryptedContent.slice(0, oEncryptedContent.byteLength - 16) : oEncryptedContent;
 			var
 				oEncryptedFile = new Blob([oEncryptedContent], {type: "text/plain", lastModified: new Date()}),
 				//fProcessNextChunkCallback runs after previous chunk uploading
@@ -128,7 +129,8 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 				}, this)
 			;
 			this.oFileInfo.File = oEncryptedFile;
-			
+			//use last 16 byte of current chunk as initial vector for next chunk
+			this.iv = new Uint8Array(oEncryptedContent.slice(oEncryptedContent.byteLength - 16));
 			if (this.iCurrChunk === 1)
 			{ // for first chunk enable 'FirstChunk' attribute. This is necessary to solve the problem of simultaneous loading of files with the same name
 				this.oFileInfo.Hidden.ExtendedProps.FirstChunk = true;
@@ -157,7 +159,7 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 
 CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 {
-	new CDownloadFile(oFile, iv, this.cryptoKey(), this.iChunkSize, this.iChunkHeader);
+	new CDownloadFile(oFile, iv, this.cryptoKey(), this.iChunkSize);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -199,10 +201,10 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 
 CCrypto.prototype.viewEncryptedImage = function (oFile, iv)
 {
-	new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize, this.iChunkHeader);
+	new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize);
 };
 
-function CDownloadFile(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
+function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -214,7 +216,6 @@ function CDownloadFile(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
 	this.key = cryptoKey;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
-	this.iChunkHeader = iChunkHeader;
 	this.decryptChunk();
 }
 CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
@@ -248,19 +249,58 @@ CDownloadFile.prototype.decryptChunk = function ()
 
 	oReq.onload =_.bind(function (oEvent)
 	{
-		var oArrayBuffer = oReq.response;
+		var
+			oArrayBuffer = oReq.response,
+			oDataWithPadding = {}
+		;
 		if (oReq.status === 200 && oArrayBuffer)
 		{
-			crypto.subtle.decrypt({ name: 'AES-CBC', iv: this.iv }, this.key, oArrayBuffer)
-				.then(_.bind(function (oDecryptedArrayBuffer) {
-					var oDecryptedUint8Array = new Uint8Array(oDecryptedArrayBuffer);
-					this.writeChunk(oDecryptedUint8Array);
-				}, this))
-				.catch(_.bind(function(err) {
-					this.stopDownloading();
-					Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
-				}, this)
-			);
+			oDataWithPadding = new Uint8Array(oArrayBuffer.byteLength + 16);
+			oDataWithPadding.set( new Uint8Array(oArrayBuffer), 0);
+			if (this.iCurrChunk !== this.iChunkNumber)
+			{// for all chunk except last - add padding
+				crypto.subtle.encrypt(
+					{
+						name: 'AES-CBC',
+						iv: new Uint8Array(oArrayBuffer.slice(oArrayBuffer.byteLength - 16))
+					},
+					this.key,
+					(new Uint8Array([16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16])).buffer // generate padding for chunk
+				).then(_.bind(function(oEncryptedContent) {
+						// add generated padding to data
+						// oEncryptedContent.slice(0, 16) - use only first 16 bytes of generated padding, other data is padding for our padding
+						oDataWithPadding.set(new Uint8Array(new Uint8Array(oEncryptedContent.slice(0, 16))), oArrayBuffer.byteLength);
+						// decrypt data
+						crypto.subtle.decrypt({ name: 'AES-CBC', iv: this.iv }, this.key, oDataWithPadding.buffer)
+							.then(_.bind(function (oDecryptedArrayBuffer) {
+								var oDecryptedUint8Array = new Uint8Array(oDecryptedArrayBuffer);
+								// use last 16 byte of current chunk as initial vector for next chunk
+								this.iv = new Uint8Array(oArrayBuffer.slice(oArrayBuffer.byteLength - 16));
+								this.writeChunk(oDecryptedUint8Array);
+							}, this))
+							.catch(_.bind(function(err) {
+								this.stopDownloading();
+								Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
+							}, this)
+						);
+					}, this)
+				);
+			}
+			else
+			{ //for last chunk just decrypt data
+				crypto.subtle.decrypt({ name: 'AES-CBC', iv: this.iv }, this.key, oArrayBuffer)
+					.then(_.bind(function (oDecryptedArrayBuffer) {
+						var oDecryptedUint8Array = new Uint8Array(oDecryptedArrayBuffer);
+						// use last 16 byte of current chunk as initial vector for next chunk
+						this.iv = new Uint8Array(oArrayBuffer.slice(oArrayBuffer.byteLength - 16));
+						this.writeChunk(oDecryptedUint8Array);
+					}, this))
+					.catch(_.bind(function(err) {
+						this.stopDownloading();
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
+					}, this)
+				);
+			}
 		}
 	}, this);
 	oReq.send(null);
@@ -276,10 +316,10 @@ CDownloadFile.prototype.stopDownloading = function ()
  */
 CDownloadFile.prototype.getChunkLink = function ()
 {
-	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + (this.iChunkSize + this.iChunkHeader);
+	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + this.iChunkSize;
 }
 
-function CViewImage(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
+function CViewImage(oFile, iv, cryptoKey, iChunkSize)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -291,7 +331,6 @@ function CViewImage(oFile, iv, cryptoKey, iChunkSize, iChunkHeader)
 	this.key = cryptoKey;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
-	this.iChunkHeader = iChunkHeader;
 	this.decryptChunk();
 }
 CViewImage.prototype = Object.create(CDownloadFile.prototype);
@@ -365,4 +404,14 @@ CBlobViewer.prototype.close = function ()
 		window.URL.revokeObjectURL(link);
 	});
 };
+
+function Array2HexString(aArray) {
+	var sHexAB = '';
+	_.each(aArray, function(element) {
+		var sHex = element.toString(16);
+		sHexAB += ((sHex.length === 1) ? '0' : '') + sHex;
+	})
+	return sHexAB;
+}
+
 module.exports = new  CCrypto();
