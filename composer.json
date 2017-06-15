@@ -1,13 +1,15 @@
 {
 	"name": "afterlogic/aurora-module-webclient-core-jscrypto-plugin",
-   	"type": "aurora-module",
+	"type": "aurora-module",
 	"require": {
-		"php":">=5.4.0",
+		"php": ">=5.4.0",
 		"afterlogic/aurora-framework": "~0.3",
 		"afterlogic/mailso": "^1.5",
 		"afterlogic/dav": "^2.1"
 	},
 	"extra": {
-		"installer-name": "CoreJscryptoWebclientPlugin"
+		"installer-name": "CoreJscryptoWebclientPlugin",
+		"include-in-mobile": false,
+		"include-in-desktop": true
 	}
 }
