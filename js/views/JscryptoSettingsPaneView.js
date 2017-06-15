@@ -10,7 +10,6 @@ var
 	
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
-	UserSettings = require('%PathToCoreWebclientModule%/js/Settings.js'),
 	
 	CAbstractSettingsFormView = ModulesManager.run('SettingsWebclient', 'getAbstractSettingsFormViewClass'),
 	
@@ -21,7 +20,8 @@ var
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
 	GenerateKeyPopup = require('modules/%ModuleName%/js/popups/GenerateKeyPopup.js'),
-	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js')
+	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js'),
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
 ;
 
 /**
@@ -67,7 +67,7 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
 		{
 			JscryptoKey.exportKey()
 				.then(_.bind(function(keydata) {
-					oBlob = new Blob([keydata.k], {type: 'text/plain'});
+					oBlob = new Blob([HexUtils.Array2HexString(new Uint8Array(keydata))], {type: 'text/plain'});
 					sHref = window.URL.createObjectURL(oBlob);
 					this.downloadLinkHref(sHref);
 					if (bShowDialog)

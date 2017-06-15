@@ -405,13 +405,4 @@ CBlobViewer.prototype.close = function ()
 	});
 };
 
-function Array2HexString(aArray) {
-	var sHexAB = '';
-	_.each(aArray, function(element) {
-		var sHex = element.toString(16);
-		sHexAB += ((sHex.length === 1) ? '0' : '') + sHex;
-	})
-	return sHexAB;
-}
-
 module.exports = new  CCrypto();

@@ -6,10 +6,10 @@ var
 	ko = require('knockout'),
 	
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
-	
 	Storage = require('%PathToCoreWebclientModule%/js/Storage.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
-	UserSettings = require('%PathToCoreWebclientModule%/js/Settings.js')
+	UserSettings = require('%PathToCoreWebclientModule%/js/Settings.js'),
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
 ;
 
 /**
@@ -52,29 +52,41 @@ CJscryptoKey.prototype.getKeyObservable = function ()
  */
 CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
 {
-	var oKey = null;
+	var 
+		aKey = [],
+		sKey = ''
+	;
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
 	{
-		oKey = Storage.getData(this.sPrefix + 'cryptoKey').keydata;
-		window.crypto.subtle.importKey(
-			"jwk",
-			oKey,
-			{
-				name: "AES-CBC",
-			},
-			true,
-			["encrypt", "decrypt"]
-		)
-		.then(_.bind(function(key) {
-			this.key(key);
-			if (fOnGenerateCallback)
-			{
-				fOnGenerateCallback(true);
-			}
-		}, this))
-		.catch(function(err) {
+		sKey = Storage.getData(this.sPrefix + 'cryptoKey').keydata;
+		aKey = HexUtils.HexString2Array(sKey);
+		if (aKey.length > 0)
+		{
+			aKey = new Uint8Array(aKey);
+			window.crypto.subtle.importKey(
+				"raw",
+				aKey.buffer,
+				{
+					name: "AES-CBC",
+				},
+				true,
+				["encrypt", "decrypt"]
+			)
+			.then(_.bind(function(key) {
+				this.key(key);
+				if (fOnGenerateCallback)
+				{
+					fOnGenerateCallback(true);
+				}
+			}, this))
+			.catch(function(err) {
+				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+			});
+		}
+		else
+		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
-		});
+		}
 	}
 };
 
@@ -93,11 +105,17 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 	)
 	.then(_.bind(function (key) {
 		window.crypto.subtle.exportKey(
-			"jwk",
+			"raw",
 			key
 		)
 		.then(_.bind(function(keydata) {
-			Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: keydata});
+			Storage.setData(
+				this.sPrefix + 'cryptoKey', 
+				{
+					keyname: sKeyName,
+					keydata: HexUtils.Array2HexString(new Uint8Array(keydata))
+				}
+			);
 			this.loadKeyFromStorage(fOnGenerateCallback);
 		}, this))
 		.catch(function(err) {
@@ -111,19 +129,10 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 
 CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey)
 {
-	var
-		oKey = {
-			alg: "A256CBC",
-			ext: true,
-			k: sKey,
-			key_ops: ["encrypt","decrypt"],
-			kty: "oct"
-		}
-	;
 	try
 	{
 		this.sKeyName(sKeyName);
-		Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: oKey});
+		Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: sKey});
 	}
 	catch (e)
 	{
@@ -135,7 +144,7 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey)
 CJscryptoKey.prototype.exportKey = function ()
 {
 	return window.crypto.subtle.exportKey(
-		"jwk",
+		"raw",
 		this.getKey()
 	);
 }
