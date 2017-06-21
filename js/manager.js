@@ -130,7 +130,7 @@ module.exports = function (oAppData) {
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 						fCancelFunction(sUid);
 					}
-					else 
+					else
 					{
 						if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
 						{

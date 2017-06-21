@@ -7,7 +7,8 @@ var
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
-	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
+	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
 ;
 
 /**
@@ -41,7 +42,7 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
 	this.oFileInfo.Hidden = { 'RangeType': 1 };
-	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': this.iv };
+	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv)) };
 };
 
 CCrypto.prototype.getCryptoKey = function ()
@@ -219,7 +220,7 @@ function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
 	this.sDownloadLink = oFile.getActionUrl('download');
 	this.oWriter = new CWriter(this.sFileName);
 	this.iCurrChunk = 0;
-	this.iv = new Uint8Array(iv);
+	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
 	this.key = cryptoKey;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
@@ -333,7 +334,7 @@ function CViewImage(oFile, iv, cryptoKey, iChunkSize)
 	this.sDownloadLink = oFile.getActionUrl('download');
 	this.oWriter = new CBlobViewer(this.sFileName);
 	this.iCurrChunk = 0;
-	this.iv = new Uint8Array(iv);
+	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
 	this.key = cryptoKey;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
