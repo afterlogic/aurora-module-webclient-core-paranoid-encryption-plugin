@@ -201,7 +201,14 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 
 CCrypto.prototype.viewEncryptedImage = function (oFile, iv)
 {
-	new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize);
+	if (!this.getCryptoKey())
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+	}
+	else
+	{
+		new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize);
+	}
 };
 
 function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
@@ -281,8 +288,7 @@ CDownloadFile.prototype.decryptChunk = function ()
 							.catch(_.bind(function(err) {
 								this.stopDownloading();
 								Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
-							}, this)
-						);
+							}, this));
 					}, this)
 				);
 			}
@@ -298,8 +304,8 @@ CDownloadFile.prototype.decryptChunk = function ()
 					.catch(_.bind(function(err) {
 						this.stopDownloading();
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
-					}, this)
-				);
+					}, this))
+					;
 			}
 		}
 	}, this);
@@ -390,19 +396,26 @@ CBlobViewer.prototype = Object.create(CWriter.prototype);
 CBlobViewer.prototype.constructor = CBlobViewer;
 CBlobViewer.prototype.close = function ()
 {
-	var
-		file = new Blob(this.aBuffer),
-		link = window.URL.createObjectURL(file),
-		imgWindow = window.open("", "_blank", "height=auto, width=auto,toolbar=no,scrollbars=no,resizable=yes"),
-		img = null
-	;
-	imgWindow.document.write("<head><title>" + this.sName + '</title></head><body><img src="' + link + '" /></body>');
+	try
+	{
+		var
+			file = new Blob(this.aBuffer),
+			link = window.URL.createObjectURL(file),
+			imgWindow = window.open("", "_blank", "height=auto, width=auto,toolbar=no,scrollbars=no,resizable=yes"),
+			img = null
+		;
+		imgWindow.document.write("<head><title>" + this.sName + '</title></head><body><img src="' + link + '" /></body>');
 
-	img = $(imgWindow.document.body).find('img');
-	img.on('load', function () {
-		//remove blob after showing image
-		window.URL.revokeObjectURL(link);
-	});
+		img = $(imgWindow.document.body).find('img');
+		img.on('load', function () {
+			//remove blob after showing image
+			window.URL.revokeObjectURL(link);
+		});
+	}
+	catch (err)
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_POPUP_WINDOWS'));
+	}
 };
 
 module.exports = new  CCrypto();
