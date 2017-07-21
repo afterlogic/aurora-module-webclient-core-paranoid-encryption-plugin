@@ -29,11 +29,15 @@ CConfirmEncryptionPopup.prototype.PopupTemplate = '%ModuleName%_ConfirmEncryptio
 
 CConfirmEncryptionPopup.prototype.onShow = function (fEncrypt, fUpload, fCancel, iFilesCount, aFileList)
 {
+	this.files('');
 	this.fEncrypt = fEncrypt;
 	this.fUpload = fUpload;
 	this.fCancel = fCancel;
-	this.message(TextUtils.i18n('%MODULENAME%/CONFIRM_ENCRYPT_PLURAL', {}, null, iFilesCount));
-	this.files(aFileList.join('<br />'));
+	this.message(TextUtils.i18n('%MODULENAME%/CONFIRM_ENCRYPT_PLURAL', {'VALUE': iFilesCount > 1 ? iFilesCount : '"' + aFileList[0] + '"'}, null, iFilesCount));
+	if (iFilesCount > 1)
+	{
+		this.files(aFileList.join('<br />'));
+	}
 };
 
 CConfirmEncryptionPopup.prototype.cancelUpload = function ()
