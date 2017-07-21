@@ -391,6 +391,7 @@ CWriter.prototype.close = function ()
 function CBlobViewer(sFileName) {
 	this.sName = sFileName;
 	this.aBuffer = [];
+	this.imgWindow = window.open("", "_blank", "height=auto, width=auto,toolbar=no,scrollbars=no,resizable=yes");
 }
 
 CBlobViewer.prototype = Object.create(CWriter.prototype);
@@ -402,12 +403,11 @@ CBlobViewer.prototype.close = function ()
 		var
 			file = new Blob(this.aBuffer),
 			link = window.URL.createObjectURL(file),
-			imgWindow = window.open("", "_blank", "height=auto, width=auto,toolbar=no,scrollbars=no,resizable=yes"),
 			img = null
 		;
-		imgWindow.document.write("<head><title>" + this.sName + '</title></head><body><img src="' + link + '" /></body>');
+		this.imgWindow.document.write("<head><title>" + this.sName + '</title></head><body><img src="' + link + '" /></body>');
 
-		img = $(imgWindow.document.body).find('img');
+		img = $(this.imgWindow.document.body).find('img');
 		img.on('load', function () {
 			//remove blob after showing image
 			window.URL.revokeObjectURL(link);
