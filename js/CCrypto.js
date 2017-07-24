@@ -150,7 +150,7 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 				this.oFileInfo.Hidden.ExtendedProps.Loading = true;
 			}
 			// call upload of encrypted chunk
-			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber);
+			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, (this.iCurrChunk - 1) * this.iChunkSize);
 		}, this))
 		.catch(function(err) {
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_ENCRYPTION'));
@@ -234,7 +234,6 @@ CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
 	}
 	else
 	{
-		this.oFile.onDownloadProgress(this.iCurrChunk, this.iChunkNumber);
 		this.oWriter.write(oDecryptedUint8Array); //write decrypted chunk
 		if (this.iCurrChunk < this.iChunkNumber)
 		{ //if it was not last chunk - decrypting another chunk
@@ -255,6 +254,9 @@ CDownloadFile.prototype.decryptChunk = function ()
 
 	oReq.responseType = 'arraybuffer';
 
+	oReq.onprogress = _.bind(function(oEvent) {
+		this.oFile.onDownloadProgress(oEvent.loaded + (this.iCurrChunk-1) * this.iChunkSize, this.iFileSize);
+	}, this);
 	oReq.onload =_.bind(function (oEvent)
 	{
 		var
