@@ -1,2 +1,4 @@
-# aurora-module-webclient-core-jscrypto-plugin
-aurora-module-webclient-core-jscrypto-plugin
+# Aurora Core Jscrypto Plugin webclient module
+
+# License
+This module is licensed under AGPLv3 license if free version of the product is used or AfterLogic Software License if commercial version of the product was purchased.
