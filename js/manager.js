@@ -180,14 +180,14 @@ module.exports = function (oAppData) {
 					}
 				});
 				
-				App.subscribeEvent('CFilseView::FileDownloadCancel', function (oParams) {
+				App.subscribeEvent('CFilesView::FileDownloadCancel', function (oParams) {
 					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						oParams.oFile.stopDownloading();
 					}
 				});
 				
-				App.subscribeEvent('CFilseView::FileUploadCancel', function (oParams) {
+				App.subscribeEvent('CFilesView::FileUploadCancel', function (oParams) {
 					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
