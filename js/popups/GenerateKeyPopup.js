@@ -2,7 +2,6 @@
 
 var
 	_ = require('underscore'),
-	$ = require('jquery'),
 	ko = require('knockout'),
 	
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
@@ -25,7 +24,7 @@ _.extendOwn(CGenerateKeyPopup.prototype, CAbstractPopup.prototype);
 
 CGenerateKeyPopup.prototype.PopupTemplate = '%ModuleName%_GenerateKeyPopup';
 
-CGenerateKeyPopup.prototype.onShow = function (fOnGenerateCallback)
+CGenerateKeyPopup.prototype.onOpen = function (fOnGenerateCallback)
 {
 	this.fOnGenerateCallback = fOnGenerateCallback;
 };

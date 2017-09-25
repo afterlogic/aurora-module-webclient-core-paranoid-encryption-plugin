@@ -2,7 +2,6 @@
 
 var
 	_ = require('underscore'),
-	$ = require('jquery'),
 	ko = require('knockout'),
 	
 	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js')
@@ -23,7 +22,7 @@ _.extendOwn(CExportInformationPopup.prototype, CAbstractPopup.prototype);
 
 CExportInformationPopup.prototype.PopupTemplate = '%ModuleName%_ExportInformationPopup';
 
-CExportInformationPopup.prototype.onShow = function (sDownloadLink, sKeyName)
+CExportInformationPopup.prototype.onOpen = function (sDownloadLink, sKeyName)
 {
 	this.downloadLink(sDownloadLink);
 	this.keyName(sKeyName);

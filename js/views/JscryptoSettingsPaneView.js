@@ -14,13 +14,13 @@ var
 	CAbstractSettingsFormView = ModulesManager.run('SettingsWebclient', 'getAbstractSettingsFormViewClass'),
 	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
 	GenerateKeyPopup = require('modules/%ModuleName%/js/popups/GenerateKeyPopup.js'),
 	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js'),
+	DeleteKeyPopup = require('modules/%ModuleName%/js/popups/DeleteKeyPopup.js'),
 	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
 ;
 
@@ -41,9 +41,10 @@ function CJscryptoSettingsPaneView()
 	this.setExportUrl();
 	JscryptoKey.getKeyObservable().subscribe(function () {
 		this.key(JscryptoKey.getKey());
-		this.keyName(JscryptoKey.getKeyName())
+		this.keyName(JscryptoKey.getKeyName());
 		this.setExportUrl();
 	}, this);
+	
 	this.bIsHttpsEnable = window.location.protocol === "https:";
 	this.EncryptionMode = ko.observable(Settings.EncryptionMode());
 	this.isImporting = ko.observable(false);
@@ -61,7 +62,7 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
 	;
 
 	this.downloadLinkHref(sHref);
-	if (Blob && window.URL && $.isFunction(window.URL.createObjectURL))
+	if (window.Blob && window.URL && $.isFunction(window.URL.createObjectURL))
 	{
 		if (JscryptoKey.getKey())
 		{
@@ -72,7 +73,7 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
 					this.downloadLinkHref(sHref);
 					if (bShowDialog)
 					{
-						Popups.showPopup(ExportInformationPopup, [sHref, this.keyName()])
+						Popups.showPopup(ExportInformationPopup, [sHref, this.keyName()]);
 					}
 				}, this));
 		}
@@ -125,7 +126,7 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 
 CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
 {
-	Popups.showPopup(GenerateKeyPopup, [_.bind(CJscryptoSettingsPaneView.prototype.setExportUrl, this)]);
+	Popups.showPopup(GenerateKeyPopup, [_.bind(this.setExportUrl, this)]);
 };
 
 /**
@@ -134,12 +135,11 @@ CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
 CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
 {
 	var
-		sConfirm = '',
 		fRemove = _.bind(function (bRemove) {
 			if (bRemove)
 			{
-				var oRes = JscryptoKey.deleteKey();
-				if (oRes.error)
+				var oResult = JscryptoKey.deleteKey();
+				if (oResult.error)
 				{
 					Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DELETE_KEY'));
 				}
@@ -147,8 +147,7 @@ CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
 		}, this)
 	;
 	
-	sConfirm = TextUtils.i18n('%MODULENAME%/CONFIRM_DELETE_KEY');
-	Popups.showPopup(ConfirmPopup, [sConfirm, fRemove]);
+	Popups.showPopup(DeleteKeyPopup, [this.downloadLinkHref(), this.keyName(), fRemove]);
 };
 
 CJscryptoSettingsPaneView.prototype.getCurrentValues = function ()

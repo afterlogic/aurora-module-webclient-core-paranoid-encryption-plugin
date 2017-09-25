@@ -46,38 +46,40 @@
 			</span>
 		</div>
 			
-		<div class="fieldset">
-			<div class="row keys_label">
-				<span class="value" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !key()"></span>
+		<div class="fieldset keys">
+			<div class="row">
+				<span class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !key()"></span>
 			</div>
-			<div class="row folders items_list">
-				<div class="item" data-bind="visible: key()">
-					<span class="controls">
-						<span class="button delete" data-bind="customTooltip: '%MODULENAME%/ACTION_DELETE_KEY', click: function () {removeJscryptoKey(); }"></span>
-					</span>
-					<span class="name">
-						<span class="text" data-bind="i18n: {'key': '%MODULENAME%/LABEL_KEY'}"></span>: <span class="text" data-bind="text: keyName"></span>
-					</span>
+			<div class="row" data-bind="visible: key()">
+				<span class="hint"  data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT'}"></span>
+				<br /><br />
+				<div class="items_list folders">
+					<div class="item">
+						<span class="controls">
+							<span class="button delete" data-bind="customTooltip: '%MODULENAME%/ACTION_DELETE_KEY', click: function () {removeJscryptoKey(); }"></span>
+						</span>
+						<span class="name">
+							<span class="text" data-bind="i18n: {'key': '%MODULENAME%/LABEL_KEY'}"></span>: <span class="text" data-bind="text: keyName"></span>
+						</span>
+					</div>
 				</div>
-				<br/>
-				<span class="hint"  data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT'}, visible: key()"></span>
 			</div>
-		</div>
-		<div class="buttons">
-			<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': keyName() + '.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
-			<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? importFileKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
-				<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_FILE_KEY'}, visible: !isImporting()"></span>
-				<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_KEY_IN_PROGRESS'}, visible: isImporting()"></span>
-			</span>
-			<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? importStringKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
-				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_STRING_KEY'}"></span>
-			</span>
-			<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? generateNewKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
-				<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_GENERATE_NEW_KEY'}"></span>
-			</span>
-			<div style="height:0px;overflow:hidden">
-				<input data-bind="event: { change: readKeyFromFile }" type="file" id="import-key-file" name="import-key-file" />
-			 </div>
+			<div class="buttons">
+				<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLinkHref, 'download': keyName() + '.txt'}, visible: downloadLinkHref() !== '#' && key()"></a>
+				<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? importFileKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
+					<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_FILE_KEY'}, visible: !isImporting()"></span>
+					<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_KEY_IN_PROGRESS'}, visible: isImporting()"></span>
+				</span>
+				<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? importStringKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
+					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_STRING_KEY'}"></span>
+				</span>
+				<span data-bind="click: (bIsHttpsEnable  && EnableJscrypto()  && !isImporting()) ? generateNewKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !EnableJscrypto()}" class="button">
+					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_GENERATE_NEW_KEY'}"></span>
+				</span>
+				<div style="height:0px;overflow:hidden">
+					<input data-bind="event: { change: readKeyFromFile }" type="file" id="import-key-file" name="import-key-file" />
+				 </div>
+			</div>
 		</div>
 	</div>
 </div>

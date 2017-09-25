@@ -2,7 +2,6 @@
 
 var
 	_ = require('underscore'),
-	$ = require('jquery'),
 	ko = require('knockout'),
 	
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
@@ -25,7 +24,7 @@ _.extendOwn(CImportKeyStringPopup.prototype, CAbstractPopup.prototype);
 
 CImportKeyStringPopup.prototype.PopupTemplate = '%ModuleName%_ImportKeyStringPopup';
 
-CImportKeyStringPopup.prototype.onShow = function ()
+CImportKeyStringPopup.prototype.onOpen = function ()
 {
 	this.newKey('');
 };

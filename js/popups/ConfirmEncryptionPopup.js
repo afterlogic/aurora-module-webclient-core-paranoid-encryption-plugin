@@ -2,7 +2,6 @@
 
 var
 	_ = require('underscore'),
-	$ = require('jquery'),
 	ko = require('knockout'),
 
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
@@ -27,7 +26,7 @@ _.extendOwn(CConfirmEncryptionPopup.prototype, CAbstractPopup.prototype);
 
 CConfirmEncryptionPopup.prototype.PopupTemplate = '%ModuleName%_ConfirmEncryptionPopup';
 
-CConfirmEncryptionPopup.prototype.onShow = function (fEncrypt, fUpload, fCancel, iFilesCount, aFileList)
+CConfirmEncryptionPopup.prototype.onOpen = function (fEncrypt, fUpload, fCancel, iFilesCount, aFileList)
 {
 	this.files('');
 	this.fEncrypt = fEncrypt;
