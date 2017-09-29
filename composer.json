@@ -1,5 +1,5 @@
 {
-	"name": "afterlogic/aurora-module-webclient-core-jscrypto-plugin",
+	"name": "afterlogic/aurora-module-webclient-core-paranoid-encryption-plugin",
 	"type": "aurora-module",
 	"require": {
 		"php": ">=5.4.0",
@@ -8,6 +8,6 @@
 		"afterlogic/aurora-module-webclient-files": "^0.6.0"
 	},
 	"extra": {
-		"installer-name": "CoreJscryptoWebclientPlugin"
+		"installer-name": "CoreParanoidEncriptionWebclientPlugin"
 	}
 }

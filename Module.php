@@ -49,9 +49,9 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	}
 
 	/**
-	 * Updates settings of the Jscrypto Module.
+	 * Updates settings of the Paranoid Encription Module.
 	 *
-	 * @param boolean $EnableModule indicates if user turned on Jscrypto Module.
+	 * @param boolean $EnableModule indicates if user turned on Paranoid Encription Module.
 	 * @return boolean
 	 */
 	public function UpdateSettings($EnableModule, $EncryptionMode)
