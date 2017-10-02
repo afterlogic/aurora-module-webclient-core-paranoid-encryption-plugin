@@ -209,7 +209,7 @@ module.exports = function (oAppData) {
 					if (bIsEncrypted)
 					{
 						oFile.thumbnailSrc('');
-						if ((/\.(png|jpe?g|gif)$/).test(oFile.fileName()))
+						if (!App.isPublic() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName()))
 						{// change view action for images
 							oFile.oActionsData.view.Handler = _.bind(function () {
 								CCrypto.viewEncryptedImage(this.oFile, this.iv);
