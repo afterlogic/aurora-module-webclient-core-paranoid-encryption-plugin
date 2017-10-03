@@ -12,6 +12,7 @@ var
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
+	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false
 ;
@@ -24,6 +25,36 @@ function IsJscryptoSupported()
 function IsHttpsEnable()
 {
 	return window.location.protocol === "https:";
+}
+
+function ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, sErrorText)
+{
+	if (isConfirmPopupShown)
+	{
+		AwaitConfirmationQueue.push({
+			sUid: sUid,
+			oFileInfo: oFileInfo
+		});
+	}
+	else
+	{
+		setTimeout(function () {
+			Popups.showPopup(ConfirmUploadPopup, [
+				fUpload,
+				fCancel,
+				AwaitConfirmationQueue.length,
+				_.map(AwaitConfirmationQueue, function(element) {
+					return element.oFileInfo.FileName; 
+				}),
+				sErrorText
+			]);
+		}, 10);
+		isConfirmPopupShown = true;
+		AwaitConfirmationQueue.push({
+			sUid: sUid,
+			oFileInfo: oFileInfo
+		});
+	}
 }
 
 module.exports = function (oAppData) {
@@ -122,13 +153,31 @@ module.exports = function (oAppData) {
 					}
 					else if (!IsHttpsEnable())
 					{
-						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-						fCancelFunction(sUid);
+						if (Settings.EncryptionMode() == Enums.EncryptionMode.Always)
+						{
+							//for Always encription mode show error
+							Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+							fCancelFunction(sUid);
+						}
+						else if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
+						{
+							//for AskMe encription mode show dialog with warning and regular upload button
+							ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+						}
 					}
 					else if (!CCrypto.getCryptoKey())
 					{
-						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
-						fCancelFunction(sUid);
+						if (Settings.EncryptionMode() == Enums.EncryptionMode.Always)
+						{
+							//for Always encription mode show error
+							Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+							fCancelFunction(sUid);
+						}
+						else if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
+						{
+							//for AskMe encription mode show dialog with warning and regular upload button
+							ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+						}
 					}
 					else
 					{

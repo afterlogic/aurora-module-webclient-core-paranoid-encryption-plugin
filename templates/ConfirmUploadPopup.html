@@ -1,0 +1,16 @@
+<div class="popup" style="display: none;">
+	<div class="mask"></div>
+	<div class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<div class="fields">
+			<div class="hint" data-bind="text: sErrorText, style: {color: 'red'}"></div>
+			<div class="hint" data-bind="text: message"></div>
+			<div class="hint confirm-file-list" data-bind="html: files"></div>
+			<div class="buttons">
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_UPLOAD'}, click: upload"></span>
+				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancelUpload"></span>
+			</div>
+		</div>
+	</div>
+	<span class="helper"></span>
+</div>
