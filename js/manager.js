@@ -1,8 +1,8 @@
 'use strict';
 
 require('modules/%ModuleName%/js/enums.js');
+
 var	
-	$ = require('jquery'),
 	_ = require('underscore'),
 	
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
@@ -19,7 +19,7 @@ var
 		
 function IsJscryptoSupported()
 {
-	return !!window.crypto.subtle;
+	return !!window.crypto && !!window.crypto.subtle;
 }
 
 function IsHttpsEnable()
