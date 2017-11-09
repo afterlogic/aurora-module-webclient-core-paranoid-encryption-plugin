@@ -19,7 +19,7 @@ function CConfirmEncryptionPopup()
 	this.fUpload = null;
 	this.fCancel = null;
 	this.message = ko.observable('');
-	this.files = ko.observable('');
+	this.filesConfirmText = ko.observable('');
 }
 
 _.extendOwn(CConfirmEncryptionPopup.prototype, CAbstractPopup.prototype);
@@ -28,14 +28,18 @@ CConfirmEncryptionPopup.prototype.PopupTemplate = '%ModuleName%_ConfirmEncryptio
 
 CConfirmEncryptionPopup.prototype.onOpen = function (fEncrypt, fUpload, fCancel, iFilesCount, aFileList)
 {
-	this.files('');
+	var aEncodedFiles = _.map(aFileList, function (sFileName) {
+		return TextUtils.encodeHtml(sFileName);
+	});
+	
+	this.filesConfirmText('');
 	this.fEncrypt = fEncrypt;
 	this.fUpload = fUpload;
 	this.fCancel = fCancel;
 	this.message(TextUtils.i18n('%MODULENAME%/CONFIRM_ENCRYPT_PLURAL', {'VALUE': iFilesCount > 1 ? iFilesCount : '"' + aFileList[0] + '"'}, null, iFilesCount));
 	if (iFilesCount > 1)
 	{
-		this.files(aFileList.join('<br />'));
+		this.filesConfirmText(aEncodedFiles.join('<br />'));
 	}
 };
 
