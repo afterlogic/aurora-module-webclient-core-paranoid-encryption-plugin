@@ -70,7 +70,11 @@ module.exports = function (oAppData) {
 		start: function (ModulesManager) {
 			if (IsJscryptoSupported())
 			{
-				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [function () { return require('modules/%ModuleName%/js/views/JscryptoSettingsPaneView.js'); }, 'jscrypto', TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')]);
+				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [
+					function () { return require('modules/%ModuleName%/js/views/ParanoidEncryptionSettingsFormView.js'); },
+					Settings.HashModuleName,
+					TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')
+				]);
 				
 				App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 					var
@@ -155,13 +159,13 @@ module.exports = function (oAppData) {
 					{
 						if (Settings.EncryptionMode() == Enums.EncryptionMode.Always)
 						{
-							//for Always encription mode show error
+							//for Always encryption mode show error
 							Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 							fCancelFunction(sUid);
 						}
 						else if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
 						{
-							//for AskMe encription mode show dialog with warning and regular upload button
+							//for AskMe encryption mode show dialog with warning and regular upload button
 							ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 						}
 					}
@@ -169,13 +173,13 @@ module.exports = function (oAppData) {
 					{
 						if (Settings.EncryptionMode() == Enums.EncryptionMode.Always)
 						{
-							//for Always encription mode show error
+							//for Always encryption mode show error
 							Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 							fCancelFunction(sUid);
 						}
 						else if (Settings.EncryptionMode() == Enums.EncryptionMode.AskMe)
 						{
-							//for AskMe encription mode show dialog with warning and regular upload button
+							//for AskMe encryption mode show dialog with warning and regular upload button
 							ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 						}
 					}

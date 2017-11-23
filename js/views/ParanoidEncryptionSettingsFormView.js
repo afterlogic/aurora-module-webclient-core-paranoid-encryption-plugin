@@ -27,7 +27,7 @@ var
 /**
  * @constructor
  */
-function CJscryptoSettingsPaneView()
+function CParanoidEncryptionSettingsFormView()
 {
 	CAbstractSettingsFormView.call(this, Settings.ServerModuleName);
 	
@@ -50,11 +50,11 @@ function CJscryptoSettingsPaneView()
 	this.isImporting = ko.observable(false);
 }
 
-_.extendOwn(CJscryptoSettingsPaneView.prototype, CAbstractSettingsFormView.prototype);
+_.extendOwn(CParanoidEncryptionSettingsFormView.prototype, CAbstractSettingsFormView.prototype);
 
-CJscryptoSettingsPaneView.prototype.ViewTemplate = '%ModuleName%_JscryptoSettingsPaneView';
+CParanoidEncryptionSettingsFormView.prototype.ViewTemplate = '%ModuleName%_ParanoidEncryptionSettingsFormView';
 
-CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
+CParanoidEncryptionSettingsFormView.prototype.setExportUrl =	function (bShowDialog)
 {
 	var
 		sHref = '#',
@@ -81,17 +81,17 @@ CJscryptoSettingsPaneView.prototype.setExportUrl =	function (bShowDialog)
 
 };
 
-CJscryptoSettingsPaneView.prototype.importFileKey = function ()
+CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
 {
 	$("#import-key-file").click();
 };
 
-CJscryptoSettingsPaneView.prototype.importStringKey = function ()
+CParanoidEncryptionSettingsFormView.prototype.importStringKey = function ()
 {
 	Popups.showPopup(ImportKeyStringPopup, [false]);
 };
 
-CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
+CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 {
 	var 
 		input = document.getElementById('import-key-file'),
@@ -124,7 +124,7 @@ CJscryptoSettingsPaneView.prototype.readKeyFromFile = function ()
 	}
 };
 
-CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
+CParanoidEncryptionSettingsFormView.prototype.generateNewKey = function ()
 {
 	Popups.showPopup(GenerateKeyPopup, [_.bind(this.setExportUrl, this)]);
 };
@@ -132,7 +132,7 @@ CJscryptoSettingsPaneView.prototype.generateNewKey = function ()
 /**
  * @param {Object} oKey
  */
-CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
+CParanoidEncryptionSettingsFormView.prototype.removeJscryptoKey = function ()
 {
 	var
 		fRemove = _.bind(function (bRemove) {
@@ -150,7 +150,7 @@ CJscryptoSettingsPaneView.prototype.removeJscryptoKey = function ()
 	Popups.showPopup(DeleteKeyPopup, [this.downloadLinkHref(), this.keyName(), fRemove]);
 };
 
-CJscryptoSettingsPaneView.prototype.getCurrentValues = function ()
+CParanoidEncryptionSettingsFormView.prototype.getCurrentValues = function ()
 {
 	return [
 		this.EnableJscrypto(),
@@ -158,13 +158,13 @@ CJscryptoSettingsPaneView.prototype.getCurrentValues = function ()
 	];
 };
 
-CJscryptoSettingsPaneView.prototype.revertGlobalValues = function ()
+CParanoidEncryptionSettingsFormView.prototype.revertGlobalValues = function ()
 {
 	this.EnableJscrypto(Settings.EnableJscrypto());
 	this.EncryptionMode(Settings.EncryptionMode());
 };
 
-CJscryptoSettingsPaneView.prototype.getParametersForSave = function ()
+CParanoidEncryptionSettingsFormView.prototype.getParametersForSave = function ()
 {
 	return {
 		'EnableModule': this.EnableJscrypto(),
@@ -172,9 +172,9 @@ CJscryptoSettingsPaneView.prototype.getParametersForSave = function ()
 	};
 };
 
-CJscryptoSettingsPaneView.prototype.applySavedValues = function ()
+CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 {
 	Settings.update(this.EnableJscrypto(), this.EncryptionMode());
 };
 
-module.exports = new CJscryptoSettingsPaneView();
+module.exports = new CParanoidEncryptionSettingsFormView();

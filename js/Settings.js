@@ -4,7 +4,7 @@ var ko = require('knockout');
 
 module.exports = {
 	ServerModuleName: '%ModuleName%',
-	HashModuleName: 'paranoid-encription',
+	HashModuleName: 'paranoid-encryption',
 	EncryptionAllowedModules: ['Files'],
 	
 	EnableJscrypto: ko.observable(true),
