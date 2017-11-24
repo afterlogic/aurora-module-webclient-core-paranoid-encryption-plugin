@@ -62,7 +62,7 @@ CParanoidEncryptionSettingsFormView.prototype.setExportUrl =	function (bShowDial
 	;
 
 	this.downloadLinkHref(sHref);
-	if (window.Blob && window.URL && $.isFunction(window.URL.createObjectURL))
+	if (window.Blob && window.URL && _.isFunction(window.URL.createObjectURL))
 	{
 		if (JscryptoKey.getKey())
 		{
@@ -129,9 +129,6 @@ CParanoidEncryptionSettingsFormView.prototype.generateNewKey = function ()
 	Popups.showPopup(GenerateKeyPopup, [_.bind(this.setExportUrl, this)]);
 };
 
-/**
- * @param {Object} oKey
- */
 CParanoidEncryptionSettingsFormView.prototype.removeJscryptoKey = function ()
 {
 	var
