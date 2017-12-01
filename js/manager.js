@@ -58,8 +58,7 @@ function ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, sErrorText)
 }
 
 module.exports = function (oAppData) {
-	var oSettings = _.extend({}, oAppData[Settings.ServerModuleName] || {}, oAppData['%ModuleName%'] || {});
-	Settings.init(oSettings);
+	Settings.init(oAppData);
 	
 	return {
 		/**
