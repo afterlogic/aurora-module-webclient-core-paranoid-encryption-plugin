@@ -13,12 +13,17 @@ var
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
+	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false
 ;
 		
 function IsJscryptoSupported()
 {
+	if (Browser.chrome && !IsHttpsEnable())
+	{
+		return !!window.crypto;
+	}
 	return !!window.crypto && !!window.crypto.subtle;
 }
 
