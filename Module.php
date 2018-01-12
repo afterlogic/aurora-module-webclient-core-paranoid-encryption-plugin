@@ -21,8 +21,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->extendObject(
 			'Aurora\Modules\Core\Classes\User', 
 			array(
-				'EnableModule' => array('bool', true),
-				'EncryptionMode' => array('int', 0)
+				'EnableModule' => array('bool', $this->getConfig('EnabledByDefault', false)),
+				'EncryptionMode' => array('int', 1)
 			)
 		);
 	}

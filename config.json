@@ -6,5 +6,9 @@
     "AvailableFor": [
 		["FilesWebclient"],
 		"array"
+	],
+	"EnabledByDefault": [
+		false,
+		"bool"
 	]
 }
