@@ -3,9 +3,9 @@
 	"type": "aurora-module",
 	"require": {
 		"php": ">=5.4.0",
-		"afterlogic/aurora-framework": "~0.7",
-		"afterlogic/aurora-module-files": "^0.7.0",
-		"afterlogic/aurora-module-webclient-files": "^0.7.0"
+		"afterlogic/aurora-framework": "~0.8",
+		"afterlogic/aurora-module-files": "^0.8.0",
+		"afterlogic/aurora-module-webclient-files": "^0.8.0"
 	},
 	"extra": {
 		"installer-name": "CoreParanoidEncryptionWebclientPlugin"
