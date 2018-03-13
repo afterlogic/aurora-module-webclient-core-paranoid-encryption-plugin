@@ -334,7 +334,7 @@ function CViewImage(oFile, iv, cryptoKey, iChunkSize)
 	this.sFileName = oFile.fileName();
 	this.iFileSize = oFile.size();
 	this.sDownloadLink = oFile.getActionUrl('download');
-	this.oWriter = new CBlobViewer(this.sFileName);
+	this.oWriter = null;
 	this.iCurrChunk = 0;
 	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
 	this.key = cryptoKey;
@@ -347,6 +347,7 @@ CViewImage.prototype.constructor = CViewImage;
 
 CViewImage.prototype.writeChunk = function (oDecryptedUint8Array)
 {
+		this.oWriter = this.oWriter === null ? new CBlobViewer(this.sFileName) : this.oWriter;
 		this.oWriter.write(oDecryptedUint8Array); //write decrypted chunk
 		if (this.iCurrChunk < this.iChunkNumber)
 		{ //if it was not last chunk - decrypting another chunk

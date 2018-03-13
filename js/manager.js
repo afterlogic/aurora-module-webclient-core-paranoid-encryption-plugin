@@ -87,7 +87,8 @@ module.exports = function (oAppData) {
 						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
 						sDownloadLink = oFile.getActionUrl('download')
 					;
-					if (!Settings.EnableJscrypto() || !iv)
+					//User can decrypt only own files
+					if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 					{
 						fRegularDownloadFileCallback(sDownloadLink);
 					}
@@ -262,11 +263,11 @@ module.exports = function (oAppData) {
 						bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined',
 						iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false
 					;
-					
+
 					if (bIsEncrypted)
 					{
 						oFile.thumbnailSrc('');
-						if (!App.isPublic() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName()))
+						if (oFile.sOwnerName === App.getUserPublicId() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName()) && Settings.EnableJscrypto())
 						{// change view action for images
 							oFile.oActionsData.view.Handler = _.bind(function () {
 								CCrypto.viewEncryptedImage(this.oFile, this.iv);
