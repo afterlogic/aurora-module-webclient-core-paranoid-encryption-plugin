@@ -82,28 +82,29 @@ module.exports = function (oAppData) {
 				
 				App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 					var
-						oFile = oParams.oFile,
-						fRegularDownloadFileCallback = oParams.fRegularDownloadFileCallback,
-						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
-						sDownloadLink = oFile.getActionUrl('download')
+						oFile = oParams.File,
+						iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false
 					;
 					//User can decrypt only own files
 					if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 					{
-						fRegularDownloadFileCallback(sDownloadLink);
 					}
 					else if (!IsHttpsEnable())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+						oParams.CancelDownload = true;
 					}
 					else if (!CCrypto.getCryptoKey())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+						oParams.CancelDownload = true;
 					}
 					else
 					{
-						oFile.startDownloading();
-						CCrypto.downloadDividedFile(oFile, iv);
+						oParams.CustomDownloadHandler = function () {
+							oFile.startDownloading();
+							CCrypto.downloadDividedFile(oFile, iv);
+						};
 					}
 				});
 				
