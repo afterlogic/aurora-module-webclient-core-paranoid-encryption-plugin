@@ -255,7 +255,14 @@ CDownloadFile.prototype.decryptChunk = function ()
 	oReq.responseType = 'arraybuffer';
 
 	oReq.onprogress = _.bind(function(oEvent) {
-		this.oFile.onDownloadProgress(oEvent.loaded + (this.iCurrChunk-1) * this.iChunkSize, this.iFileSize);
+		if (this.oFile.downloading())
+		{
+			this.oFile.onDownloadProgress(oEvent.loaded + (this.iCurrChunk-1) * this.iChunkSize, this.iFileSize);
+		}
+		else
+		{
+			oReq.abort();
+		}
 	}, this);
 	oReq.onload =_.bind(function (oEvent)
 	{

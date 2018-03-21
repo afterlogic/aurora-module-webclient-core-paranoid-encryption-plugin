@@ -88,6 +88,7 @@ module.exports = function (oAppData) {
 					//User can decrypt only own files
 					if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 					{
+						//regular upload will start in Jua in this case
 					}
 					else if (!IsHttpsEnable())
 					{
