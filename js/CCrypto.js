@@ -226,6 +226,7 @@ function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
 	this.iChunkSize = iChunkSize;
 	this.decryptChunk();
 }
+
 CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
 {
 	if (this.oFile.downloading() !== true)
@@ -245,7 +246,7 @@ CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
 			this.oWriter.close();
 		}
 	}
-}
+};
 
 CDownloadFile.prototype.decryptChunk = function ()
 {
@@ -255,7 +256,7 @@ CDownloadFile.prototype.decryptChunk = function ()
 	oReq.responseType = 'arraybuffer';
 
 	oReq.onprogress = _.bind(function(oEvent) {
-		if (this.oFile.downloading())
+		if (this.isDownloading())
 		{
 			this.oFile.onDownloadProgress(oEvent.loaded + (this.iCurrChunk-1) * this.iChunkSize, this.iFileSize);
 		}
@@ -320,12 +321,12 @@ CDownloadFile.prototype.decryptChunk = function ()
 		}
 	}, this);
 	oReq.send(null);
-}
+};
 
 CDownloadFile.prototype.stopDownloading = function ()
 {
 	this.oFile.stopDownloading();
-}
+};
 
 /**
  * Generate link for downloading current chunk
@@ -333,7 +334,12 @@ CDownloadFile.prototype.stopDownloading = function ()
 CDownloadFile.prototype.getChunkLink = function ()
 {
 	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + this.iChunkSize;
-}
+};
+
+CDownloadFile.prototype.isDownloading = function ()
+{
+	return this.oFile.downloading();
+};
 
 function CViewImage(oFile, iv, cryptoKey, iChunkSize)
 {
@@ -365,11 +371,16 @@ CViewImage.prototype.writeChunk = function (oDecryptedUint8Array)
 			this.stopDownloading();
 			this.oWriter.close();
 		}
-}
+};
 
 CViewImage.prototype.stopDownloading = function ()
 {
-}
+};
+
+CDownloadFile.prototype.isDownloading = function ()
+{//image download can't be aborted
+	return true;
+};
 /**
 * Writing chunks in file
 * 
