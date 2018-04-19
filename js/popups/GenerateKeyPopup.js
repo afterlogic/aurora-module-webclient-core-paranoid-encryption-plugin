@@ -3,7 +3,7 @@
 var
 	_ = require('underscore'),
 	ko = require('knockout'),
-	
+
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js')
@@ -15,7 +15,7 @@ var
 function CGenerateKeyPopup()
 {
 	CAbstractPopup.call(this);
-	
+
 	this.keyName = ko.observable(App.getUserPublicId());
 	this.fOnGenerateCallback = null;
 }
@@ -30,9 +30,13 @@ CGenerateKeyPopup.prototype.onOpen = function (fOnGenerateCallback)
 };
 
 CGenerateKeyPopup.prototype.generateKey = function ()
-{	
-	JscryptoKey.generateKey(this.fOnGenerateCallback, this.keyName());
-	this.closePopup();
+{
+	JscryptoKey.generateKey(_.bind(function() {
+			this.fOnGenerateCallback();
+			this.closePopup();
+		}, this),
+		this.keyName()
+	);
 };
 
 module.exports = new CGenerateKeyPopup();

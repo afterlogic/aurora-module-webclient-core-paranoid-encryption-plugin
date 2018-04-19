@@ -3,7 +3,7 @@
 var
 	$ = require('jquery'),
 	_ = require('underscore'),
-	ko = require('knockout'),
+
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
@@ -21,10 +21,6 @@ function CCrypto()
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = null;
-	this.cryptoKey = ko.observable(JscryptoKey.getKey());
-	JscryptoKey.getKeyObservable().subscribe(function () {
-		this.cryptoKey(JscryptoKey.getKey());
-	}, this);
 	// Queue of files awaiting upload
 	this.oChunkQueue = {
 		isProcessed: false,
@@ -33,6 +29,7 @@ function CCrypto()
 	this.aStopList = [];
 	this.fOnUploadCancelCallback = null;
 }
+
 CCrypto.prototype.start = function (oFileInfo)
 {
 	this.oFileInfo = oFileInfo;
@@ -45,9 +42,19 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv)) };
 };
 
-CCrypto.prototype.getCryptoKey = function ()
+CCrypto.prototype.startUpload = function (oFileInfo, sUid, fOnChunkEncryptCallback)
 {
-	return this.cryptoKey();
+	this.oChunkQueue.isProcessed = true;
+	this.start(oFileInfo);
+	JscryptoKey.getKey(_.bind(function() {
+			this.readChunk(sUid, fOnChunkEncryptCallback);
+		}, this)
+	);
+};
+
+CCrypto.prototype.cryptoKey = function ()
+{
+	return JscryptoKey.key();
 };
 
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
@@ -160,7 +167,7 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 
 CCrypto.prototype.downloadDividedFile = function (oFile, iv)
 {
-	new CDownloadFile(oFile, iv, this.cryptoKey(), this.iChunkSize);
+	new CDownloadFile(oFile, iv, this.iChunkSize);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -202,17 +209,22 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 
 CCrypto.prototype.viewEncryptedImage = function (oFile, iv)
 {
-	if (!this.getCryptoKey())
+	if (!this.isKeyInStorage())
 	{
 		Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 	}
 	else
 	{
-		new CViewImage(oFile, iv, this.cryptoKey(), this.iChunkSize);
+		new CViewImage(oFile, iv, this.iChunkSize);
 	}
 };
 
-function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
+CCrypto.prototype.isKeyInStorage = function ()
+{
+	return !!JscryptoKey.loadKeyFromStorage();
+};
+
+function CDownloadFile(oFile, iv, iChunkSize)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -221,10 +233,17 @@ function CDownloadFile(oFile, iv, cryptoKey, iChunkSize)
 	this.oWriter = new CWriter(this.sFileName);
 	this.iCurrChunk = 0;
 	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
-	this.key = cryptoKey;
+	this.key = null;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
-	this.decryptChunk();
+	JscryptoKey.getKey(_.bind(function(oKey) {
+			this.key = oKey;
+			this.decryptChunk();
+		}, this),
+		_.bind(function() {
+			this.stopDownloading();
+		}, this)
+	);
 }
 
 CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
@@ -341,7 +360,7 @@ CDownloadFile.prototype.isDownloading = function ()
 	return this.oFile.downloading();
 };
 
-function CViewImage(oFile, iv, cryptoKey, iChunkSize)
+function CViewImage(oFile, iv, iChunkSize)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -350,10 +369,13 @@ function CViewImage(oFile, iv, cryptoKey, iChunkSize)
 	this.oWriter = null;
 	this.iCurrChunk = 0;
 	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
-	this.key = cryptoKey;
+	this.key = null;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
-	this.decryptChunk();
+	JscryptoKey.getKey(_.bind(function(oKey) {
+		this.key = oKey;
+		this.decryptChunk();
+	}, this));
 }
 CViewImage.prototype = Object.create(CDownloadFile.prototype);
 CViewImage.prototype.constructor = CViewImage;
@@ -371,10 +393,6 @@ CViewImage.prototype.writeChunk = function (oDecryptedUint8Array)
 			this.stopDownloading();
 			this.oWriter.close();
 		}
-};
-
-CViewImage.prototype.stopDownloading = function ()
-{
 };
 
 CDownloadFile.prototype.isDownloading = function ()

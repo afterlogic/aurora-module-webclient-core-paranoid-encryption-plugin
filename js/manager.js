@@ -4,7 +4,7 @@ require('modules/%ModuleName%/js/enums.js');
 
 var	
 	_ = require('underscore'),
-	
+
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
@@ -17,7 +17,7 @@ var
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false
 ;
-		
+
 function IsJscryptoSupported()
 {
 	if (Browser.chrome && !IsHttpsEnable())
@@ -64,7 +64,7 @@ function ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, sErrorText)
 
 module.exports = function (oAppData) {
 	Settings.init(oAppData);
-	
+
 	return {
 		/**
 		 * Runs before application start. Subscribes to the event before post displaying.
@@ -79,7 +79,7 @@ module.exports = function (oAppData) {
 					Settings.HashModuleName,
 					TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')
 				]);
-				
+
 				App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 					var
 						oFile = oParams.File,
@@ -95,7 +95,7 @@ module.exports = function (oAppData) {
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 						oParams.CancelDownload = true;
 					}
-					else if (!CCrypto.getCryptoKey())
+					else if (!CCrypto.isKeyInStorage())
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 						oParams.CancelDownload = true;
@@ -108,7 +108,7 @@ module.exports = function (oAppData) {
 						};
 					}
 				});
-				
+
 				App.subscribeEvent('Jua::FileUpload::before', function (oParams) {
 					var
 						sUid = oParams.sUid,
@@ -119,9 +119,7 @@ module.exports = function (oAppData) {
 						fCancelFunction = oParams.fCancelFunction,
 						fStartUploadCallback = function (oFileInfo, sUid, fOnChunkEncryptCallback) {
 							// Starts upload an encrypted file
-							CCrypto.oChunkQueue.isProcessed = true;
-							CCrypto.start(oFileInfo);
-							CCrypto.readChunk(sUid, fOnChunkEncryptCallback);
+							CCrypto.startUpload(oFileInfo, sUid, fOnChunkEncryptCallback);
 						},
 						fUpload = _.bind(function () {
 							AwaitConfirmationQueue.forEach(function (element) {
@@ -135,8 +133,8 @@ module.exports = function (oAppData) {
 								// if another file is being uploaded now - add a file to the queue
 								CCrypto.oChunkQueue.aFiles.push({
 									fStartUploadCallback: fStartUploadCallback,
-									oFileInfo: element.oFileInfo, 
-									sUid: element.sUid, 
+									oFileInfo: element.oFileInfo,
+									sUid: element.sUid,
 									fOnChunkEncryptCallback: fOnChunkEncryptCallback
 								});
 							});
@@ -176,7 +174,7 @@ module.exports = function (oAppData) {
 							ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 						}
 					}
-					else if (!CCrypto.getCryptoKey())
+					else if (!CCrypto.isKeyInStorage())
 					{
 						if (Settings.EncryptionMode() == Enums.EncryptionMode.Always)
 						{
@@ -239,14 +237,14 @@ module.exports = function (oAppData) {
 						}
 					}
 				});
-				
+
 				App.subscribeEvent('CFilesView::FileDownloadCancel', function (oParams) {
 					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{
 						oParams.oFile.stopDownloading();
 					}
 				});
-				
+
 				App.subscribeEvent('CFilesView::FileUploadCancel', function (oParams) {
 					if (Settings.EnableJscrypto() && IsHttpsEnable())
 					{

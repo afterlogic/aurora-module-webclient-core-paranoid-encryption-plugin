@@ -4,17 +4,13 @@ var
 	_ = require('underscore'),
 	$ = require('jquery'),
 	ko = require('knockout'),
-	
+
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js'),
-	
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
-	
 	CAbstractSettingsFormView = ModulesManager.run('SettingsWebclient', 'getAbstractSettingsFormViewClass'),
-	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-	
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	ImportKeyStringPopup = require('modules/%ModuleName%/js/popups/ImportKeyStringPopup.js'),
@@ -30,24 +26,22 @@ var
 function CParanoidEncryptionSettingsFormView()
 {
 	CAbstractSettingsFormView.call(this, Settings.ServerModuleName);
-	
-	this.EnableJscrypto = ko.observable(Settings.EnableJscrypto());
-	
-	this.key = ko.observable(JscryptoKey.getKey());
-	this.keyName = ko.observable(JscryptoKey.getKeyName());
-	
-	this.downloadLinkHref = ko.observable('#');
 
-	this.setExportUrl();
-	JscryptoKey.getKeyObservable().subscribe(function () {
-		this.key(JscryptoKey.getKey());
-		this.keyName(JscryptoKey.getKeyName());
-		this.setExportUrl();
-	}, this);
-	
+	this.enableJscrypto = ko.observable(Settings.EnableJscrypto());
+	this.key = ko.observable('');
+	this.keyName = ko.observable('');
+	this.downloadLinkHref = ko.observable('#');
 	this.bIsHttpsEnable = window.location.protocol === "https:";
-	this.EncryptionMode = ko.observable(Settings.EncryptionMode());
+	this.encryptionMode = ko.observable(Settings.EncryptionMode());
 	this.isImporting = ko.observable(false);
+
+	if (ko.isObservable(JscryptoKey.key))
+	{
+		JscryptoKey.key.subscribe(function () {
+			this.key(JscryptoKey.key());
+			this.keyName(JscryptoKey.keyName());
+		}, this);
+	}
 }
 
 _.extendOwn(CParanoidEncryptionSettingsFormView.prototype, CAbstractSettingsFormView.prototype);
@@ -64,7 +58,7 @@ CParanoidEncryptionSettingsFormView.prototype.setExportUrl =	function (bShowDial
 	this.downloadLinkHref(sHref);
 	if (window.Blob && window.URL && _.isFunction(window.URL.createObjectURL))
 	{
-		if (JscryptoKey.getKey())
+		if (this.key())
 		{
 			JscryptoKey.exportKey()
 				.then(_.bind(function(keydata) {
@@ -78,7 +72,6 @@ CParanoidEncryptionSettingsFormView.prototype.setExportUrl =	function (bShowDial
 				}, this));
 		}
 	}
-
 };
 
 CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
@@ -88,7 +81,7 @@ CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
 
 CParanoidEncryptionSettingsFormView.prototype.importStringKey = function ()
 {
-	Popups.showPopup(ImportKeyStringPopup, [false]);
+	Popups.showPopup(ImportKeyStringPopup);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
@@ -99,7 +92,10 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 		reader = new FileReader(),
 		sContents = '',
 		aFileNameParts = input.files[0].name.split('.'),
-		sKeyName = ''
+		sKeyName = '',
+		fOnGenerateCallback = _.bind(function() {
+			this.isImporting(false);
+		}, this)
 	;
 	aFileNameParts.splice(aFileNameParts.length - 1, 1);
 	sKeyName = aFileNameParts.join('');
@@ -109,11 +105,11 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 		return;
 	}
 	this.isImporting(true);
-	reader.onload =_.bind( function(e) {
+	reader.onload = function(e) {
 		sContents = e.target.result;
-		JscryptoKey.importKeyFromString(sKeyName, sContents);
-		this.isImporting(false);
-	}, this);
+		JscryptoKey.importKeyFromString(sKeyName, sContents, fOnGenerateCallback);
+	};
+
 	try
 	{
 		reader.readAsText(file);
@@ -126,7 +122,9 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 
 CParanoidEncryptionSettingsFormView.prototype.generateNewKey = function ()
 {
-	Popups.showPopup(GenerateKeyPopup, [_.bind(this.setExportUrl, this)]);
+	Popups.showPopup(GenerateKeyPopup, [_.bind(function () {
+			this.setExportUrl(/*bShowDialog*/ true);
+	}, this)]);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.removeJscryptoKey = function ()
@@ -143,35 +141,43 @@ CParanoidEncryptionSettingsFormView.prototype.removeJscryptoKey = function ()
 			}
 		}, this)
 	;
-	
+
 	Popups.showPopup(DeleteKeyPopup, [this.downloadLinkHref(), this.keyName(), fRemove]);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.getCurrentValues = function ()
 {
 	return [
-		this.EnableJscrypto(),
-		this.EncryptionMode()
+		this.enableJscrypto(),
+		this.encryptionMode()
 	];
 };
 
 CParanoidEncryptionSettingsFormView.prototype.revertGlobalValues = function ()
 {
-	this.EnableJscrypto(Settings.EnableJscrypto());
-	this.EncryptionMode(Settings.EncryptionMode());
+	this.enableJscrypto(Settings.EnableJscrypto());
+	this.encryptionMode(Settings.EncryptionMode());
 };
 
 CParanoidEncryptionSettingsFormView.prototype.getParametersForSave = function ()
 {
 	return {
-		'EnableModule': this.EnableJscrypto(),
-		'EncryptionMode': Types.pInt(this.EncryptionMode())
+		'EnableModule': this.enableJscrypto(),
+		'EncryptionMode': Types.pInt(this.encryptionMode())
 	};
 };
 
 CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 {
-	Settings.update(this.EnableJscrypto(), this.EncryptionMode());
+	Settings.update(this.enableJscrypto(), this.encryptionMode());
+};
+
+CParanoidEncryptionSettingsFormView.prototype.onShow = function ()
+{
+	JscryptoKey.getKey(_.bind(function(oKey) {
+		this.key(oKey);
+		this.setExportUrl();
+	}, this));
 };
 
 module.exports = new CParanoidEncryptionSettingsFormView();

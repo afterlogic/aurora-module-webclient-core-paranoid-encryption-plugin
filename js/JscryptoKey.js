@@ -19,40 +19,71 @@ function CJscryptoKey()
 	this.sPrefix = 'user_' + (UserSettings.UserId || '0') + '_';
 
 	this.key = ko.observable();
-	this.sKeyName = ko.observable();
-
-	this.loadKeyFromStorage();
+	this.keyName = ko.observable();
 }
 
 CJscryptoKey.prototype.key = null;
 CJscryptoKey.prototype.sPrefix = '';
 
-CJscryptoKey.prototype.getKey = function ()
+CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallback)
 {
-	return this.key();
+	var 
+		aKey = this.loadKeyFromStorage(),
+		oPromise = new Promise((resolve, reject) => {
+			if (!aKey)
+			{
+				reject(new Error(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY')));
+			}
+			else
+			{
+				if (!this.key())
+				{
+					this.generateKeyFromArray(aKey)
+						.then(_.bind(function(key) {
+							resolve(key);
+						}, this));
+				}
+				else
+				{
+					resolve(this.key());
+				}
+			}
+		})
+	;
+
+	this.loadKeyNameFromStorage();
+	oPromise
+		.then(_.bind(function(oKey) {
+			this.onKeyGenerateSuccess(oKey);
+			if (_.isFunction(fOnGenerateKeyCallback))
+			{
+				fOnGenerateKeyCallback(oKey);
+			}
+		}, this))
+		.catch(_.bind(function(oError) {
+			if (_.isFunction(fOnErrorCallback))
+			{
+				fOnErrorCallback();
+			}
+			this.onKeyGenerateError(oError);
+		}, this));
 };
 
-CJscryptoKey.prototype.getKeyName = function ()
+CJscryptoKey.prototype.loadKeyNameFromStorage = function ()
 {
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
 	{
-		return Storage.getData(this.sPrefix + 'cryptoKey').keyname;
+		this.keyName(Storage.getData(this.sPrefix + 'cryptoKey').keyname);
 	}
-	return false;
-};
-
-CJscryptoKey.prototype.getKeyObservable = function ()
-{
-	return this.key;
 };
 
 /**
  *  import key from data in local storage
  */
-CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
+CJscryptoKey.prototype.loadKeyFromStorage = function ()
 {
 	var 
-		aKey = [],
+		aKey = false,
 		sKey = ''
 	;
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
@@ -62,30 +93,39 @@ CJscryptoKey.prototype.loadKeyFromStorage = function (fOnGenerateCallback)
 		if (aKey.length > 0)
 		{
 			aKey = new Uint8Array(aKey);
-			window.crypto.subtle.importKey(
-				"raw",
-				aKey.buffer,
-				{
-					name: "AES-CBC",
-				},
-				true,
-				["encrypt", "decrypt"]
-			)
-			.then(_.bind(function(key) {
-				this.key(key);
-				if (fOnGenerateCallback)
-				{
-					fOnGenerateCallback(true);
-				}
-			}, this))
-			.catch(function(err) {
-				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
-			});
 		}
 		else
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
 		}
+	}
+	return aKey;
+};
+
+CJscryptoKey.prototype.generateKeyFromArray = function (aKey)
+{
+	var keyPromise = window.crypto.subtle.importKey(
+		"raw",
+		aKey.buffer,
+		{
+			name: "AES-CBC"
+		},
+		true,
+		["encrypt", "decrypt"]
+	);
+	return keyPromise;
+};
+
+CJscryptoKey.prototype.onKeyGenerateSuccess = function (oKey)
+{
+	this.key(oKey);
+};
+
+CJscryptoKey.prototype.onKeyGenerateError = function (oError)
+{
+	if (oError.message)
+	{
+		Screens.showError(oError.message);
 	}
 };
 
@@ -115,7 +155,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 					keydata: HexUtils.Array2HexString(new Uint8Array(keydata))
 				}
 			);
-			this.loadKeyFromStorage(fOnGenerateCallback);
+			this.getKey(fOnGenerateCallback);
 		}, this))
 		.catch(function(err) {
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_EXPORT_KEY'));
@@ -126,27 +166,27 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 	});
 };
 
-CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey)
+CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey, fOnGenerateKeyCallback, fOnErrorCallback)
 {
 	try
 	{
-		this.sKeyName(sKeyName);
+		this.keyName(sKeyName);
 		Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: sKey});
+		this.getKey(fOnGenerateKeyCallback, fOnErrorCallback);
 	}
 	catch (e)
 	{
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
 	}
-	this.loadKeyFromStorage();
-}
+};
 
 CJscryptoKey.prototype.exportKey = function ()
 {
 	return window.crypto.subtle.exportKey(
 		"raw",
-		this.getKey()
+		this.key()
 	);
-}
+};
 
 CJscryptoKey.prototype.deleteKey = function ()
 {
@@ -157,10 +197,8 @@ CJscryptoKey.prototype.deleteKey = function ()
 	}
 	catch (e)
 	{
-		return {error: e}
+		return {error: e};
 	}
-
-	this.loadKeyFromStorage();
 
 	return {status: 'ok'};
 };
