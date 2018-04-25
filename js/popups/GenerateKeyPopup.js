@@ -33,10 +33,10 @@ CGenerateKeyPopup.prototype.generateKey = function ()
 {
 	JscryptoKey.generateKey(_.bind(function() {
 			this.fOnGenerateCallback();
-			this.closePopup();
 		}, this),
 		this.keyName()
 	);
+	this.closePopup();
 };
 
 module.exports = new CGenerateKeyPopup();

@@ -14,23 +14,29 @@ var
 /**
  * @constructor
  */
-function CExportInformationPopup()
+function CDeleteKeyPopup()
 {
 	CAbstractPopup.call(this);
 	
-	this.downloadLink = ko.observable('');
+	this.fExportKeyCallback = null;
 	this.keyName = ko.observable('');
 	this.fDelete = null;
 	this.fDeleteCallback = null;
 }
 
-_.extendOwn(CExportInformationPopup.prototype, CAbstractPopup.prototype);
+_.extendOwn(CDeleteKeyPopup.prototype, CAbstractPopup.prototype);
 
-CExportInformationPopup.prototype.PopupTemplate = '%ModuleName%_DeleteKeyPopup';
+CDeleteKeyPopup.prototype.PopupTemplate = '%ModuleName%_DeleteKeyPopup';
 
-CExportInformationPopup.prototype.onOpen = function (sDownloadLink, sKeyName, fDelete)
+CDeleteKeyPopup.prototype.onOpen = function (fExportKeyCallback, sKeyName, fDelete)
 {
-	this.downloadLink(sDownloadLink);
+	if (_.isFunction(fExportKeyCallback))
+	{
+		this.fExportKeyCallback = _.bind(function() {
+			this.closePopup();
+			fExportKeyCallback();
+		}, this);
+	}
 	this.keyName(sKeyName);
 	this.fDeleteCallback = _.bind(function (bRemove) {
 		fDelete.call(this, bRemove);
@@ -46,10 +52,10 @@ CExportInformationPopup.prototype.onOpen = function (sDownloadLink, sKeyName, fD
 	}, this);
 };
 
-CExportInformationPopup.prototype.deleteKey = function ()
+CDeleteKeyPopup.prototype.deleteKey = function ()
 {
 	this.hidePopup();
 	Popups.showPopup(ConfirmPopup, [TextUtils.i18n('%MODULENAME%/CONFIRM_DELETE_KEY'), this.fDeleteCallback]);
 };
 
-module.exports = new CExportInformationPopup();
+module.exports = new CDeleteKeyPopup();

@@ -30,10 +30,10 @@ function CParanoidEncryptionSettingsFormView()
 	this.enableJscrypto = ko.observable(Settings.EnableJscrypto());
 	this.key = ko.observable('');
 	this.keyName = ko.observable('');
-	this.downloadLinkHref = ko.observable('#');
 	this.bIsHttpsEnable = window.location.protocol === "https:";
 	this.encryptionMode = ko.observable(Settings.EncryptionMode());
 	this.isImporting = ko.observable(false);
+	this.exportKeyBound = _.bind(this.exportKey, this);
 
 	if (ko.isObservable(JscryptoKey.key))
 	{
@@ -47,32 +47,6 @@ function CParanoidEncryptionSettingsFormView()
 _.extendOwn(CParanoidEncryptionSettingsFormView.prototype, CAbstractSettingsFormView.prototype);
 
 CParanoidEncryptionSettingsFormView.prototype.ViewTemplate = '%ModuleName%_ParanoidEncryptionSettingsFormView';
-
-CParanoidEncryptionSettingsFormView.prototype.setExportUrl =	function (bShowDialog)
-{
-	var
-		sHref = '#',
-		oBlob = null
-	;
-
-	this.downloadLinkHref(sHref);
-	if (window.Blob && window.URL && _.isFunction(window.URL.createObjectURL))
-	{
-		if (this.key())
-		{
-			JscryptoKey.exportKey()
-				.then(_.bind(function(keydata) {
-					oBlob = new Blob([HexUtils.Array2HexString(new Uint8Array(keydata))], {type: 'text/plain'});
-					sHref = window.URL.createObjectURL(oBlob);
-					this.downloadLinkHref(sHref);
-					if (bShowDialog)
-					{
-						Popups.showPopup(ExportInformationPopup, [sHref, this.keyName()]);
-					}
-				}, this));
-		}
-	}
-};
 
 CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
 {
@@ -95,6 +69,9 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 		sKeyName = '',
 		fOnGenerateCallback = _.bind(function() {
 			this.isImporting(false);
+		}, this),
+		fOnErrorCallback = _.bind(function() {
+			this.isImporting(false);
 		}, this)
 	;
 	aFileNameParts.splice(aFileNameParts.length - 1, 1);
@@ -107,7 +84,7 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 	this.isImporting(true);
 	reader.onload = function(e) {
 		sContents = e.target.result;
-		JscryptoKey.importKeyFromString(sKeyName, sContents, fOnGenerateCallback);
+		JscryptoKey.importKeyFromString(sKeyName, sContents, fOnGenerateCallback, fOnErrorCallback);
 	};
 
 	try
@@ -123,7 +100,8 @@ CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 CParanoidEncryptionSettingsFormView.prototype.generateNewKey = function ()
 {
 	Popups.showPopup(GenerateKeyPopup, [_.bind(function () {
-			this.setExportUrl(/*bShowDialog*/ true);
+		//After generating new key show "export key" dialog
+		Popups.showPopup(ExportInformationPopup, [this.exportKeyBound, this.keyName()]);
 	}, this)]);
 };
 
@@ -142,7 +120,7 @@ CParanoidEncryptionSettingsFormView.prototype.removeJscryptoKey = function ()
 		}, this)
 	;
 
-	Popups.showPopup(DeleteKeyPopup, [this.downloadLinkHref(), this.keyName(), fRemove]);
+	Popups.showPopup(DeleteKeyPopup, [this.exportKeyBound, this.keyName(), fRemove]);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.getCurrentValues = function ()
@@ -176,8 +154,46 @@ CParanoidEncryptionSettingsFormView.prototype.onShow = function ()
 {
 	JscryptoKey.getKey(_.bind(function(oKey) {
 		this.key(oKey);
-		this.setExportUrl();
 	}, this));
+};
+
+CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
+{
+	var
+		oBlob = null,
+		downloadLinkHref = null,
+		oDownloadLink = document.createElement("a")
+	;
+
+	JscryptoKey.getKey(
+		/*fOnGenerateKeyCallback*/_.bind(function(oKey) {
+			this.key(oKey);
+			if (this.key())
+			{
+				JscryptoKey.exportKey()
+					.then(_.bind(function(keydata) {
+						oBlob = new Blob([HexUtils.Array2HexString(new Uint8Array(keydata))], {type: 'text/plain'});
+						downloadLinkHref = window.URL.createObjectURL(oBlob);
+						document.body.appendChild(oDownloadLink);
+						oDownloadLink.style = "display: none";
+						oDownloadLink.href = downloadLinkHref;
+						oDownloadLink.download = this.keyName();
+						oDownloadLink.click();
+						window.URL.revokeObjectURL(downloadLinkHref);
+					}, this))
+					.catch(function() {
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+					});
+			}
+			else
+			{
+				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+			}
+		}, this),
+		/*fOnErrorCallback*/		false,
+		/*sPassword*/			false,
+		/*bForcedKeyLoading*/	true
+	);
 };
 
 module.exports = new CParanoidEncryptionSettingsFormView();

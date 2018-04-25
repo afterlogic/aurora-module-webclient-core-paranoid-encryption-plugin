@@ -31,12 +31,8 @@ CImportKeyStringPopup.prototype.onOpen = function ()
 
 CImportKeyStringPopup.prototype.importKey = function ()
 {
-	JscryptoKey.importKeyFromString(this.keyName(),
-		this.newKey(),
-		_.bind(function() {
-			this.closePopup();
-		}, this)
-	);
+	JscryptoKey.importKeyFromString(this.keyName(), this.newKey());
+	this.closePopup();
 };
 
 module.exports = new CImportKeyStringPopup();

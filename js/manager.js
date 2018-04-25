@@ -32,6 +32,11 @@ function IsHttpsEnable()
 	return window.location.protocol === "https:";
 }
 
+function IsBlobSavingEnable()
+{
+	return window.Blob && window.URL && _.isFunction(window.URL.createObjectURL)
+}
+
 function ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, sErrorText)
 {
 	if (isConfirmPopupShown)
@@ -72,7 +77,7 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
-			if (IsJscryptoSupported())
+			if (IsJscryptoSupported() && IsBlobSavingEnable())
 			{
 				ModulesManager.run('SettingsWebclient', 'registerSettingsTab', [
 					function () { return require('modules/%ModuleName%/js/views/ParanoidEncryptionSettingsFormView.js'); },

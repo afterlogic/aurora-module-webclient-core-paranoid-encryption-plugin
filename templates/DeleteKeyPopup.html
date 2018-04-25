@@ -5,7 +5,9 @@
 		<div class="fields">
 			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/CONFIRM_DELETE_KEY'}"></div>
 			<div class="buttons">
-				<a class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}, attr: {'href': downloadLink, 'download': keyName() + '.txt'}"></a>
+				<span data-bind="click: fExportKeyCallback" class="button">
+					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}"></span>
+				</span>
 				<span class="button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_DELETE'}, click: deleteKey"></span>
 				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CLOSE'}, click: cancelPopup"></span>
 			</div>

@@ -3,12 +3,15 @@
 var
 	_ = require('underscore'),
 	ko = require('knockout'),
-	
+
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Storage = require('%PathToCoreWebclientModule%/js/Storage.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	UserSettings = require('%PathToCoreWebclientModule%/js/Settings.js'),
-	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
+	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+	DecryptKeyPasswordPopup =  require('modules/%ModuleName%/js/popups/DecryptKeyPasswordPopup.js'),
+	EncryptKeyPasswordPopup = require('modules/%ModuleName%/js/popups/EncryptKeyPasswordPopup.js')
 ;
 
 /**
@@ -17,7 +20,6 @@ var
 function CJscryptoKey()
 {
 	this.sPrefix = 'user_' + (UserSettings.UserId || '0') + '_';
-
 	this.key = ko.observable();
 	this.keyName = ko.observable();
 }
@@ -25,26 +27,64 @@ function CJscryptoKey()
 CJscryptoKey.prototype.key = null;
 CJscryptoKey.prototype.sPrefix = '';
 
-CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallback)
+/**
+ * Asynchronously read key from storage, decrypt and generate key-object
+ * 
+ * @param {Function} fOnGenerateKeyCallback - starts after the key is successfully generated
+ * @param {Function} fOnErrorCallback - starts if error occurred during key generation process
+ * @param {string} sPassword - encrypt key with given password, "password dialog" wouldn't show
+ * @param {boolean} bForcedKeyLoading - forced key loading and decryption
+ */
+CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallback, sPassword, bForcedKeyLoading)
 {
-	var 
-		aKey = this.loadKeyFromStorage(),
+	var
+		sEncryptedKeyData = this.loadKeyFromStorage(),
 		oPromise = new Promise((resolve, reject) => {
-			if (!aKey)
+			var fDecryptKeyCallback = _.bind(function(sPassword) {
+				//Decrypt key with user password
+				this.decryptKeyData(sEncryptedKeyData, sPassword)
+					.then(_.bind(function(aKeyData) {
+						//generate key object from encrypted data
+						this.generateKeyFromArray(aKeyData)
+							.then(function(oKey) {
+								//return key object
+								resolve(oKey);
+							})
+							.catch(function() {
+								reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+							});
+					}, this))
+					.catch(function() {
+						reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+					});
+			}, this);
+			if (!sEncryptedKeyData)
 			{
 				reject(new Error(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY')));
 			}
 			else
 			{
-				if (!this.key())
-				{
-					this.generateKeyFromArray(aKey)
-						.then(_.bind(function(key) {
-							resolve(key);
-						}, this));
+				if (!this.key() || bForcedKeyLoading)
+				{//if key not available or loading is forced - encrypt key data
+					if (!sPassword)
+					{//if password is unknown - request password
+						Popups.showPopup(DecryptKeyPasswordPopup, [
+							fDecryptKeyCallback,
+							function() {
+								if (_.isFunction(fOnErrorCallback))
+								{
+									fOnErrorCallback();
+								}
+							}
+						]);
+					}
+					else
+					{//if password is known - decrypt key with this password
+						fDecryptKeyCallback(sPassword);
+					}
 				}
 				else
-				{
+				{//if key already available - return key
 					resolve(this.key());
 				}
 			}
@@ -69,6 +109,9 @@ CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallba
 		}, this));
 };
 
+/**
+ * Read key name from local storage
+ */
 CJscryptoKey.prototype.loadKeyNameFromStorage = function ()
 {
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
@@ -78,35 +121,34 @@ CJscryptoKey.prototype.loadKeyNameFromStorage = function ()
 };
 
 /**
- *  import key from data in local storage
+ *  read key data from local storage
+ *  
+ *  @returns {string}
  */
 CJscryptoKey.prototype.loadKeyFromStorage = function ()
 {
 	var 
-		aKey = false,
 		sKey = ''
 	;
+
 	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
 	{
 		sKey = Storage.getData(this.sPrefix + 'cryptoKey').keydata;
-		aKey = HexUtils.HexString2Array(sKey);
-		if (aKey.length > 0)
-		{
-			aKey = new Uint8Array(aKey);
-		}
-		else
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
-		}
 	}
-	return aKey;
+	return sKey;
 };
 
+/**
+ * Asynchronously generate key object from array data
+ * 
+ * @param {ArrayBuffer} aKey
+ * @returns {Promise}
+ */
 CJscryptoKey.prototype.generateKeyFromArray = function (aKey)
 {
 	var keyPromise = window.crypto.subtle.importKey(
 		"raw",
-		aKey.buffer,
+		aKey,
 		{
 			name: "AES-CBC"
 		},
@@ -116,24 +158,41 @@ CJscryptoKey.prototype.generateKeyFromArray = function (aKey)
 	return keyPromise;
 };
 
+/**
+ * Write key-object to knockout variable
+ * 
+ * @param {Object} oKey
+ */
 CJscryptoKey.prototype.onKeyGenerateSuccess = function (oKey)
 {
 	this.key(oKey);
 };
 
+/**
+ * Show error message
+ * 
+ * @param {Object} oError
+ */
 CJscryptoKey.prototype.onKeyGenerateError = function (oError)
 {
-	if (oError.message)
+	if (oError && oError.message)
 	{
 		Screens.showError(oError.message);
 	}
 };
 
 /**
- *  generate new key
+ * Asynchronously  generate new key
+ * 
+ * @param {Function} fOnGenerateCallback - starts after the key is successfully generated
+ * @param {string} sKeyName
  */
 CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 {
+	var
+		sKeyData = ''
+	;
+
 	window.crypto.subtle.generateKey(
 		{
 			name: "AES-CBC",
@@ -147,32 +206,78 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 			"raw",
 			key
 		)
-		.then(_.bind(function(keydata) {
-			Storage.setData(
-				this.sPrefix + 'cryptoKey', 
-				{
-					keyname: sKeyName,
-					keydata: HexUtils.Array2HexString(new Uint8Array(keydata))
-				}
-			);
-			this.getKey(fOnGenerateCallback);
+		.then(_.bind(function(aKeyData) {
+			sKeyData = HexUtils.Array2HexString(new Uint8Array(aKeyData)); 
+			Popups.showPopup(EncryptKeyPasswordPopup, [
+				_.bind(function(sPassword) {//Encrypt generated Key with User password
+					this.encryptKeyData(sKeyData, sPassword)
+						.then(_.bind(function(sKeyDataEncrypted) {//Stroe encrypted key in local storage
+							Storage.setData(
+								this.sPrefix + 'cryptoKey', 
+								{
+									keyname: sKeyName,
+									keydata: sKeyDataEncrypted
+								}
+							);
+							this.onKeyGenerateSuccess(key);
+							if (_.isFunction(fOnGenerateCallback))
+							{
+								fOnGenerateCallback();
+							}
+						}, this))
+						.catch(function() {
+							Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+						});
+				}, this),
+				function() {}
+			]);
 		}, this))
-		.catch(function(err) {
+		.catch(function() {
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_EXPORT_KEY'));
 		});
 	}, this))
-	.catch(function(err) {
+	.catch(function() {
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_GENERATE_KEY'));
 	});
 };
 
-CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey, fOnGenerateKeyCallback, fOnErrorCallback)
+/**
+ * Asynchronously generate key-object from string key-data
+ * 
+ * @param {string} sKeyName
+ * @param {string} sKeyData
+ * @param {Function} fOnImportKeyCallback - starts after the key is successfully imported
+ * @param {Function} fOnErrorCallback - starts if an error occurs during the key import process
+ */
+CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnImportKeyCallback, fOnErrorCallback)
 {
 	try
 	{
 		this.keyName(sKeyName);
-		Storage.setData(this.sPrefix + 'cryptoKey', {keyname: sKeyName, keydata: sKey});
-		this.getKey(fOnGenerateKeyCallback, fOnErrorCallback);
+		Popups.showPopup(EncryptKeyPasswordPopup, [
+			_.bind(function(sPassword) {//Encrypt imported Key with User password
+				this.encryptKeyData(sKeyData, sPassword)
+					.then(_.bind(function(sKeyDataEncrypted) {//Stroe encrypted key in local storage
+						Storage.setData(
+							this.sPrefix + 'cryptoKey', 
+							{
+								keyname: sKeyName,
+								keydata: sKeyDataEncrypted
+							}
+						);
+						this.getKey(fOnImportKeyCallback, fOnErrorCallback, sPassword);
+					}, this))
+					.catch(function() {
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+					});
+			}, this),
+			function() {
+				if (_.isFunction(fOnErrorCallback))
+				{
+					fOnErrorCallback();
+				}
+			}
+		]);
 	}
 	catch (e)
 	{
@@ -180,6 +285,11 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKey, fOnGenera
 	}
 };
 
+/**
+ * Asynchronously export key
+ * 
+ * @returns {Promise}
+ */
 CJscryptoKey.prototype.exportKey = function ()
 {
 	return window.crypto.subtle.exportKey(
@@ -188,6 +298,11 @@ CJscryptoKey.prototype.exportKey = function ()
 	);
 };
 
+/**
+ * Remove key-object and clear key-data in local storage
+ * 
+ * @returns {Object}
+ */
 CJscryptoKey.prototype.deleteKey = function ()
 {
 	try
@@ -201,6 +316,157 @@ CJscryptoKey.prototype.deleteKey = function ()
 	}
 
 	return {status: 'ok'};
+};
+
+/**
+ * Asynchronously decrypt key with user password
+ * 
+ * @param {string} sEncryptedKeyData
+ * @param {string} sPassword
+ * @returns {Promise}
+ */
+CJscryptoKey.prototype.decryptKeyData = function (sEncryptedKeyData, sPassword)
+{
+	var
+		aVector = new Uint8Array(16) //defaults to zero
+	;
+	return new Promise((resolve, reject) => {
+		if (!sEncryptedKeyData)
+		{
+			reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+		}
+		else
+		{
+			//get password-key
+			this.deriveKeyFromPasswordPromise(sPassword,
+				_.bind(function(oDerivedKey) {
+					crypto.subtle.decrypt({ name: 'AES-CBC', iv: aVector }, oDerivedKey, new Uint8Array(HexUtils.HexString2Array(sEncryptedKeyData)))
+						.then(_.bind(function(aDecryptedKeyData) {
+							resolve(new Uint8Array(aDecryptedKeyData));
+						}, this))
+						.catch(function() {
+							reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+						});
+				}, this),
+				function() {
+					reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+				}
+			);
+		}
+	});
+};
+
+/**
+ * Asynchronously encrypt key with user password
+ * 
+ * @param {string} sUserKeyData
+ * @param {string} sPassword
+ * @returns {Promise}
+ */
+CJscryptoKey.prototype.encryptKeyData = function (sUserKeyData, sPassword)
+{
+	var
+		aKeyData = null,
+		sEncryptedKeyData = null,
+		aVector = new Uint8Array(16) //defaults to zero
+	;
+
+	return new Promise((resolve, reject) => {
+		if (!sUserKeyData)
+		{
+			reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+		}
+		else
+		{
+			aKeyData = HexUtils.HexString2Array(sUserKeyData);
+			if (aKeyData.length > 0)
+			{
+				aKeyData = new Uint8Array(aKeyData);
+			}
+			else
+			{
+				reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+			}
+			//get password-key
+			this.deriveKeyFromPasswordPromise(sPassword,
+				_.bind(function(oDerivedKey) {//encrypt user-key with password-key
+					crypto.subtle.encrypt({ name: 'AES-CBC', iv: aVector }, oDerivedKey, aKeyData)
+						.then(_.bind(function(aEncryptedKeyData) {
+							sEncryptedKeyData = HexUtils.Array2HexString(new Uint8Array(aEncryptedKeyData));
+							resolve(sEncryptedKeyData);
+						}, this))
+						.catch(function() {
+							reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+						});
+				}, this),
+				function() {
+					reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
+				}
+			);
+		}
+	});
+};
+
+/**
+ * Asynchronously generate special key from user password. This key used in process of encryption/decryption user key.
+ * 
+ * @param {string} sPassword
+ * @param {Function} fOnGetDerivedKeyCallback - starts after the key is successfully generated
+ * @param {Function} fOnErrorCallback - starts if an error occurs during the key generation process
+ */
+CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGetDerivedKeyCallback, fOnErrorCallback)
+{
+	var
+		sSalt = "the salt is this string",
+		convertStringToArrayBuffer = function (sData)
+		{
+			var oEncoder = new TextEncoder("utf-8");
+			return oEncoder.encode(sData);
+		}
+	;
+
+	window.crypto.subtle.importKey(
+		"raw",
+		convertStringToArrayBuffer(sPassword),
+		{"name": "PBKDF2"},
+		false,
+		["deriveKey"]
+	)
+	.then(_.bind(function (oPasswordKey) {
+		window.crypto.subtle.deriveKey(
+			{
+				"name": "PBKDF2",
+				"salt": convertStringToArrayBuffer(sSalt),
+				"iterations": 100000,
+				"hash": "SHA-256"
+			},
+			oPasswordKey,
+			{
+				"name": "AES-CBC",
+				"length": 256
+			},
+			true,
+			["encrypt", "decrypt"]
+		)
+		.then(function(oDerivedKey) {
+			if (_.isFunction(fOnGetDerivedKeyCallback))
+			{
+				fOnGetDerivedKeyCallback(oDerivedKey);
+			}
+		})
+		.catch(function() {
+			if (_.isFunction(fOnErrorCallback))
+			{
+				fOnErrorCallback();
+			}
+		});
+	}, this))
+	.catch(function() {
+		if (_.isFunction(fOnErrorCallback))
+		{
+			fOnErrorCallback();
+		}
+	});
 };
 
 module.exports = new CJscryptoKey();

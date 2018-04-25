@@ -14,7 +14,7 @@ function CExportInformationPopup()
 {
 	CAbstractPopup.call(this);
 	
-	this.downloadLink = ko.observable('#');
+	this.fExportKeyCallback = null;
 	this.keyName = ko.observable('');
 }
 
@@ -22,9 +22,15 @@ _.extendOwn(CExportInformationPopup.prototype, CAbstractPopup.prototype);
 
 CExportInformationPopup.prototype.PopupTemplate = '%ModuleName%_ExportInformationPopup';
 
-CExportInformationPopup.prototype.onOpen = function (sDownloadLink, sKeyName)
+CExportInformationPopup.prototype.onOpen = function (fExportKeyCallback, sKeyName)
 {
-	this.downloadLink(sDownloadLink);
+	if (_.isFunction(fExportKeyCallback))
+	{
+		this.fExportKeyCallback = _.bind(function() {
+			this.closePopup();
+			fExportKeyCallback();
+		}, this);
+	}
 	this.keyName(sKeyName);
 };
 
