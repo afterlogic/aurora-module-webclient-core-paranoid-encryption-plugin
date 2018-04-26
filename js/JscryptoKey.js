@@ -211,7 +211,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 			Popups.showPopup(EncryptKeyPasswordPopup, [
 				_.bind(function(sPassword) {//Encrypt generated Key with User password
 					this.encryptKeyData(sKeyData, sPassword)
-						.then(_.bind(function(sKeyDataEncrypted) {//Stroe encrypted key in local storage
+						.then(_.bind(function(sKeyDataEncrypted) {//Store encrypted key in local storage
 							Storage.setData(
 								this.sPrefix + 'cryptoKey', 
 								{
@@ -219,6 +219,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 									keydata: sKeyDataEncrypted
 								}
 							);
+							this.loadKeyNameFromStorage();
 							this.onKeyGenerateSuccess(key);
 							if (_.isFunction(fOnGenerateCallback))
 							{
@@ -253,7 +254,6 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 {
 	try
 	{
-		this.keyName(sKeyName);
 		Popups.showPopup(EncryptKeyPasswordPopup, [
 			_.bind(function(sPassword) {//Encrypt imported Key with User password
 				this.encryptKeyData(sKeyData, sPassword)
@@ -308,6 +308,7 @@ CJscryptoKey.prototype.deleteKey = function ()
 	try
 	{
 		this.key(null);
+		this.keyName(null);
 		Storage.removeData(this.sPrefix + 'cryptoKey');
 	}
 	catch (e)

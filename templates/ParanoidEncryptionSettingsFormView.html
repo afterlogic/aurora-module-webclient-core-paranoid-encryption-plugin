@@ -48,9 +48,9 @@
 			
 		<div class="fieldset keys">
 			<div class="row">
-				<span class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !key()"></span>
+				<span class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !keyName()"></span>
 			</div>
-			<div class="row" data-bind="visible:key()">
+			<div class="row" data-bind="visible: keyName()">
 				<span class="hint"  data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT'}"></span>
 				<br /><br />
 				<div class="items_list folders">
@@ -65,17 +65,17 @@
 				</div>
 			</div>
 			<div class="buttons">
-				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto())  ? exportKey : false, visible: key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
+				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto())  ? exportKey : false, visible: keyName(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
 					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}"></span>
 				</span>
-				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? importFileKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
+				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? importFileKey : false, visible: !keyName(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
 					<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_FILE_KEY'}, visible: !isImporting()"></span>
 					<span data-bind="i18n: {'key':  '%MODULENAME%/ACTION_IMPORT_KEY_IN_PROGRESS'}, visible: isImporting()"></span>
 				</span>
-				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? importStringKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
+				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? importStringKey : false, visible: !keyName(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
 					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_IMPORT_STRING_KEY'}"></span>
 				</span>
-				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? generateNewKey : false, visible: !key(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
+				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto()  && !isImporting()) ? generateNewKey : false, visible: !keyName(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
 					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_GENERATE_NEW_KEY'}"></span>
 				</span>
 				<div style="height:0px;overflow:hidden">

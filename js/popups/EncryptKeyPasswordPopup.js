@@ -35,17 +35,21 @@ CEncryptKeyPasswordPopup.prototype.onOpen = function (fOnPasswordEnterCallback, 
 
 CEncryptKeyPasswordPopup.prototype.encryptKey = function ()
 {
-	if ($.trim(this.keyPassword()) && $.trim(this.keyPassword()) === $.trim(this.keyPasswordConfirm()))
+	if ($.trim(this.keyPassword()) === '')
+	{
+		this.showError(TextUtils.i18n('%MODULENAME%/ERROR_PASSWORD_CANT_BE_BLANK'));
+	}
+	else if ($.trim(this.keyPassword()) !== $.trim(this.keyPasswordConfirm()))
+	{
+		this.showError(TextUtils.i18n('COREWEBCLIENT/ERROR_PASSWORDS_DO_NOT_MATCH'));
+	}
+	else
 	{
 		if (_.isFunction(this.fOnPasswordEnterCallback))
 		{
 			this.fOnPasswordEnterCallback($.trim(this.keyPassword()));
 		}
 		this.closePopup();
-	}
-	else
-	{
-		this.showError(TextUtils.i18n('COREWEBCLIENT/ERROR_PASSWORDS_DO_NOT_MATCH'));
 	}
 };
 

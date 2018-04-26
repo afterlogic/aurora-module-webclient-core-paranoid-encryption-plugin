@@ -28,17 +28,15 @@ function CParanoidEncryptionSettingsFormView()
 	CAbstractSettingsFormView.call(this, Settings.ServerModuleName);
 
 	this.enableJscrypto = ko.observable(Settings.EnableJscrypto());
-	this.key = ko.observable('');
 	this.keyName = ko.observable('');
 	this.bIsHttpsEnable = window.location.protocol === "https:";
 	this.encryptionMode = ko.observable(Settings.EncryptionMode());
 	this.isImporting = ko.observable(false);
 	this.exportKeyBound = _.bind(this.exportKey, this);
 
-	if (ko.isObservable(JscryptoKey.key))
+	if (ko.isObservable(JscryptoKey.keyName))
 	{
-		JscryptoKey.key.subscribe(function () {
-			this.key(JscryptoKey.key());
+		JscryptoKey.keyName.subscribe(function () {
 			this.keyName(JscryptoKey.keyName());
 		}, this);
 	}
@@ -152,9 +150,7 @@ CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 
 CParanoidEncryptionSettingsFormView.prototype.onShow = function ()
 {
-	JscryptoKey.getKey(_.bind(function(oKey) {
-		this.key(oKey);
-	}, this));
+	JscryptoKey.loadKeyNameFromStorage();
 };
 
 CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
@@ -167,8 +163,7 @@ CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
 
 	JscryptoKey.getKey(
 		/*fOnGenerateKeyCallback*/_.bind(function(oKey) {
-			this.key(oKey);
-			if (this.key())
+			if (oKey)
 			{
 				JscryptoKey.exportKey()
 					.then(_.bind(function(keydata) {
