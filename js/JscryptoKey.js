@@ -22,6 +22,7 @@ function CJscryptoKey()
 	this.sPrefix = 'user_' + (UserSettings.UserId || '0') + '_';
 	this.key = ko.observable();
 	this.keyName = ko.observable();
+	this.storageName = 'cryptoKeyEncrypted';
 }
 
 CJscryptoKey.prototype.key = null;
@@ -114,9 +115,9 @@ CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallba
  */
 CJscryptoKey.prototype.loadKeyNameFromStorage = function ()
 {
-	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
+	if (Storage.hasData(this.getStorageName()))
 	{
-		this.keyName(Storage.getData(this.sPrefix + 'cryptoKey').keyname);
+		this.keyName(Storage.getData(this.getStorageName()).keyname);
 	}
 };
 
@@ -131,9 +132,9 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 		sKey = ''
 	;
 
-	if (Storage.hasData(this.sPrefix + 'cryptoKey'))
+	if (Storage.hasData(this.getStorageName()))
 	{
-		sKey = Storage.getData(this.sPrefix + 'cryptoKey').keydata;
+		sKey = Storage.getData(this.getStorageName()).keydata;
 	}
 	return sKey;
 };
@@ -213,7 +214,7 @@ CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
 					this.encryptKeyData(sKeyData, sPassword)
 						.then(_.bind(function(sKeyDataEncrypted) {//Store encrypted key in local storage
 							Storage.setData(
-								this.sPrefix + 'cryptoKey', 
+								this.getStorageName(),
 								{
 									keyname: sKeyName,
 									keydata: sKeyDataEncrypted
@@ -259,7 +260,7 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 				this.encryptKeyData(sKeyData, sPassword)
 					.then(_.bind(function(sKeyDataEncrypted) {//Stroe encrypted key in local storage
 						Storage.setData(
-							this.sPrefix + 'cryptoKey', 
+							this.getStorageName(),
 							{
 								keyname: sKeyName,
 								keydata: sKeyDataEncrypted
@@ -309,7 +310,7 @@ CJscryptoKey.prototype.deleteKey = function ()
 	{
 		this.key(null);
 		this.keyName(null);
-		Storage.removeData(this.sPrefix + 'cryptoKey');
+		Storage.removeData(this.getStorageName());
 	}
 	catch (e)
 	{
@@ -468,6 +469,11 @@ CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGe
 			fOnErrorCallback();
 		}
 	});
+};
+
+CJscryptoKey.prototype.getStorageName = function ()
+{
+	return this.sPrefix + this.storageName;
 };
 
 module.exports = new CJscryptoKey();
