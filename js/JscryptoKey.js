@@ -40,7 +40,7 @@ CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallba
 {
 	var
 		sEncryptedKeyData = this.loadKeyFromStorage(),
-		oPromise = new Promise((resolve, reject) => {
+		oPromise = new Promise(function (resolve, reject) {
 			var fDecryptKeyCallback = _.bind(function(sPassword) {
 				//Decrypt key with user password
 				this.decryptKeyData(sEncryptedKeyData, sPassword)
@@ -89,7 +89,7 @@ CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallba
 					resolve(this.key());
 				}
 			}
-		})
+		}.bind(this))
 	;
 
 	this.loadKeyNameFromStorage();
@@ -332,7 +332,7 @@ CJscryptoKey.prototype.decryptKeyData = function (sEncryptedKeyData, sPassword)
 	var
 		aVector = new Uint8Array(16) //defaults to zero
 	;
-	return new Promise((resolve, reject) => {
+	return new Promise(function (resolve, reject) {
 		if (!sEncryptedKeyData)
 		{
 			reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
@@ -355,7 +355,7 @@ CJscryptoKey.prototype.decryptKeyData = function (sEncryptedKeyData, sPassword)
 				}
 			);
 		}
-	});
+	}.bind(this));
 };
 
 /**
@@ -373,7 +373,7 @@ CJscryptoKey.prototype.encryptKeyData = function (sUserKeyData, sPassword)
 		aVector = new Uint8Array(16) //defaults to zero
 	;
 
-	return new Promise((resolve, reject) => {
+	return new Promise(function (resolve, reject) {
 		if (!sUserKeyData)
 		{
 			reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
@@ -406,7 +406,7 @@ CJscryptoKey.prototype.encryptKeyData = function (sUserKeyData, sPassword)
 				}
 			);
 		}
-	});
+	}.bind(this));
 };
 
 /**
