@@ -255,6 +255,10 @@ module.exports = function (oAppData) {
 					{
 						CCrypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback);
 					}
+					else if (_.isFunction(oParams.fOnUploadCancelCallback))
+					{
+						oParams.fOnUploadCancelCallback(oParams.sFileUploadUid, oParams.sFileUploadName);
+					}
 				});
 				App.subscribeEvent('Jua::FileUploadingError', function () {
 					if (Settings.EnableJscrypto() && IsHttpsEnable())
