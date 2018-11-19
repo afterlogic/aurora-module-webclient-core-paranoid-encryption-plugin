@@ -19,12 +19,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 	public function init()
 	{
-		$this->extendObject(
-			'Aurora\Modules\Core\Classes\User', 
-			array(
+		\Aurora\Modules\Core\Classes\User::extend(
+			self::GetName(), 
+			[
 				'EnableModule' => array('bool', $this->getConfig('EnabledByDefault', false)),
 				'EncryptionMode' => array('int', 1)
-			)
+			]
 		);
 	}
 
@@ -41,8 +41,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if (!empty($oUser) && $oUser->Role === \Aurora\System\Enums\UserRole::NormalUser)
 		{
 			return array(
-				'EnableModule' => $oUser->{$this->GetName().'::EnableModule'},
-				'EncryptionMode' => $oUser->{$this->GetName().'::EncryptionMode'}
+				'EnableModule' => $oUser->{self::GetName().'::EnableModule'},
+				'EncryptionMode' => $oUser->{self::GetName().'::EncryptionMode'}
 			);
 		}
 
@@ -64,8 +64,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		{
 			$oCoreDecorator = \Aurora\Modules\Core\Module::Decorator();
 			$oUser = $oCoreDecorator->GetUser($iUserId);
-			$oUser->{$this->GetName().'::EnableModule'} = $EnableModule;
-			$oUser->{$this->GetName().'::EncryptionMode'} = $EncryptionMode;
+			$oUser->{self::GetName().'::EnableModule'} = $EnableModule;
+			$oUser->{self::GetName().'::EncryptionMode'} = $EncryptionMode;
 			$oCoreDecorator->UpdateUserObject($oUser);
 		}
 		return true;
