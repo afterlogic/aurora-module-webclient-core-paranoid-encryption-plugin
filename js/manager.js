@@ -2,7 +2,7 @@
 
 require('modules/%ModuleName%/js/enums.js');
 
-var	
+var
 	_ = require('underscore'),
 
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
@@ -267,8 +267,10 @@ module.exports = function (oAppData) {
 						CCrypto.checkQueue();
 					}
 				});
-				App.subscribeEvent('FilesWebclient::ParseFile::after', function (oFile) {
-					var 
+				App.subscribeEvent('FilesWebclient::ParseFile::after', function (aParams) {
+
+					var
+						oFile = aParams[0],
 						bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined',
 						iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false
 					;
