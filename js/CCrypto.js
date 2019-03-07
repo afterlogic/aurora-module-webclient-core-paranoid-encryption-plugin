@@ -8,16 +8,17 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
-	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
+	Settings = require('modules/%ModuleName%/js/Settings.js')
 ;
 
 /**
  * @constructor
  */
 function CCrypto()
-{ 
+{
 	this.iChunkNumber = 0;
-	this.iChunkSize = 5 * 1024 * 1024;
+	this.iChunkSize = Settings.ChunkSizeMb * 1024 * 1024;
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = null;
@@ -69,10 +70,6 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 	if (this.aStopList.indexOf(sUid) !== -1)
 	{ // if user canceled uploading file with uid = sUid
 		this.aStopList.splice(this.aStopList.indexOf(sUid), 1);
-		if (this.fOnUploadCancelCallback !== null)
-		{
-			this.fOnUploadCancelCallback(sUid, this.oFileInfo.FileName);
-		}
 		this.checkQueue();
 		return;
 	}
@@ -187,7 +184,7 @@ CCrypto.prototype.checkQueue = function ()
 * @param {String} sUid
 * @param {Function} fOnUploadCancelCallback
 */
-CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
+CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback, sFileName)
 {
 	var bFileInQueue = false;
 	 // If file await to be uploaded - delete it from queue
@@ -199,11 +196,13 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback)
 			bFileInQueue = true;
 		}
 	});
+
 	if (!bFileInQueue)
 	{
 		this.aStopList.push(sUid);
 		this.oChunkQueue.isProcessed = false;
-		this.fOnUploadCancelCallback = fOnUploadCancelCallback;
+		fOnUploadCancelCallback(sUid, sFileName);
+		this.checkQueue();
 	}
 };
 

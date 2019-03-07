@@ -40,10 +40,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$oUser = \Aurora\System\Api::getAuthenticatedUser();
 		if (!empty($oUser) && $oUser->Role === \Aurora\System\Enums\UserRole::NormalUser)
 		{
-			return array(
-				'EnableModule' => $oUser->{self::GetName().'::EnableModule'},
-				'EncryptionMode' => $oUser->{self::GetName().'::EncryptionMode'}
-			);
+			return [
+				'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
+				'EncryptionMode'		=> $oUser->{self::GetName().'::EncryptionMode'},
+				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
+				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true)
+			];
 		}
 
 		return null;

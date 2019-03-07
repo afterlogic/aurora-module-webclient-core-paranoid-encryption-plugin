@@ -3,7 +3,7 @@
 var
 	ko = require('knockout'),
 	_ = require('underscore'),
-	
+
 	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js')
 ;
 
@@ -11,10 +11,12 @@ module.exports = {
 	ServerModuleName: '%ModuleName%',
 	HashModuleName: 'paranoid-encryption',
 	EncryptionAllowedModules: ['Files'],
-	
+
 	EnableJscrypto: ko.observable(true),
 	EncryptionMode: ko.observable(Enums.EncryptionMode.Always),
-	
+	ChunkSizeMb: 5,
+	AllowMultiChunkUpload: true,
+
 	/**
 	 * Initializes settings from AppData object sections.
 	 * 
@@ -23,14 +25,16 @@ module.exports = {
 	init: function (oAppData)
 	{
 		var oAppDataSection = _.extend({}, oAppData[this.ServerModuleName] || {}, oAppData['%ModuleName%'] || {});
-		
+
 		if (!_.isEmpty(oAppDataSection))
 		{
 			this.EnableJscrypto(Types.pBool(oAppDataSection.EnableModule, this.EnableJscrypto()));
 			this.EncryptionMode(Types.pEnum(oAppDataSection.EncryptionMode, Enums.EncryptionMode, this.EncryptionMode()));
+			this.ChunkSizeMb = Types.pInt(oAppDataSection.ChunkSizeMb, this.ChunkSizeMb);
+			this.AllowMultiChunkUpload = Types.pBool(oAppDataSection.AllowMultiChunkUpload, this.AllowMultiChunkUpload);
 		}
 	},
-	
+
 	/**
 	 * Updates new settings values after saving on server.
 	 * 

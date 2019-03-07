@@ -3,12 +3,20 @@
 		false,
 		"bool"
 	],
-    "AvailableFor": [
+	"AvailableFor": [
 		["FilesWebclient"],
 		"array"
 	],
 	"EnabledByDefault": [
 		false,
+		"bool"
+	],
+	"ChunkSizeMb": [
+		5,
+		"int"
+	],
+	"AllowMultiChunkUpload": [
+		true,
 		"bool"
 	]
 }
