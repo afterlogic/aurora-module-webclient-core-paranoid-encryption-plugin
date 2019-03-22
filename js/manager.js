@@ -134,7 +134,16 @@ module.exports = function (oAppData) {
 							else
 							{
 								// Starts upload an encrypted file
-								Crypto.startUpload(oFileInfo, sUid, fOnChunkEncryptCallback);
+								Crypto.startUpload(
+									oFileInfo,
+									sUid,
+									fOnChunkEncryptCallback,
+									_.bind(function () {
+										fCancelFunction(sUid);
+										Crypto.oChunkQueue.isProcessed = false;
+										Crypto.checkQueue();
+									}, this)
+								);
 							}
 						},
 						fUpload = _.bind(function () {

@@ -16,7 +16,6 @@ function CDecryptKeyPasswordPopup()
 
 	this.keyPassword = ko.observable('');
 	this.fOnPasswordEnterCallback = null;
-	this.fOnWrongPasswordCallback = null;
 	this.fOnCancellCallback = null;
 }
 

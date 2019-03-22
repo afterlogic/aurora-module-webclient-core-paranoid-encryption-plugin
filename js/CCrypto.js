@@ -43,13 +43,15 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv)) };
 };
 
-CCrypto.prototype.startUpload = function (oFileInfo, sUid, fOnChunkEncryptCallback)
+CCrypto.prototype.startUpload = function (oFileInfo, sUid, fOnChunkEncryptCallback, fCancelCallback)
 {
 	this.oChunkQueue.isProcessed = true;
 	this.start(oFileInfo);
-	JscryptoKey.getKey(_.bind(function() {
+	JscryptoKey.getKey(
+		_.bind(function() {
 			this.readChunk(sUid, fOnChunkEncryptCallback);
-		}, this)
+		},this),
+		fCancelCallback
 	);
 };
 
