@@ -422,8 +422,20 @@ CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGe
 		sSalt = "the salt is this string",
 		convertStringToArrayBuffer = function (sData)
 		{
-			var oEncoder = new TextEncoder("utf-8");
-			return oEncoder.encode(sData);
+			if (window.TextEncoder)
+			{
+				return new TextEncoder('utf-8').encode(sData);
+			}
+			
+			var
+				sUtf8 = unescape(encodeURIComponent(sData)),
+				sResult = new Uint8Array(sUtf8.length)
+			;
+			for (var i = 0; i < sUtf8.length; i++)
+			{
+				sResult[i] = sUtf8.charCodeAt(i);
+			}
+			return sResult;
 		}
 	;
 
