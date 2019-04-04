@@ -256,9 +256,9 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 	try
 	{
 		Popups.showPopup(EncryptKeyPasswordPopup, [
-			_.bind(function(sPassword) {//Encrypt imported Key with User password
+			_.bind(function(sPassword) { // Encrypt imported Key with User password
 				this.encryptKeyData(sKeyData, sPassword)
-					.then(_.bind(function(sKeyDataEncrypted) {//Stroe encrypted key in local storage
+					.then(_.bind(function(sKeyDataEncrypted) { // Store encrypted key in local storage
 						Storage.setData(
 							this.getStorageName(),
 							{
@@ -270,9 +270,14 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 					}, this))
 					.catch(function() {
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+						if (_.isFunction(fOnErrorCallback))
+						{
+							fOnErrorCallback();
+						}
 					});
 			}, this),
 			function() {
+				// Cancel callback
 				if (_.isFunction(fOnErrorCallback))
 				{
 					fOnErrorCallback();
@@ -283,6 +288,10 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 	catch (e)
 	{
 		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_IMPORT_KEY'));
+		if (_.isFunction(fOnErrorCallback))
+		{
+			fOnErrorCallback();
+		}
 	}
 };
 
