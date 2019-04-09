@@ -248,6 +248,12 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('CFilesView::FileUploadCancel', function (oParams) {
 		if (Settings.EnableJscrypto() && IsHttpsEnable())
 		{
+			//clear queue
+			Crypto.oChunkQueue.aFiles.forEach(function (oData, index, array) {
+					oParams.fOnUploadCancelCallback(oData.sUid, oData.oFileInfo.FileName);
+			});
+			Crypto.oChunkQueue.aFiles = [];
+
 			Crypto.stopUploading(oParams.sFileUploadUid , oParams.fOnUploadCancelCallback, oParams.sFileUploadName);
 		}
 		else if (_.isFunction(oParams.fOnUploadCancelCallback))

@@ -204,7 +204,7 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback, sFile
 		this.aStopList.push(sUid);
 		this.oChunkQueue.isProcessed = false;
 		fOnUploadCancelCallback(sUid, sFileName);
-		this.checkQueue();
+//		this.checkQueue();
 	}
 };
 
