@@ -11,6 +11,7 @@ module.exports = {
 	ServerModuleName: '%ModuleName%',
 	HashModuleName: 'paranoid-encryption',
 	EncryptionAllowedModules: ['Files'],
+	EncryptionAllowedStorages: ['personal', 'corporate'],
 
 	EnableJscrypto: ko.observable(true),
 	EncryptionMode: ko.observable(Enums.EncryptionMode.Always),

@@ -155,8 +155,15 @@ function StartModule (ModulesManager)
 			})
 		;
 
-		if (!Settings.EnableJscrypto() || (Settings.EncryptionAllowedModules && Settings.EncryptionAllowedModules.length > 0 && !Settings.EncryptionAllowedModules.includes(sModuleName))
-			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never)
+		if (!Settings.EnableJscrypto()
+			|| (
+				Settings.EncryptionAllowedModules &&
+				Settings.EncryptionAllowedModules.length > 0 &&
+				!Settings.EncryptionAllowedModules.includes(sModuleName)
+			)
+			|| !Settings.EncryptionAllowedStorages.includes(oParams.sStorageType)
+			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never
+		)
 		{
 			fRegularUploadFileCallback(sUid, oFileInfo);
 		}
