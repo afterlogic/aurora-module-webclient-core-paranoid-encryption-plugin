@@ -6,4 +6,4 @@ You will be able to generate your own encryption key and store it in some secure
 Not only browser can be used for decrypt files. All files are encrypted using AES-CBC algorithm with a 256 bit key length. You can decrypt files using some offline programs which support AES 256 algorithm. Of course you will need you encryption key. Don't forget to store it.
 
 # License
-This module is licensed under AGPLv3 license if free version of the product is used or AfterLogic Software License if commercial version of the product was purchased.
+This module is licensed under AGPLv3 license if free version of the product is used or Afterlogic Software License if commercial version of the product was purchased.
