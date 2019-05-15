@@ -40,7 +40,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
 
 		$oUser = \Aurora\System\Api::getAuthenticatedUser();
-		if (!empty($oUser) && $oUser->Role === \Aurora\System\Enums\UserRole::NormalUser)
+		if (!empty($oUser) && $oUser->isNormalOrTenant())
 		{
 			return [
 				'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
