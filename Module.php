@@ -66,11 +66,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$iUserId = \Aurora\System\Api::getAuthenticatedUserId();
 		if (0 < $iUserId)
 		{
-			$oCoreDecorator = \Aurora\Modules\Core\Module::Decorator();
-			$oUser = $oCoreDecorator->GetUser($iUserId);
+			$oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserUnchecked($iUserId);
 			$oUser->{self::GetName().'::EnableModule'} = $EnableModule;
 			$oUser->{self::GetName().'::EncryptionMode'} = $EncryptionMode;
-			$oCoreDecorator->UpdateUserObject($oUser);
+			\Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
 		}
 		return true;
 	}
