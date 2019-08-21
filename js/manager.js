@@ -161,15 +161,16 @@ function StartModule (ModulesManager)
 				Settings.EncryptionAllowedModules.length > 0 &&
 				!Settings.EncryptionAllowedModules.includes(sModuleName)
 			)
-			|| !Settings.EncryptionAllowedStorages.includes(oParams.sStorageType)
-			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never
+			|| (!Settings.EncryptionAllowedStorages.includes(oParams.sStorageType) && oParams.sStorageType !== 'encrypted')
+			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never 
+			|| (Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder && oParams.sStorageType !== 'encrypted')
 		)
 		{
 			fRegularUploadFileCallback(sUid, oFileInfo);
 		}
 		else if (!IsHttpsEnable())
 		{
-			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always)
+			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always || Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder)
 			{
 				//for Always encryption mode show error
 				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
@@ -183,7 +184,7 @@ function StartModule (ModulesManager)
 		}
 		else if (!Crypto.isKeyInStorage())
 		{
-			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always)
+			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always || Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder)
 			{
 				//for Always encryption mode show error
 				Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));

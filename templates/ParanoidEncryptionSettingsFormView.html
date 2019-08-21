@@ -19,6 +19,12 @@
 			<div class="row">
 				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>
 				<span class="value">
+					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.AlwaysInEncryptedFolder, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
+						<span class="icon"></span>
+						<input type="radio" id="tab_always_in_encrypted_folder" data-bind="checked: bIsHttpsEnable && enableJscrypto() ?encryptionMode : false, attr: {'value': Enums.EncryptionMode.AlwaysInEncryptedFolder}" />
+					</label>
+					<label for="tab_always_in_encrypted_folder" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ALWAYS_IN_ENCRYPTED_FOLDER'}"></label>
+
 					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.Always, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
 						<span class="icon"></span>
 						<input type="radio" id="tab_always" data-bind="checked: bIsHttpsEnable && enableJscrypto() ? encryptionMode : false, attr: {'value': Enums.EncryptionMode.Always}" />

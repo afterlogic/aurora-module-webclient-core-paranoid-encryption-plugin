@@ -18,6 +18,9 @@ namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
  */
 class Module extends \Aurora\System\Module\AbstractWebclientModule
 {
+	static $sStorageType = 'encrypted';
+	static $sEncryptedFolder = '.encrypted';
+	protected $aRequireModules = ['PersonalFiles'];
 
 	public function init()
 	{
@@ -28,6 +31,203 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				'EncryptionMode' => array('int', 1)
 			]
 		);
+
+		$this->subscribeEvent('Files::GetStorages::after', array($this, 'onAfterGetStorages'), 1);
+		$this->subscribeEvent('System::toResponseArray::before', array($this, 'onBeforeToResponseArray'));
+
+		$this->subscribeEvent('Files::GetFile', array($this, 'onGetFile'));
+		$this->subscribeEvent('Files::CreateFile', array($this, 'onCreateFile'));
+
+		$this->subscribeEvent('Files::GetItems::before', array($this, 'onBeforeGetItems'));
+		$this->subscribeEvent('Files::GetItems::after', array($this, 'onAfterGetItems'));
+		$this->subscribeEvent('Files::Copy::before', array($this, 'onBeforeCopyOrMove'));
+		$this->subscribeEvent('Files::Move::before', array($this, 'onBeforeCopyOrMove'));
+		$this->subscribeEvent('Files::Delete::before', array($this, 'onBeforeDelete'));
+
+		$this->subscribeEvent('Files::GetFileInfo::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::CreateFolder::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::Rename::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::GetQuota::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::CreateLink::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::GetFileContent::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::IsFileExists::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::CheckQuota::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::CreatePublicLink::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::DeletePublicLink::before', array($this, 'onBeforeMethod'));
+	}
+
+	protected function getEncryptedPath($sPath)
+	{
+		return '/' . self::$sEncryptedFolder . \ltrim($sPath);
+	}
+
+	protected function startsWith($haystack, $needle)
+	{
+		 $length = strlen($needle);
+		 return (substr($haystack, 0, $length) === $needle);
+	}
+
+	public function onAfterGetStorages($aArgs, &$mResult)
+	{
+		array_unshift($mResult, [
+			'Type' => static::$sStorageType, 
+			'DisplayName' => $this->i18N('LABEL_STORAGE'), 
+			'IsExternal' => false
+		]);
+	}
+
+	public function onGetFile($aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = 'personal';
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+
+			$this->GetModuleManager()->broadcastEvent(
+				'Files',
+				'GetFile', 
+				$aArgs,
+				$mResult
+			);				
+		}
+	}
+
+	public function onCreateFile($aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = 'personal';
+			$aArgs['Path'] =  $this->getEncryptedPath($aArgs['Path']);
+
+			$this->GetModuleManager()->broadcastEvent(
+				'Files',
+				'CreateFile', 
+				$aArgs,
+				$mResult
+			);				
+		}
+	}
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onBeforeGetItems(&$aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = 'personal';
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+
+			if(!\Aurora\Modules\Files\Module::Decorator()->IsFileExists($aArgs['UserId'], $aArgs['Type'], '', self::$sEncryptedFolder))
+			{
+				\Aurora\Modules\Files\Module::Decorator()->CreateFolder($aArgs['UserId'], $aArgs['Type'], '', self::$sEncryptedFolder);
+			}
+		}
+	}	
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onAfterGetItems(&$aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === 'personal' && $aArgs['Path'] === '' && is_array($mResult))
+		{
+			foreach ($mResult as $iKey => $oFileItem)
+			{
+				if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
+				{
+					unset($mResult[$iKey]);
+				}
+			}
+		}
+	}	
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onBeforeCopyOrMove(&$aArgs, &$mResult)
+	{
+		if ($aArgs['FromType'] === self::$sStorageType || $aArgs['ToType'] === self::$sStorageType)
+		{
+			if ($aArgs['FromType'] === self::$sStorageType)
+			{
+				$aArgs['FromType'] = 'personal';
+				$aArgs['FromPath'] = $this->getEncryptedPath($aArgs['FromPath']);
+			}
+			if ($aArgs['ToType'] === self::$sStorageType)
+			{
+				$aArgs['ToType'] = 'personal';
+				$aArgs['ToPath'] = $this->getEncryptedPath($aArgs['ToPath']);
+			}
+
+			foreach ($aArgs['Files'] as $iKey => $aItem)
+			{
+				if ($aItem['FromType'] === self::$sStorageType)
+				{
+					$aArgs['Files'][$iKey]['FromType'] = 'personal';
+					$aArgs['Files'][$iKey]['FromPath'] = $this->getEncryptedPath($aItem['FromPath']);
+				}
+			}
+		}
+	}	
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onBeforeDelete(&$aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = 'personal';
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+
+			foreach ($aArgs['Items'] as $iKey => $aItem)
+			{
+				$aArgs['Items'][$iKey]['Path'] = $this->getEncryptedPath($aItem['Path']);
+			}
+		}
+	}		
+
+	/**
+	 * @ignore
+	 * @param array $aArgs Arguments of event.
+	 * @param mixed $mResult Is passed by reference.
+	 */
+	public function onBeforeMethod	(&$aArgs, &$mResult)
+	{
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = 'personal';
+			if (isset($aArgs['Path']))
+			{
+				$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+			}
+		}
+	}
+
+	/**
+	 * @param [type] $aArgs
+	 * @return void
+	 */
+	public function onBeforeToResponseArray	(&$aArgs)
+	{
+		if (isset($aArgs[0]) && $aArgs[0] instanceof \Aurora\Modules\Files\Classes\FileItem)
+		{
+			if ($this->startsWith($aArgs[0]->Path, '/.encrypted'))
+			{
+				$aArgs[0]->Path = str_replace('/.encrypted', '', $aArgs[0]->Path);
+				$aArgs[0]->FullPath = str_replace('/.encrypted', '', $aArgs[0]->FullPath);
+				$aArgs[0]->TypeStr = self::$sStorageType;
+			}
+		}
 	}
 
 	/**

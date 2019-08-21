@@ -45,6 +45,6 @@ module.exports = {
 	update: function (bEnableJscrypto, iEncryptionMode)
 	{
 		this.EnableJscrypto(bEnableJscrypto);
-		this.EncryptionMode(iEncryptionMode);
+		this.EncryptionMode(Types.pInt(iEncryptionMode));
 	}
 };

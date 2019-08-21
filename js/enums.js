@@ -11,7 +11,8 @@ var
 Enums.EncryptionMode = {
 	Always: 0,
 	AskMe: 1,
-	Never: 2
+	Never: 2,
+	AlwaysInEncryptedFolder: 3
 };
 
 if (typeof window.Enums === 'undefined')
