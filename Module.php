@@ -19,6 +19,7 @@ namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 class Module extends \Aurora\System\Module\AbstractWebclientModule
 {
 	static $sStorageType = 'encrypted';
+	static $sPersonalStorageType = 'personal';
 	static $sEncryptedFolder = '.encrypted';
 	protected $aRequireModules = ['PersonalFiles'];
 
@@ -28,7 +29,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			self::GetName(), 
 			[
 				'EnableModule' => array('bool', $this->getConfig('EnabledByDefault', false)),
-				'EncryptionMode' => array('int', 1)
+				'EncryptionMode' => array('int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe))
 			]
 		);
 
@@ -80,7 +81,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
-			$aArgs['Type'] = 'personal';
+			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 
 			$this->GetModuleManager()->broadcastEvent(
@@ -96,7 +97,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
-			$aArgs['Type'] = 'personal';
+			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] =  $this->getEncryptedPath($aArgs['Path']);
 
 			$this->GetModuleManager()->broadcastEvent(
@@ -117,7 +118,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
-			$aArgs['Type'] = 'personal';
+			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 
 			if(!\Aurora\Modules\Files\Module::Decorator()->IsFileExists($aArgs['UserId'], $aArgs['Type'], '', self::$sEncryptedFolder))
@@ -134,7 +135,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 */
 	public function onAfterGetItems(&$aArgs, &$mResult)
 	{
-		if ($aArgs['Type'] === 'personal' && $aArgs['Path'] === '' && is_array($mResult))
+		if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
 		{
 			foreach ($mResult as $iKey => $oFileItem)
 			{
@@ -157,12 +158,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		{
 			if ($aArgs['FromType'] === self::$sStorageType)
 			{
-				$aArgs['FromType'] = 'personal';
+				$aArgs['FromType'] = self::$sPersonalStorageType;
 				$aArgs['FromPath'] = $this->getEncryptedPath($aArgs['FromPath']);
 			}
 			if ($aArgs['ToType'] === self::$sStorageType)
 			{
-				$aArgs['ToType'] = 'personal';
+				$aArgs['ToType'] = self::$sPersonalStorageType;
 				$aArgs['ToPath'] = $this->getEncryptedPath($aArgs['ToPath']);
 			}
 
@@ -170,7 +171,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			{
 				if ($aItem['FromType'] === self::$sStorageType)
 				{
-					$aArgs['Files'][$iKey]['FromType'] = 'personal';
+					$aArgs['Files'][$iKey]['FromType'] = self::$sPersonalStorageType;
 					$aArgs['Files'][$iKey]['FromPath'] = $this->getEncryptedPath($aItem['FromPath']);
 				}
 			}
@@ -186,7 +187,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
-			$aArgs['Type'] = 'personal';
+			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 
 			foreach ($aArgs['Items'] as $iKey => $aItem)
@@ -205,7 +206,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Type'] === self::$sStorageType)
 		{
-			$aArgs['Type'] = 'personal';
+			$aArgs['Type'] = self::$sPersonalStorageType;
 			if (isset($aArgs['Path']))
 			{
 				$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);

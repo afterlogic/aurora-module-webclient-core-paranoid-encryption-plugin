@@ -11,6 +11,10 @@
 		false,
 		"bool"
 	],
+	"EncryptionModeByDefault": [
+		1,
+		"int"
+	],
 	"ChunkSizeMb": [
 		5,
 		"int"
