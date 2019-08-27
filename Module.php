@@ -29,7 +29,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			self::GetName(), 
 			[
 				'EnableModule' => array('bool', $this->getConfig('EnabledByDefault', false)),
-				'EncryptionMode' => array('int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe))
+				'EncryptionMode' => array('int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe)),
+				'AllowChangeSettings' => array('bool', $this->getConfig('AllowChangeSettings', true)),
 			]
 		);
 
@@ -70,11 +71,14 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
-		array_unshift($mResult, [
-			'Type' => static::$sStorageType, 
-			'DisplayName' => $this->i18N('LABEL_STORAGE'), 
-			'IsExternal' => false
-		]);
+		if ($this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
+		{
+			array_unshift($mResult, [
+				'Type' => static::$sStorageType, 
+				'DisplayName' => $this->i18N('LABEL_STORAGE'), 
+				'IsExternal' => false
+			]);
+		}
 	}
 
 	public function onGetFile($aArgs, &$mResult)
@@ -135,13 +139,16 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 */
 	public function onAfterGetItems(&$aArgs, &$mResult)
 	{
-		if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
+		if ($this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
 		{
-			foreach ($mResult as $iKey => $oFileItem)
+			if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
 			{
-				if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
+				foreach ($mResult as $iKey => $oFileItem)
 				{
-					unset($mResult[$iKey]);
+					if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
+					{
+						unset($mResult[$iKey]);
+					}
 				}
 			}
 		}
@@ -230,6 +237,21 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
+	protected function getEncryptionMode()
+	{
+		$mResult = false;
+		if ($this->getConfig('AllowChangeSettings', true))
+		{
+			$oUser = \Aurora\System\Api::getAuthenticatedUser();
+			$mResult = $oUser->{self::GetName().'::EncryptionMode'};
+		}
+		else
+		{
+			$mResult = $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe);
+		}
+
+		return $mResult;
+	}
 
 	/**
 	 * Obtains list of module settings for authenticated user.
@@ -239,19 +261,20 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function GetSettings()
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
-
+		$aSettings = null;
 		$oUser = \Aurora\System\Api::getAuthenticatedUser();
 		if (!empty($oUser) && $oUser->isNormalOrTenant())
 		{
-			return [
+			$aSettings = [
 				'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
-				'EncryptionMode'		=> $oUser->{self::GetName().'::EncryptionMode'},
 				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
-				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true)
+				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
+				'AllowChangeSettings' => $this->getConfig('AllowChangeSettings', true),
+				'EncryptionMode' => $this->getEncryptionMode()
 			];
 		}
 
-		return null;
+		return $aSettings;
 	}
 
 	/**

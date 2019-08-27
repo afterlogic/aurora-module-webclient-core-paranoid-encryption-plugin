@@ -16,7 +16,7 @@
 				<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
 			</div>
 			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_JSCRYPTO'}"></div>
-			<div class="row">
+			<div class="row" data-bind="visible: allowChangeSettings()">
 				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>
 				<span class="value">
 					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.AlwaysInEncryptedFolder, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">

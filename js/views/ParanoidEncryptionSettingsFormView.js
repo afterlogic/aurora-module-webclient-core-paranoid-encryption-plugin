@@ -31,6 +31,7 @@ function CParanoidEncryptionSettingsFormView()
 	this.keyName = ko.observable('');
 	this.bIsHttpsEnable = window.location.protocol === "https:";
 	this.encryptionMode = ko.observable(Settings.EncryptionMode());
+	this.allowChangeSettings = ko.observable(Settings.AllowChangeSettings);
 	this.isImporting = ko.observable(false);
 	this.exportKeyBound = _.bind(this.exportKey, this);
 

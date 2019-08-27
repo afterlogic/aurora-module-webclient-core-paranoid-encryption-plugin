@@ -17,6 +17,7 @@ module.exports = {
 	EncryptionMode: ko.observable(Enums.EncryptionMode.Always),
 	ChunkSizeMb: 5,
 	AllowMultiChunkUpload: true,
+	AllowChangeSettings: false,
 
 	/**
 	 * Initializes settings from AppData object sections.
@@ -33,6 +34,7 @@ module.exports = {
 			this.EncryptionMode(Types.pEnum(oAppDataSection.EncryptionMode, Enums.EncryptionMode, this.EncryptionMode()));
 			this.ChunkSizeMb = Types.pInt(oAppDataSection.ChunkSizeMb, this.ChunkSizeMb);
 			this.AllowMultiChunkUpload = Types.pBool(oAppDataSection.AllowMultiChunkUpload, this.AllowMultiChunkUpload);
+			this.AllowChangeSettings = Types.pBool(oAppDataSection.AllowChangeSettings, this.AllowChangeSettings);
 		}
 	},
 
