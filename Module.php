@@ -19,6 +19,7 @@ namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 class Module extends \Aurora\System\Module\AbstractWebclientModule
 {
 	static $sStorageType = 'encrypted';
+	static $iStorageOrder = 10;
 	static $sPersonalStorageType = 'personal';
 	static $sEncryptedFolder = '.encrypted';
 	protected $aRequireModules = ['PersonalFiles'];
@@ -76,7 +77,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			array_unshift($mResult, [
 				'Type' => static::$sStorageType, 
 				'DisplayName' => $this->i18N('LABEL_STORAGE'), 
-				'IsExternal' => false
+				'IsExternal' => false,
+				'Order' => static::$iStorageOrder
 			]);
 		}
 	}
