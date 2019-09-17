@@ -72,7 +72,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
-		if ($this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
+		$oUser = \Aurora\System\Api::getAuthenticatedUser();
+		if ($oUser->{$this->GetName() . '::EnableModule'} && $this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
 		{
 			array_unshift($mResult, [
 				'Type' => static::$sStorageType, 
