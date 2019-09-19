@@ -15,7 +15,8 @@ var
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
-	isConfirmPopupShown = false
+	isConfirmPopupShown = false,
+	oButtonsView = null
 ;
 
 function IsHttpsEnable()
@@ -308,6 +309,16 @@ function StartModule (ModulesManager)
 	});
 }
 
+function getButtonView()
+{
+	if (!oButtonsView)
+	{
+		oButtonsView = require('modules/%ModuleName%/js/views/ButtonsView.js');
+	}
+
+	return oButtonsView;
+}
+
 module.exports = function (oAppData) {
 	Settings.init(oAppData);
 	Crypto = require('modules/%ModuleName%/js/CCrypto.js');
@@ -319,6 +330,8 @@ module.exports = function (oAppData) {
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
+			ModulesManager.run('FilesWebclient', 'registerToolbarButtons', [getButtonView()]);
+
 			var bBlobSavingEnable = window.Blob && window.URL && _.isFunction(window.URL.createObjectURL);
 			// Module can't work without saving blob and shouldn't be initialized.
 			if (bBlobSavingEnable)
