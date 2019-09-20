@@ -79,7 +79,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				'Type' => static::$sStorageType, 
 				'DisplayName' => $this->i18N('LABEL_STORAGE'), 
 				'IsExternal' => false,
-				'Order' => static::$iStorageOrder
+				'Order' => static::$iStorageOrder,
+				'IsDroppable' => false
 			]);
 		}
 	}
