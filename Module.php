@@ -22,7 +22,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	static $iStorageOrder = 10;
 	static $sPersonalStorageType = 'personal';
 	static $sEncryptedFolder = '.encrypted';
-	protected $aRequireModules = ['PersonalFiles'];
+	protected $aRequireModules = ['PersonalFiles','S3Filestorage'];
 
 	public function init()
 	{
