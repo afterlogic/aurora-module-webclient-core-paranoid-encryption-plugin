@@ -91,6 +91,35 @@ function StartModule (ModulesManager)
 		}
 	});
 
+	App.subscribeEvent('OpenPgpFilesWebclient::DownloadSecureFile', function (oParams) {
+		var
+			oFile = oParams.File,
+			iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
+			fProcessBlobCallback = oParams.fProcessBlobCallback
+		;
+
+		//User can decrypt only own files
+		if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_СANT_DECRYPT_FILE'));
+		}
+		else if (!IsHttpsEnable())
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+			oParams.CancelDownload = true;
+		}
+		else if (!Crypto.isKeyInStorage())
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
+			oParams.CancelDownload = true;
+		}
+		else
+		{
+			oFile.startDownloading();
+			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback);
+		}
+	});
+
 	App.subscribeEvent('Jua::FileUpload::before', function (oParams) {
 		var
 			sUid = oParams.sUid,

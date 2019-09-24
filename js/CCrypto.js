@@ -164,9 +164,9 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (oFile, iv)
+CCrypto.prototype.downloadDividedFile = function (oFile, iv, fProcessBlobCallback)
 {
-	new CDownloadFile(oFile, iv, this.iChunkSize);
+	new CDownloadFile(oFile, iv, this.iChunkSize, fProcessBlobCallback);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -225,13 +225,13 @@ CCrypto.prototype.isKeyInStorage = function ()
 	return !!JscryptoKey.loadKeyFromStorage();
 };
 
-function CDownloadFile(oFile, iv, iChunkSize)
+function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
 	this.iFileSize = oFile.size();
 	this.sDownloadLink = oFile.getActionUrl('download');
-	this.oWriter = new CWriter(this.sFileName);
+	this.oWriter = new CWriter(this.sFileName, fProcessBlobCallback);
 	this.iCurrChunk = 0;
 	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
 	this.key = null;
@@ -405,11 +405,16 @@ CDownloadFile.prototype.isDownloading = function ()
 * 
 * @constructor
 * @param {String} sFileName
+* @param {Function} fProcessBlobCallback
 */
-function CWriter(sFileName)
+function CWriter(sFileName, fProcessBlobCallback)
 {
 	this.sName = sFileName;
 	this.aBuffer = [];
+	if (_.isFunction(fProcessBlobCallback))
+	{
+		this.fProcessBlobCallback = fProcessBlobCallback;
+	}
 }
 CWriter.prototype.write = function (oDecryptedUint8Array)
 {
@@ -417,8 +422,16 @@ CWriter.prototype.write = function (oDecryptedUint8Array)
 };
 CWriter.prototype.close = function ()
 {
-	var file = new Blob(this.aBuffer);
-	FileSaver.saveAs(file, this.sName);
+	let file = new Blob(this.aBuffer);
+
+	if (typeof this.fProcessBlobCallback !== 'undefined')
+	{
+		this.fProcessBlobCallback(file);
+	}
+	else
+	{
+		FileSaver.saveAs(file, this.sName);
+	}
 	file = null;
 };
 
