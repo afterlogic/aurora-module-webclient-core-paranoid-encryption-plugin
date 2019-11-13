@@ -4,6 +4,7 @@ require('modules/%ModuleName%/js/enums.js');
 
 var
 	_ = require('underscore'),
+	ko = require('knockout'),
 
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
@@ -16,7 +17,8 @@ var
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false,
-	oButtonsView = null
+	oButtonsView = null,
+	FilesView = null
 ;
 
 function IsHttpsEnable()
@@ -336,6 +338,22 @@ function StartModule (ModulesManager)
 			return !(typeof(oArg.oExtendedProps) !== 'undefined' &&  typeof(oArg.oExtendedProps.InitializationVector) !== 'undefined');
 		}));
 	});
+
+
+	Settings.EnableJscrypto.subscribe(function(newValue) {
+		if (FilesView !== null)
+		{
+			FilesView.requestStorages();
+		}
+	});
+
+	App.subscribeEvent('FilesWebclient::ConstructView::after', function (oParams) {
+		if ('CFilesView' === oParams.Name)
+		{
+			FilesView = oParams.View;
+		}
+	});
+
 }
 
 function getButtonView()
@@ -373,13 +391,18 @@ module.exports = function (oAppData) {
 				}
 				else if (window.crypto && window.crypto.subtle)
 				{
-					var sPassword = window.crypto.getRandomValues(new Uint8Array(16));
-					// window.crypto can't work with PBKDF2 in Edge.
-					// Checks if it works (in case if it will work in Edge one day) and then inizializes module.
-					window.crypto.subtle.importKey('raw', sPassword, {name: 'PBKDF2'}, false, ['deriveBits', 'deriveKey'])
-						.then(function () {
-							StartModule(ModulesManager);
-						});
+					if (!Browser.edge)
+					{
+						StartModule(ModulesManager);
+
+					}
+					// var sPassword = window.crypto.getRandomValues(new Uint8Array(16));
+					// // window.crypto can't work with PBKDF2 in Edge.
+					// // Checks if it works (in case if it will work in Edge one day) and then inizializes module.
+					// window.crypto.subtle.importKey('raw', sPassword, {name: 'PBKDF2'}, false, ['deriveBits', 'deriveKey'])
+					// 	.then(function () {
+					// 		StartModule(ModulesManager);
+					// 	});
 				}
 			}
 		}
