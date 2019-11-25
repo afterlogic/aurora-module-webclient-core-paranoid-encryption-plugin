@@ -164,9 +164,9 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (oFile, iv, fProcessBlobCallback)
+CCrypto.prototype.downloadDividedFile = function (oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback)
 {
-	new CDownloadFile(oFile, iv, this.iChunkSize, fProcessBlobCallback);
+	new CDownloadFile(oFile, iv, this.iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -225,7 +225,7 @@ CCrypto.prototype.isKeyInStorage = function ()
 	return !!JscryptoKey.loadKeyFromStorage();
 };
 
-function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback)
+function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback)
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -237,11 +237,16 @@ function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback)
 	this.key = null;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
+	this.fProcessBlobErrorCallback = fProcessBlobErrorCallback;
 	JscryptoKey.getKey(_.bind(function(oKey) {
 			this.key = oKey;
 			this.decryptChunk();
 		}, this),
 		_.bind(function() {
+			if (_.isFunction(this.fProcessBlobErrorCallback))
+			{
+				this.fProcessBlobErrorCallback();
+			}
 			this.stopDownloading();
 		}, this)
 	);
@@ -318,6 +323,10 @@ CDownloadFile.prototype.decryptChunk = function ()
 							}, this))
 							.catch(_.bind(function(err) {
 								this.stopDownloading();
+								if (_.isFunction(this.fProcessBlobErrorCallback))
+								{
+									this.fProcessBlobErrorCallback();
+								}
 								Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
 							}, this));
 					}, this)
@@ -334,6 +343,10 @@ CDownloadFile.prototype.decryptChunk = function ()
 					}, this))
 					.catch(_.bind(function(err) {
 						this.stopDownloading();
+						if (_.isFunction(this.fProcessBlobErrorCallback))
+						{
+							this.fProcessBlobErrorCallback();
+						}
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_DECRYPTION'));
 					}, this))
 					;

@@ -97,7 +97,8 @@ function StartModule (ModulesManager)
 		var
 			oFile = oParams.File,
 			iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
-			fProcessBlobCallback = oParams.fProcessBlobCallback
+			fProcessBlobCallback = oParams.fProcessBlobCallback,
+			fProcessBlobErrorCallback = oParams.fProcessBlobErrorCallback
 		;
 
 		//User can decrypt only own files
@@ -118,7 +119,7 @@ function StartModule (ModulesManager)
 		else
 		{
 			oFile.startDownloading();
-			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback);
+			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback);
 		}
 	});
 
