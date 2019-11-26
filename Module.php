@@ -57,6 +57,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::CheckQuota::before', array($this, 'onBeforeMethod'));
 		$this->subscribeEvent('Files::CreatePublicLink::before', array($this, 'onBeforeMethod'));
 		$this->subscribeEvent('Files::DeletePublicLink::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', array($this, 'onBeforeMethod'));
 	}
 
 	protected function getEncryptedPath($sPath)
