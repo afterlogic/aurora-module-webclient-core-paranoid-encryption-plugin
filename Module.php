@@ -36,7 +36,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		);
 
 		$this->subscribeEvent('Files::GetStorages::after', array($this, 'onAfterGetStorages'), 1);
-		$this->subscribeEvent('System::toResponseArray::before', array($this, 'onBeforeToResponseArray'));
+		$this->subscribeEvent('Files::FileItemtoResponseArray', array($this, 'onFileItemToResponseArray'));
 
 		$this->subscribeEvent('Files::GetFile', array($this, 'onGetFile'));
 		$this->subscribeEvent('Files::CreateFile', array($this, 'onCreateFile'));
@@ -67,8 +67,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 	protected function startsWith($haystack, $needle)
 	{
-		 $length = strlen($needle);
-		 return (substr($haystack, 0, $length) === $needle);
+		 return (substr($haystack, 0, strlen($needle)) === $needle);
 	}
 
 	public function onAfterGetStorages($aArgs, &$mResult)
@@ -230,7 +229,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 * @param [type] $aArgs
 	 * @return void
 	 */
-	public function onBeforeToResponseArray	(&$aArgs)
+	public function onFileItemToResponseArray(&$aArgs)
 	{
 		if (isset($aArgs[0]) && $aArgs[0] instanceof \Aurora\Modules\Files\Classes\FileItem)
 		{
@@ -242,6 +241,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
+
 	protected function getEncryptionMode()
 	{
 		$mResult = false;
