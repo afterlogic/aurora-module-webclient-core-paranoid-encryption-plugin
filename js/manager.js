@@ -105,16 +105,28 @@ function StartModule (ModulesManager)
 		if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_СANT_DECRYPT_FILE'));
+			if (_.isFunction(fProcessBlobErrorCallback))
+			{
+				fProcessBlobErrorCallback();
+			}
 		}
 		else if (!IsHttpsEnable())
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 			oParams.CancelDownload = true;
+			if (_.isFunction(fProcessBlobErrorCallback))
+			{
+				fProcessBlobErrorCallback();
+			}
 		}
 		else if (!Crypto.isKeyInStorage())
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 			oParams.CancelDownload = true;
+			if (_.isFunction(fProcessBlobErrorCallback))
+			{
+				fProcessBlobErrorCallback();
+			}
 		}
 		else
 		{
