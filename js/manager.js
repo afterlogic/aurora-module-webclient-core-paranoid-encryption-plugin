@@ -332,7 +332,7 @@ function StartModule (ModulesManager)
 		if (bIsEncrypted)
 		{
 			oFile.thumbnailSrc('');
-			if (oFile.sOwnerName === App.getUserPublicId() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName()) && Settings.EnableJscrypto())
+			if (oFile.sOwnerName === App.getUserPublicId() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()) && Settings.EnableJscrypto())
 			{// change view action for images
 				oFile.oActionsData.view.Handler = _.bind(function () {
 					Crypto.viewEncryptedImage(this.oFile, this.iv);
