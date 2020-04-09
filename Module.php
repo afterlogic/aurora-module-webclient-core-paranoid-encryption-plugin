@@ -248,7 +248,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if ($this->getConfig('AllowChangeSettings', true))
 		{
 			$oUser = \Aurora\System\Api::getAuthenticatedUser();
-			$mResult = $oUser->{self::GetName().'::EncryptionMode'};
+			if ($oUser instanceof \Aurora\Modules\Core\Classes\User)
+			{
+				$mResult = $oUser->{self::GetName().'::EncryptionMode'};
+			}
 		}
 		else
 		{
