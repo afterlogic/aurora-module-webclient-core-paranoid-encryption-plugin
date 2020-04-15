@@ -39,7 +39,7 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.iCurrChunk = 0;
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
-	this.oFileInfo.Hidden = { 'RangeType': 1 };
+	this.oFileInfo.Hidden = { 'RangeType': 1, 'Overwrite': true };
 	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv)) };
 };
 
