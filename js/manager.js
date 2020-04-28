@@ -43,7 +43,7 @@ function ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, sErrorText)
 				fCancel,
 				AwaitConfirmationQueue.length,
 				_.map(AwaitConfirmationQueue, function(element) {
-					return element.oFileInfo.FileName; 
+					return element.oFileInfo.FileName;
 				}),
 				sErrorText
 			]);
@@ -67,7 +67,12 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 		var
 			oFile = oParams.File,
-			iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false
+			iv = 'oExtendedProps' in oFile ?
+				('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false)
+				: false,
+			sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
+				('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : false)
+				: false
 		;
 		//User can decrypt only own files
 		if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
@@ -88,7 +93,7 @@ function StartModule (ModulesManager)
 		{
 			oParams.CustomDownloadHandler = function () {
 				oFile.startDownloading();
-				Crypto.downloadDividedFile(oFile, iv);
+				Crypto.downloadDividedFile(oFile, iv, null, null, sParanoidEncryptedKey);
 			};
 		}
 	});
@@ -96,7 +101,12 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('OpenPgpFilesWebclient::DownloadSecureFile', function (oParams) {
 		var
 			oFile = oParams.File,
-			iv = 'oExtendedProps' in oFile ? ('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false) : false,
+			iv = 'oExtendedProps' in oFile ?
+				('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false)
+				: false,
+			sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
+				('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : false)
+				: false,
 			fProcessBlobCallback = oParams.fProcessBlobCallback,
 			fProcessBlobErrorCallback = oParams.fProcessBlobErrorCallback
 		;
@@ -131,7 +141,7 @@ function StartModule (ModulesManager)
 		else
 		{
 			oFile.startDownloading();
-			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback);
+			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey);
 		}
 	});
 
@@ -207,7 +217,7 @@ function StartModule (ModulesManager)
 				!Settings.EncryptionAllowedModules.includes(sModuleName)
 			)
 			|| (!Settings.EncryptionAllowedStorages.includes(oParams.sStorageType) && oParams.sStorageType !== 'encrypted')
-			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never 
+			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never
 			|| (Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder && oParams.sStorageType !== 'encrypted')
 		)
 		{
@@ -261,7 +271,7 @@ function StartModule (ModulesManager)
 							fCancel,
 							AwaitConfirmationQueue.length,
 							_.map(AwaitConfirmationQueue, function(element) {
-								return element.oFileInfo.FileName; 
+								return element.oFileInfo.FileName;
 							})
 						]);
 					}, 10);
@@ -278,8 +288,8 @@ function StartModule (ModulesManager)
 				{ // if another file is being uploaded now - add a file to the queue
 					Crypto.oChunkQueue.aFiles.push({
 						fStartUploadCallback: fStartUploadCallback,
-						oFileInfo: oFileInfo, 
-						sUid: sUid, 
+						oFileInfo: oFileInfo,
+						sUid: sUid,
 						fOnChunkEncryptCallback: fOnChunkEncryptCallback
 					});
 				}
@@ -326,7 +336,8 @@ function StartModule (ModulesManager)
 		var
 			oFile = aParams[0],
 			bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined',
-			iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false
+			iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false,
+			sParanoidEncryptedKey = (bIsEncrypted && oFile.oExtendedProps.ParanoidKey) ? oFile.oExtendedProps.ParanoidKey : false
 		;
 
 		if (bIsEncrypted)
@@ -334,9 +345,9 @@ function StartModule (ModulesManager)
 			oFile.thumbnailSrc('');
 			if (oFile.sOwnerName === App.getUserPublicId() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()) && Settings.EnableJscrypto())
 			{// change view action for images
-				oFile.oActionsData.view.Handler = _.bind(function () {
-					Crypto.viewEncryptedImage(this.oFile, this.iv);
-				}, {oFile: oFile, iv: iv});
+				oFile.oActionsData.view.Handler = () => {
+					Crypto.viewEncryptedImage(oFile, iv, sParanoidEncryptedKey);
+				};
 			}
 			else
 			{// remove view action for non-images
@@ -381,15 +392,15 @@ function getButtonView()
 
 module.exports = function (oAppData) {
 	Settings.init(oAppData);
-	Crypto = require('modules/%ModuleName%/js/CCrypto.js');
 
 	return {
 		/**
 		 * Runs before application start. Subscribes to the event before post displaying.
-		 * 
+		 *
 		 * @param {Object} ModulesManager
 		 */
 		start: function (ModulesManager) {
+			Crypto = require('modules/%ModuleName%/js/CCrypto.js');
 			ModulesManager.run('FilesWebclient', 'registerToolbarButtons', [getButtonView()]);
 
 			var bBlobSavingEnable = window.Blob && window.URL && _.isFunction(window.URL.createObjectURL);

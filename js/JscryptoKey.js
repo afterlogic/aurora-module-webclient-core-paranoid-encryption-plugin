@@ -30,7 +30,7 @@ CJscryptoKey.prototype.sPrefix = '';
 
 /**
  * Asynchronously read key from storage, decrypt and generate key-object
- * 
+ *
  * @param {Function} fOnGenerateKeyCallback - starts after the key is successfully generated
  * @param {Function} fOnErrorCallback - starts if error occurred during key generation process
  * @param {string} sPassword - encrypt key with given password, "password dialog" wouldn't show
@@ -51,11 +51,11 @@ CJscryptoKey.prototype.getKey = function (fOnGenerateKeyCallback, fOnErrorCallba
 								//return key object
 								resolve(oKey);
 							})
-							.catch(function() {
+							.catch(function(e) {
 								reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
 							});
 					}, this))
-					.catch(function() {
+					.catch(function(e) {
 						reject(new Error(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')));
 					});
 			}, this);
@@ -123,12 +123,12 @@ CJscryptoKey.prototype.loadKeyNameFromStorage = function ()
 
 /**
  *  read key data from local storage
- *  
+ *
  *  @returns {string}
  */
 CJscryptoKey.prototype.loadKeyFromStorage = function ()
 {
-	var 
+	var
 		sKey = ''
 	;
 
@@ -141,7 +141,7 @@ CJscryptoKey.prototype.loadKeyFromStorage = function ()
 
 /**
  * Asynchronously generate key object from array data
- * 
+ *
  * @param {ArrayBuffer} aKey
  * @returns {Promise}
  */
@@ -161,7 +161,7 @@ CJscryptoKey.prototype.generateKeyFromArray = function (aKey)
 
 /**
  * Write key-object to knockout variable
- * 
+ *
  * @param {Object} oKey
  */
 CJscryptoKey.prototype.onKeyGenerateSuccess = function (oKey)
@@ -171,7 +171,7 @@ CJscryptoKey.prototype.onKeyGenerateSuccess = function (oKey)
 
 /**
  * Show error message
- * 
+ *
  * @param {Object} oError
  */
 CJscryptoKey.prototype.onKeyGenerateError = function (oError)
@@ -183,69 +183,124 @@ CJscryptoKey.prototype.onKeyGenerateError = function (oError)
 };
 
 /**
- * Asynchronously  generate new key
- * 
+ * Asynchronously generate new key
+ */
+CJscryptoKey.prototype.generateKey = async function ()
+{
+	let oKey = false;
+
+	try
+	{
+		oKey = await window.crypto.subtle.generateKey(
+			{
+				name: "AES-CBC",
+				length: 256
+			},
+			true,
+			["encrypt", "decrypt"]
+		);
+	}
+	catch (e)
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_GENERATE_KEY'));
+	}
+
+	return oKey;
+};
+
+CJscryptoKey.prototype.convertKeyToString = async function (oKey)
+{
+	let sKeyData = '';
+
+	if (oKey)
+	{
+		try
+		{
+			let aKeyData = await window.crypto.subtle.exportKey(
+				"raw",
+				oKey
+			);
+			sKeyData = HexUtils.Array2HexString(new Uint8Array(aKeyData));
+		}
+		catch (e)
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_EXPORT_KEY'));
+		}
+	}
+
+	return sKeyData;
+};
+
+/**
+ * Asynchronously generate and export new key
+ *
  * @param {Function} fOnGenerateCallback - starts after the key is successfully generated
  * @param {string} sKeyName
  */
-CJscryptoKey.prototype.generateKey = function (fOnGenerateCallback, sKeyName)
+CJscryptoKey.prototype.generateAndExportKey = async function (fOnGenerateCallback, sKeyName)
 {
-	var
-		sKeyData = ''
-	;
+	let oKey = await this.generateKey();
+	const sKeyData = await this.convertKeyToString(oKey);
 
-	window.crypto.subtle.generateKey(
-		{
-			name: "AES-CBC",
-			length: 256
-		},
-		true,
-		["encrypt", "decrypt"]
-	)
-	.then(_.bind(function (key) {
-		window.crypto.subtle.exportKey(
-			"raw",
-			key
-		)
-		.then(_.bind(function(aKeyData) {
-			sKeyData = HexUtils.Array2HexString(new Uint8Array(aKeyData)); 
-			Popups.showPopup(EncryptKeyPasswordPopup, [
-				_.bind(function(sPassword) {//Encrypt generated Key with User password
-					this.encryptKeyData(sKeyData, sPassword)
-						.then(_.bind(function(sKeyDataEncrypted) {//Store encrypted key in local storage
-							Storage.setData(
-								this.getStorageName(),
-								{
-									keyname: sKeyName,
-									keydata: sKeyDataEncrypted
-								}
-							);
-							this.loadKeyNameFromStorage();
-							this.onKeyGenerateSuccess(key);
-							if (_.isFunction(fOnGenerateCallback))
-							{
-								fOnGenerateCallback();
-							}
-						}, this))
-						.catch(function() {
-							Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
-						});
-				}, this),
-				function() {}
-			]);
-		}, this))
-		.catch(function() {
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_EXPORT_KEY'));
-		});
-	}, this))
-	.catch(function() {
-		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_GENERATE_KEY'));
-	});
+	Popups.showPopup(EncryptKeyPasswordPopup,
+		[
+			async sPassword => {
+				//Encrypt generated Key with User password
+				try
+				{
+					const sKeyDataEncrypted = await this.encryptKeyData(sKeyData, sPassword);
+					Storage.setData(
+						this.getStorageName(),
+						{
+							keyname: sKeyName,
+							keydata: sKeyDataEncrypted
+						}
+					);
+					this.loadKeyNameFromStorage();
+					this.onKeyGenerateSuccess(oKey);
+					if (_.isFunction(fOnGenerateCallback))
+					{
+						fOnGenerateCallback();
+					}
+				}
+				catch (e)
+				{
+					Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+				}
+			},
+			() => {}
+		]
+	);
+};
+
+CJscryptoKey.prototype.getKeyFromString = async function (sParanoidKey)
+{
+	let oKey = null;
+	let aKeyData = HexUtils.HexString2Array(sParanoidKey);
+	if (aKeyData.length > 0)
+	{
+		aKeyData = new Uint8Array(aKeyData);
+	}
+	else
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+	}
+
+	try
+	{
+		oKey = await this.generateKeyFromArray(aKeyData);
+	}
+	catch (e)
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+	}
+
+	return oKey;
 };
 
 /**
  * Asynchronously generate key-object from string key-data
- * 
+ *
  * @param {string} sKeyName
  * @param {string} sKeyData
  * @param {Function} fOnImportKeyCallback - starts after the key is successfully imported
@@ -297,7 +352,7 @@ CJscryptoKey.prototype.importKeyFromString = function (sKeyName, sKeyData, fOnIm
 
 /**
  * Asynchronously export key
- * 
+ *
  * @returns {Promise}
  */
 CJscryptoKey.prototype.exportKey = function ()
@@ -310,7 +365,7 @@ CJscryptoKey.prototype.exportKey = function ()
 
 /**
  * Remove key-object and clear key-data in local storage
- * 
+ *
  * @returns {Object}
  */
 CJscryptoKey.prototype.deleteKey = function ()
@@ -331,7 +386,7 @@ CJscryptoKey.prototype.deleteKey = function ()
 
 /**
  * Asynchronously decrypt key with user password
- * 
+ *
  * @param {string} sEncryptedKeyData
  * @param {string} sPassword
  * @returns {Promise}
@@ -369,7 +424,7 @@ CJscryptoKey.prototype.decryptKeyData = function (sEncryptedKeyData, sPassword)
 
 /**
  * Asynchronously encrypt key with user password
- * 
+ *
  * @param {string} sUserKeyData
  * @param {string} sPassword
  * @returns {Promise}
@@ -420,7 +475,7 @@ CJscryptoKey.prototype.encryptKeyData = function (sUserKeyData, sPassword)
 
 /**
  * Asynchronously generate special key from user password. This key used in process of encryption/decryption user key.
- * 
+ *
  * @param {string} sPassword
  * @param {Function} fOnGetDerivedKeyCallback - starts after the key is successfully generated
  * @param {Function} fOnErrorCallback - starts if an error occurs during the key generation process
@@ -435,7 +490,7 @@ CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGe
 			{
 				return new TextEncoder('utf-8').encode(sData);
 			}
-			
+
 			var
 				sUtf8 = unescape(encodeURIComponent(sData)),
 				sResult = new Uint8Array(sUtf8.length)

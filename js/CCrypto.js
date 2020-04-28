@@ -4,12 +4,14 @@ var
 	$ = require('jquery'),
 	_ = require('underscore'),
 
+	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
-	Settings = require('modules/%ModuleName%/js/Settings.js')
+	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	OpenPgpEncryptor = ModulesManager.run('OpenPgpWebclient', 'getOpenPgpEncryptor')
 ;
 
 /**
@@ -29,9 +31,10 @@ function CCrypto()
 	};
 	this.aStopList = [];
 	this.fOnUploadCancelCallback = null;
+	this.oKey = null;
 }
 
-CCrypto.prototype.start = function (oFileInfo)
+CCrypto.prototype.start = async function (oFileInfo, ParanoidKey = '')
 {
 	this.oFileInfo = oFileInfo;
 	this.oFile = oFileInfo.File;
@@ -40,24 +43,39 @@ CCrypto.prototype.start = function (oFileInfo)
 	this.oChunk = null;
 	this.iv = window.crypto.getRandomValues(new Uint8Array(16));
 	this.oFileInfo.Hidden = { 'RangeType': 1, 'Overwrite': true };
-	this.oFileInfo.Hidden.ExtendedProps = { 'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv)) };
+	this.oFileInfo.Hidden.ExtendedProps = {
+		'InitializationVector': HexUtils.Array2HexString(new Uint8Array(this.iv))
+	};
+
+	if (ParanoidKey)
+	{
+		this.oFileInfo.Hidden.ExtendedProps.ParanoidKey = ParanoidKey;
+	}
 };
 
-CCrypto.prototype.startUpload = function (oFileInfo, sUid, fOnChunkEncryptCallback, fCancelCallback)
+CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncryptCallback, fCancelCallback)
 {
 	this.oChunkQueue.isProcessed = true;
-	this.start(oFileInfo);
-	JscryptoKey.getKey(
-		_.bind(function() {
+	this.oKey = await JscryptoKey.generateKey();
+	const sKeyData = await JscryptoKey.convertKeyToString(this.oKey);
+	let aCurrentAccountPublicKeys = await OpenPgpEncryptor.getCurrentAccountKeys(/*bIsPublic*/true);
+	if (sKeyData && aCurrentAccountPublicKeys)
+	{
+		const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(sKeyData, aCurrentAccountPublicKeys);
+		if (oPGPEncryptionResult.result)
+		{
+			let { data, password } = oPGPEncryptionResult.result;
+			await this.start(oFileInfo, data);
 			this.readChunk(sUid, fOnChunkEncryptCallback);
-		},this),
-		fCancelCallback
-	);
-};
-
-CCrypto.prototype.cryptoKey = function ()
-{
-	return JscryptoKey.key();
+		}
+	}
+	else
+	{
+		if (_.isFunction(fCancelCallback))
+		{
+			fCancelCallback();
+		}
+	}
 };
 
 CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
@@ -68,7 +86,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 		oReader = new FileReader(),
 		oBlob = null
 	;
-	
+
 	if (this.aStopList.indexOf(sUid) !== -1)
 	{ // if user canceled uploading file with uid = sUid
 		this.aStopList.splice(this.aStopList.indexOf(sUid), 1);
@@ -116,7 +134,7 @@ CCrypto.prototype.readChunk = function (sUid, fOnChunkEncryptCallback)
 
 CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 {
-	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.cryptoKey(), this.oChunk)
+	crypto.subtle.encrypt({ name: 'AES-CBC', iv: this.iv }, this.oKey, this.oChunk)
 		.then(_.bind(function (oEncryptedContent) {
 			//delete padding for all chunks except last one
 			oEncryptedContent = (this.iChunkNumber > 1 && this.iCurrChunk !== this.iChunkNumber) ? oEncryptedContent.slice(0, oEncryptedContent.byteLength - 16) : oEncryptedContent;
@@ -146,7 +164,7 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 			{
 				delete this.oFileInfo.Hidden.ExtendedProps.FirstChunk;
 			}
-			
+
 			if (this.iCurrChunk == this.iChunkNumber)
 			{ // unmark file as loading
 				delete this.oFileInfo.Hidden.ExtendedProps.Loading;
@@ -158,15 +176,16 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 			// call upload of encrypted chunk
 			fOnChunkEncryptCallback(sUid, this.oFileInfo, fProcessNextChunkCallback, this.iCurrChunk, this.iChunkNumber, (this.iCurrChunk - 1) * this.iChunkSize);
 		}, this))
-		.catch(function(err) {
+		.catch(function(err)
+		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_ENCRYPTION'));
 		})
 	;
 };
 
-CCrypto.prototype.downloadDividedFile = function (oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback)
+CCrypto.prototype.downloadDividedFile = function (oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey = '')
 {
-	new CDownloadFile(oFile, iv, this.iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback);
+	new CDownloadFile(oFile, iv, this.iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey);
 };
 /**
 * Checking Queue for files awaiting upload
@@ -182,7 +201,7 @@ CCrypto.prototype.checkQueue = function ()
 };
 /**
 * Stop file uploading
-* 
+*
 * @param {String} sUid
 * @param {Function} fOnUploadCancelCallback
 */
@@ -204,19 +223,20 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback, sFile
 		this.aStopList.push(sUid);
 		this.oChunkQueue.isProcessed = false;
 		fOnUploadCancelCallback(sUid, sFileName);
+		this.oKey = null;
 //		this.checkQueue();
 	}
 };
 
-CCrypto.prototype.viewEncryptedImage = function (oFile, iv)
+CCrypto.prototype.viewEncryptedImage = function (oFile, iv, sParanoidEncryptedKey = '')
 {
-	if (!this.isKeyInStorage())
+	if (!this.isKeyInStorage() && !sParanoidEncryptedKey)
 	{
 		Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 	}
 	else
 	{
-		new CViewImage(oFile, iv, this.iChunkSize);
+		new CViewImage(oFile, iv, this.iChunkSize, sParanoidEncryptedKey);
 	}
 };
 
@@ -225,7 +245,7 @@ CCrypto.prototype.isKeyInStorage = function ()
 	return !!JscryptoKey.loadKeyFromStorage();
 };
 
-function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback)
+function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey = '')
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -238,18 +258,25 @@ function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlob
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
 	this.fProcessBlobErrorCallback = fProcessBlobErrorCallback;
-	JscryptoKey.getKey(_.bind(function(oKey) {
-			this.key = oKey;
-			this.decryptChunk();
-		}, this),
-		_.bind(function() {
-			if (_.isFunction(this.fProcessBlobErrorCallback))
-			{
-				this.fProcessBlobErrorCallback();
-			}
-			this.stopDownloading();
-		}, this)
-	);
+	if (sParanoidEncryptedKey)
+	{
+		this.decryptParanoidKeyAndStartDownload(sParanoidEncryptedKey, this.fProcessBlobErrorCallback);
+	}
+	else
+	{
+		JscryptoKey.getKey(_.bind(function(oKey) {
+				this.key = oKey;
+				this.decryptChunk();
+			}, this),
+			_.bind(function() {
+				if (_.isFunction(this.fProcessBlobErrorCallback))
+				{
+					this.fProcessBlobErrorCallback();
+				}
+				this.stopDownloading();
+			}, this)
+		);
+	}
 }
 
 CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
@@ -374,7 +401,43 @@ CDownloadFile.prototype.isDownloading = function ()
 	return this.oFile.downloading();
 };
 
-function CViewImage(oFile, iv, iChunkSize)
+CDownloadFile.prototype.decryptParanoidKeyAndStartDownload = async function (sParanoidEncryptedKey, fOnErrorCallback)
+{
+	let fOnError = () => {
+		if (_.isFunction(fOnErrorCallback))
+		{
+			fOnErrorCallback();
+		}
+		this.stopDownloading();
+	};
+
+	await OpenPgpEncryptor.initKeys();
+	let oPGPDecryptionResult = await OpenPgpEncryptor.decryptData(sParanoidEncryptedKey);
+	if (oPGPDecryptionResult.result)
+	{
+		let oKey = await JscryptoKey.getKeyFromString(oPGPDecryptionResult.result);
+		if (oKey)
+		{
+			this.key = oKey;
+			this.decryptChunk();
+		}
+		else
+		{
+			fOnError();
+		}
+	}
+	else if (oPGPDecryptionResult.hasErrors() || oPGPDecryptionResult.hasNotices())
+	{
+		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+		fOnError();
+	}
+	else
+	{//user closed the 'Enter key password' popup
+		this.stopDownloading();
+	}
+};
+
+function CViewImage(oFile, iv, iChunkSize, sParanoidEncryptedKey = '')
 {
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
@@ -386,10 +449,17 @@ function CViewImage(oFile, iv, iChunkSize)
 	this.key = null;
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
-	JscryptoKey.getKey(_.bind(function(oKey) {
-		this.key = oKey;
-		this.decryptChunk();
-	}, this));
+	if (sParanoidEncryptedKey)
+	{
+		this.decryptParanoidKeyAndStartDownload(sParanoidEncryptedKey);
+	}
+	else
+	{
+		JscryptoKey.getKey(_.bind(function(oKey) {
+			this.key = oKey;
+			this.decryptChunk();
+		}, this));
+	}
 }
 CViewImage.prototype = Object.create(CDownloadFile.prototype);
 CViewImage.prototype.constructor = CViewImage;
@@ -415,7 +485,7 @@ CDownloadFile.prototype.isDownloading = function ()
 };
 /**
 * Writing chunks in file
-* 
+*
 * @constructor
 * @param {String} sFileName
 * @param {Function} fProcessBlobCallback
@@ -450,7 +520,7 @@ CWriter.prototype.close = function ()
 
 /**
 * Writing chunks in blob for viewing
-* 
+*
 * @constructor
 * @param {String} sFileName
 */

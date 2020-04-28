@@ -31,7 +31,7 @@ CGenerateKeyPopup.prototype.onOpen = function (fOnGenerateCallback)
 
 CGenerateKeyPopup.prototype.generateKey = function ()
 {
-	JscryptoKey.generateKey(_.bind(function() {
+	JscryptoKey.generateAndExportKey(_.bind(function() {
 			this.fOnGenerateCallback();
 		}, this),
 		this.keyName()
