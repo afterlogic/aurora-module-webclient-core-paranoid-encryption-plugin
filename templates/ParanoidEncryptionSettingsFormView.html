@@ -7,7 +7,7 @@
 		<div class="fieldset">
 			<div class="row" data-bind="visible: !bIsHttpsEnable">
 				<span data-bind="i18n: {'key': '%MODULENAME%/ERROR_HTTPS_NEEDED'}, style: {color: 'red'}"></span>
-			</div>	
+			</div>
 			<div class="row">
 				<label class="custom_checkbox" data-bind="css: {'checked': enableJscrypto}">
 					<span class="icon"></span>
@@ -53,8 +53,7 @@
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}"></span>
 			</span>
 		</div>
-			
-		<div class="fieldset keys">
+		<div class="fieldset keys" data-bind="visible: keyName()">
 			<div class="row">
 				<span class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}, visible: !keyName()"></span>
 			</div>

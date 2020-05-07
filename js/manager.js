@@ -84,11 +84,6 @@ function StartModule (ModulesManager)
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
 			oParams.CancelDownload = true;
 		}
-		else if (!Crypto.isKeyInStorage())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
-			oParams.CancelDownload = true;
-		}
 		else
 		{
 			oParams.CustomDownloadHandler = function () {
@@ -123,15 +118,6 @@ function StartModule (ModulesManager)
 		else if (!IsHttpsEnable())
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-			oParams.CancelDownload = true;
-			if (_.isFunction(fProcessBlobErrorCallback))
-			{
-				fProcessBlobErrorCallback();
-			}
-		}
-		else if (!Crypto.isKeyInStorage())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 			oParams.CancelDownload = true;
 			if (_.isFunction(fProcessBlobErrorCallback))
 			{
@@ -235,20 +221,6 @@ function StartModule (ModulesManager)
 			{
 				//for AskMe encryption mode show dialog with warning and regular upload button
 				ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-			}
-		}
-		else if (!Crypto.isKeyInStorage())
-		{
-			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always || Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder)
-			{
-				//for Always encryption mode show error
-				Screens.showError(TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
-				fCancelFunction(sUid);
-			}
-			else if (Settings.EncryptionMode() === Enums.EncryptionMode.AskMe)
-			{
-				//for AskMe encryption mode show dialog with warning and regular upload button
-				ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'));
 			}
 		}
 		else

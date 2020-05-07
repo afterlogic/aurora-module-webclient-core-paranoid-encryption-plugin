@@ -9,7 +9,7 @@ namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 
 /**
  * Paranoid Encryption module allows you to encrypt files in File module using client-based functionality only.
- * 
+ *
  * @license https://www.gnu.org/licenses/agpl-3.0.html AGPL-3.0
  * @license https://afterlogic.com/products/common-licensing Afterlogic Software License
  * @copyright Copyright (c) 2019, Afterlogic Corp.
@@ -27,11 +27,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function init()
 	{
 		\Aurora\Modules\Core\Classes\User::extend(
-			self::GetName(), 
+			self::GetName(),
 			[
-				'EnableModule' => array('bool', $this->getConfig('EnabledByDefault', false)),
-				'EncryptionMode' => array('int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe)),
-				'AllowChangeSettings' => array('bool', $this->getConfig('AllowChangeSettings', true)),
+				'EnableModule' 			=> ['bool', $this->getConfig('EnabledByDefault', false)],
+				'EncryptionMode' 		=> ['int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe)],
+				'AllowChangeSettings'	=> ['bool', $this->getConfig('AllowChangeSettings', true)],
+				'DontRemindMe'			=> ['bool', false],
 			]
 		);
 
@@ -76,8 +77,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if ($oUser->{$this->GetName() . '::EnableModule'} && $this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
 		{
 			array_unshift($mResult, [
-				'Type' => static::$sStorageType, 
-				'DisplayName' => $this->i18N('LABEL_STORAGE'), 
+				'Type' => static::$sStorageType,
+				'DisplayName' => $this->i18N('LABEL_STORAGE'),
 				'IsExternal' => false,
 				'Order' => static::$iStorageOrder,
 				'IsDroppable' => false
@@ -94,10 +95,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 			$this->GetModuleManager()->broadcastEvent(
 				'Files',
-				'GetFile', 
+				'GetFile',
 				$aArgs,
 				$mResult
-			);				
+			);
 		}
 	}
 
@@ -110,10 +111,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 			$this->GetModuleManager()->broadcastEvent(
 				'Files',
-				'CreateFile', 
+				'CreateFile',
 				$aArgs,
 				$mResult
-			);				
+			);
 		}
 	}
 
@@ -134,7 +135,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				\Aurora\Modules\Files\Module::Decorator()->CreateFolder($aArgs['UserId'], $aArgs['Type'], '', self::$sEncryptedFolder);
 			}
 		}
-	}	
+	}
 
 	/**
 	 * @ignore
@@ -156,7 +157,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				}
 			}
 		}
-	}	
+	}
 
 	/**
 	 * @ignore
@@ -187,7 +188,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				}
 			}
 		}
-	}	
+	}
 
 	/**
 	 * @ignore
@@ -206,7 +207,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				$aArgs['Items'][$iKey]['Path'] = $this->getEncryptedPath($aItem['Path']);
 			}
 		}
-	}		
+	}
 
 	/**
 	 * @ignore
@@ -275,10 +276,11 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		{
 			$aSettings = [
 				'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
+				'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
 				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
 				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
-				'AllowChangeSettings' => $this->getConfig('AllowChangeSettings', true),
-				'EncryptionMode' => $this->getEncryptionMode()
+				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true),
+				'EncryptionMode' 		=> $this->getEncryptionMode()
 			];
 		}
 
@@ -304,5 +306,26 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			\Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
 		}
 		return true;
+	}
+
+	/**
+	 * Updates DontRemindMe setting of the Paranoid Encryption Module.
+	 *
+	 * @return boolean
+	 */
+	public function DontRemindMe()
+	{
+		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
+
+		$bResult = false;
+		$iUserId = \Aurora\System\Api::getAuthenticatedUserId();
+		if (0 < $iUserId)
+		{
+			$oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserUnchecked($iUserId);
+			$oUser->{self::GetName().'::DontRemindMe'} = true;
+			$bResult = \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
+		}
+
+		return $bResult;
 	}
 }

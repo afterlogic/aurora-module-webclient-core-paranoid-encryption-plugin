@@ -1,0 +1,25 @@
+<div class="popup" style="display: none;">
+	<div class="mask"></div>
+	<div class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<div class="fields">
+			<div class="row">
+				<div data-bind="html: message"></div>
+			</div>
+			<div class="row">
+				<span class="value">
+					<label class="custom_checkbox" data-bind="css: {'checked': dontRemindMe}">
+						<span class="icon"></span>
+						<input type="checkbox" id="dontRemindMe" data-bind="checked: dontRemindMe" />
+					</label>
+					<label for="dontRemindMe" data-bind="i18n: {'key': '%MODULENAME%/LABEL_DONT_REMIND_ME'}"></label>
+				</span>
+			</div>
+			<div class="buttons">
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_CONTINUE'}, click: continueDownload"></span>
+				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancel"></span>
+			</div>
+		</div>
+	</div>
+	<span class="helper"></span>
+</div>

@@ -10,6 +10,8 @@ var
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
 	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
+	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+	OutdatedEncryptionMethodPopup = require('modules/%ModuleName%/js/popups/OutdatedEncryptionMethodPopup.js'),
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	OpenPgpEncryptor = ModulesManager.run('OpenPgpWebclient', 'getOpenPgpEncryptor')
 ;
@@ -58,15 +60,26 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
 	this.oChunkQueue.isProcessed = true;
 	this.oKey = await JscryptoKey.generateKey();
 	const sKeyData = await JscryptoKey.convertKeyToString(this.oKey);
-	let aCurrentAccountPublicKeys = await OpenPgpEncryptor.getCurrentAccountKeys(/*bIsPublic*/true);
-	if (sKeyData && aCurrentAccountPublicKeys)
+	let oCurrentUserPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
+	if (oCurrentUserPrivateKey && sKeyData)
 	{
-		const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(sKeyData, aCurrentAccountPublicKeys);
-		if (oPGPEncryptionResult.result)
+		let CurrentUserPublicKey = await OpenPgpEncryptor.getCurrentUserPublicKey();
+		if (CurrentUserPublicKey)
 		{
-			let { data, password } = oPGPEncryptionResult.result;
-			await this.start(oFileInfo, data);
-			this.readChunk(sUid, fOnChunkEncryptCallback);
+			const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(sKeyData, [CurrentUserPublicKey]);
+			if (oPGPEncryptionResult.result)
+			{
+				let { data, password } = oPGPEncryptionResult.result;
+				await this.start(oFileInfo, data);
+				this.readChunk(sUid, fOnChunkEncryptCallback);
+			}
+		}
+		else
+		{
+			if (_.isFunction(fCancelCallback))
+			{
+				fCancelCallback();
+			}
 		}
 	}
 	else
@@ -247,11 +260,16 @@ CCrypto.prototype.isKeyInStorage = function ()
 
 function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey = '')
 {
+	this.oWriter = new CWriter(oFile.fileName(), fProcessBlobCallback);
+	this.init(oFile, iv, iChunkSize, fProcessBlobErrorCallback, sParanoidEncryptedKey);
+}
+
+CDownloadFile.prototype.init = async function (oFile, iv, iChunkSize, fProcessBlobErrorCallback, sParanoidEncryptedKey)
+{
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
 	this.iFileSize = oFile.size();
 	this.sDownloadLink = oFile.getActionUrl('download');
-	this.oWriter = new CWriter(this.sFileName, fProcessBlobCallback);
 	this.iCurrChunk = 0;
 	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
 	this.key = null;
@@ -259,25 +277,43 @@ function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlob
 	this.iChunkSize = iChunkSize;
 	this.fProcessBlobErrorCallback = fProcessBlobErrorCallback;
 	if (sParanoidEncryptedKey)
-	{
+	{//the key was transferred from outside
 		this.decryptParanoidKeyAndStartDownload(sParanoidEncryptedKey, this.fProcessBlobErrorCallback);
 	}
 	else
-	{
-		JscryptoKey.getKey(_.bind(function(oKey) {
-				this.key = oKey;
-				this.decryptChunk();
-			}, this),
-			_.bind(function() {
-				if (_.isFunction(this.fProcessBlobErrorCallback))
-				{
-					this.fProcessBlobErrorCallback();
-				}
-				this.stopDownloading();
-			}, this)
-		);
+	{//read the key from local storage
+		const fCancelCallback = () => {
+			if (_.isFunction(this.fProcessBlobErrorCallback))
+			{
+				this.fProcessBlobErrorCallback();
+			}
+			this.stopDownloading();
+		};
+		const fContinueCallback = () => {
+			JscryptoKey.getKey(
+				oKey => {
+					this.key = oKey;
+					this.decryptChunk();
+				},
+				fCancelCallback
+			);
+		};
+		if (!Settings.DontRemindMe())
+		{
+			//showing popup
+			Popups.showPopup(OutdatedEncryptionMethodPopup,
+				[
+					this.sFileName,
+					fContinueCallback,
+					fCancelCallback
+			]);
+		}
+		else
+		{
+			fContinueCallback();
+		}
 	}
-}
+};
 
 CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array)
 {
@@ -432,34 +468,15 @@ CDownloadFile.prototype.decryptParanoidKeyAndStartDownload = async function (sPa
 		fOnError();
 	}
 	else
-	{//user closed the 'Enter key password' popup
+	{
 		this.stopDownloading();
 	}
 };
 
 function CViewImage(oFile, iv, iChunkSize, sParanoidEncryptedKey = '')
 {
-	this.oFile = oFile;
-	this.sFileName = oFile.fileName();
-	this.iFileSize = oFile.size();
-	this.sDownloadLink = oFile.getActionUrl('download');
 	this.oWriter = null;
-	this.iCurrChunk = 0;
-	this.iv = new Uint8Array(HexUtils.HexString2Array(iv));
-	this.key = null;
-	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
-	this.iChunkSize = iChunkSize;
-	if (sParanoidEncryptedKey)
-	{
-		this.decryptParanoidKeyAndStartDownload(sParanoidEncryptedKey);
-	}
-	else
-	{
-		JscryptoKey.getKey(_.bind(function(oKey) {
-			this.key = oKey;
-			this.decryptChunk();
-		}, this));
-	}
+	this.init(oFile, iv, iChunkSize, /*fProcessBlobErrorCallback*/null, sParanoidEncryptedKey);
 }
 CViewImage.prototype = Object.create(CDownloadFile.prototype);
 CViewImage.prototype.constructor = CViewImage;

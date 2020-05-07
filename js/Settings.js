@@ -18,10 +18,11 @@ module.exports = {
 	ChunkSizeMb: 5,
 	AllowMultiChunkUpload: true,
 	AllowChangeSettings: false,
+	DontRemindMe: ko.observable(false),
 
 	/**
 	 * Initializes settings from AppData object sections.
-	 * 
+	 *
 	 * @param {Object} oAppData Object contained modules settings.
 	 */
 	init: function (oAppData)
@@ -31,6 +32,7 @@ module.exports = {
 		if (!_.isEmpty(oAppDataSection))
 		{
 			this.EnableJscrypto(Types.pBool(oAppDataSection.EnableModule, this.EnableJscrypto()));
+			this.DontRemindMe(Types.pBool(oAppDataSection.DontRemindMe, this.DontRemindMe()));
 			this.EncryptionMode(Types.pEnum(oAppDataSection.EncryptionMode, Enums.EncryptionMode, this.EncryptionMode()));
 			this.ChunkSizeMb = Types.pInt(oAppDataSection.ChunkSizeMb, this.ChunkSizeMb);
 			this.AllowMultiChunkUpload = Types.pBool(oAppDataSection.AllowMultiChunkUpload, this.AllowMultiChunkUpload);
@@ -40,7 +42,7 @@ module.exports = {
 
 	/**
 	 * Updates new settings values after saving on server.
-	 * 
+	 *
 	 * @param {boolean} bEnableJscrypto
 	 * @param {number} iEncryptionMode
 	 */
