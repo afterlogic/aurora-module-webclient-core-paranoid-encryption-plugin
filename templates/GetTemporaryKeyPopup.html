@@ -1,0 +1,21 @@
+<div class="popup" style="display: none;">
+	<div class="mask" data-bind="click: cancelPopup"></div>
+	<div class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<span class="popup_heading" data-bind="i18n: {'key': '%MODULENAME%/LABEL_INPUT_KEY'}"></span>
+
+		<div class="fields">
+			<div class="fieldset">
+				<div class="row">
+					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_YOUR_KEY'}"></span>
+					<input class="value input" type="text" spellcheck="false" maxlength="255" data-bind="value: key" />
+				</div>
+			</div>
+			<div class="buttons">
+				<span class="button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_OK'}, click: enterKey"></span>
+				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CANCEL'}, click: cancel"></span>
+			</div>
+		</div>
+	</div>
+	<span class="helper"></span>
+</div>
