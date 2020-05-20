@@ -9,6 +9,7 @@ var
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	FileSaver = require('%PathToCoreWebclientModule%/js/vendors/FileSaver.js'),
 	JscryptoKey = require('modules/%ModuleName%/js/JscryptoKey.js'),
+	Utils = require('%PathToCoreWebclientModule%/js/utils/Common.js'),
 	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	OutdatedEncryptionMethodPopup = require('modules/%ModuleName%/js/popups/OutdatedEncryptionMethodPopup.js'),
@@ -377,6 +378,7 @@ function CDownloadFile(oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlob
 
 CDownloadFile.prototype.init = async function (oFile, iv, iChunkSize, fProcessBlobErrorCallback, sKey)
 {
+	this.sHash = Utils.getRandomHash();
 	this.oFile = oFile;
 	this.sFileName = oFile.fileName();
 	this.iFileSize = oFile.size();
@@ -533,7 +535,7 @@ CDownloadFile.prototype.stopDownloading = function ()
  */
 CDownloadFile.prototype.getChunkLink = function ()
 {
-	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + this.iChunkSize;
+	return this.sDownloadLink + '/download/' + this.iCurrChunk++ + '/' + this.iChunkSize + '&' + this.sHash;
 };
 
 CDownloadFile.prototype.isDownloading = function ()
