@@ -58,6 +58,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::CheckQuota::before', array($this, 'onBeforeMethod'));
 		$this->subscribeEvent('Files::CreatePublicLink::before', array($this, 'onBeforeMethod'));
 		$this->subscribeEvent('Files::DeletePublicLink::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::GetPublicFiles::after', array($this, 'onAfterGetPublicFiles'));
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', array($this, 'onBeforeMethod'));
 	}
 
@@ -242,6 +243,24 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
+
+	/**
+	* @param array $aArgs Arguments of event.
+	* @param mixed $mResult Is passed by reference.
+	*/
+   public function onAfterGetPublicFiles(&$aArgs, &$mResult)
+   {
+		if (is_array($mResult) && isset($mResult['Items']) && is_array($mResult['Items']))
+		{ //remove from result all encrypted files
+			$mResult['Items'] = array_filter(
+				$mResult['Items'],
+				function ($FileItem) {
+					return !isset($FileItem->ExtendedProps)
+						|| !isset($FileItem->ExtendedProps['InitializationVector']);
+				}
+			);
+		}
+   }
 
 	protected function getEncryptionMode()
 	{
