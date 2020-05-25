@@ -395,6 +395,11 @@ CDownloadFile.prototype.init = async function (oFile, iv, iChunkSize, fProcessBl
 	this.iChunkNumber = Math.ceil(this.iFileSize/iChunkSize);
 	this.iChunkSize = iChunkSize;
 	this.fProcessBlobErrorCallback = fProcessBlobErrorCallback;
+	//clear parameters after & if DownloadLink contains any
+	if (this.sDownloadLink.indexOf('&') > 0)
+	{
+		this.sDownloadLink = this.sDownloadLink.substring(0, this.sDownloadLink.indexOf('&'));
+	}
 	const fCancelCallback = () => {
 		if (_.isFunction(this.fProcessBlobErrorCallback))
 		{
