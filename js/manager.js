@@ -87,7 +87,6 @@ function StartModule (ModulesManager)
 		else
 		{
 			oParams.CustomDownloadHandler = function () {
-				oFile.startDownloading();
 				Crypto.downloadDividedFile(oFile, iv, null, null, sParanoidEncryptedKey);
 			};
 		}
@@ -126,7 +125,6 @@ function StartModule (ModulesManager)
 		}
 		else
 		{
-			oFile.startDownloading();
 			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey);
 		}
 	});

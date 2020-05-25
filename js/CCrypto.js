@@ -200,6 +200,7 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 
 CCrypto.prototype.downloadDividedFile = async function (oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey = '')
 {
+	oFile.startDownloading();
 	const sKey = await this.prepareKey(
 		oFile,
 		sParanoidEncryptedKey
@@ -354,6 +355,7 @@ CCrypto.prototype.stopUploading = function (sUid, fOnUploadCancelCallback, sFile
 
 CCrypto.prototype.viewEncryptedImage = async function (oFile, iv, sParanoidEncryptedKey = '')
 {
+	oFile.startDownloading();
 	const sKey = await this.prepareKey(
 		oFile,
 		sParanoidEncryptedKey
@@ -362,6 +364,10 @@ CCrypto.prototype.viewEncryptedImage = async function (oFile, iv, sParanoidEncry
 	if (sKey !== false)
 	{
 		new CViewImage(oFile, iv, this.iChunkSize, sKey);
+	}
+	else
+	{
+		oFile.stopDownloading()
 	}
 };
 
@@ -566,10 +572,6 @@ CViewImage.prototype.writeChunk = function (oDecryptedUint8Array)
 		}
 };
 
-CDownloadFile.prototype.isDownloading = function ()
-{//image download can't be aborted
-	return true;
-};
 /**
 * Writing chunks in file
 *
