@@ -306,7 +306,20 @@ CCrypto.prototype.decryptParanoidKey = async function (sParanoidEncryptedKey)
 	}
 	else if (oPGPDecryptionResult.hasErrors() || oPGPDecryptionResult.hasNotices())
 	{
-		Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+		//if errors or notices contains PrivateKeyNotFoundError
+		let aErrors = oPGPDecryptionResult.errors ? oPGPDecryptionResult.errors : [];
+		let aNotices = oPGPDecryptionResult.notices ? oPGPDecryptionResult.notices : []
+		if ([...aErrors, ...aNotices].some(
+			error => error.length && error[0] === Enums.OpenPgpErrors.PrivateKeyNotFoundError
+		))
+		{
+			//show error message customised for files
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_NO_PRIVATE_KEY_FOUND_FOR_DECRYPT'));
+		}
+		else
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+		}
 	}
 
 	return sKey;
