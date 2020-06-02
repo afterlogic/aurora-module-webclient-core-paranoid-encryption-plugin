@@ -4,12 +4,13 @@ require('modules/%ModuleName%/js/enums.js');
 
 var
 	_ = require('underscore'),
-	ko = require('knockout'),
 
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
+	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	Crypto = null,
+	OpenPgpEncryptor = null,
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
@@ -67,15 +68,22 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 		var
 			oFile = oParams.File,
-			iv = 'oExtendedProps' in oFile ?
-				('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false)
+			oExtendedProps = 'oExtendedProps' in oFile ? oFile.oExtendedProps : false,
+			iv = oExtendedProps && 'InitializationVector' in oExtendedProps ?
+				oExtendedProps.InitializationVector
 				: false,
-			sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
-				('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : false)
-				: false
+			sParanoidEncryptedKey = oExtendedProps && 'ParanoidKey' in oExtendedProps ?
+				oExtendedProps.ParanoidKey
+				: false,
+			sParanoidEncryptedKeyShared = oExtendedProps && 'ParanoidKeyShared' in oExtendedProps ?
+				oExtendedProps.ParanoidKeyShared
+				: false,
+			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
+			bIsSharedStorage = oFile.storageType() === Enums.FileStorageType.Shared
 		;
-		//User can decrypt only own files
-		if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
+		//User can decrypt only own or shared files
+		if (!Settings.EnableJscrypto() || !iv
+			|| !(bIsOwnFile || bIsSharedStorage))
 		{
 			//regular upload will start in Jua in this case
 		}
@@ -87,7 +95,13 @@ function StartModule (ModulesManager)
 		else
 		{
 			oParams.CustomDownloadHandler = function () {
-				Crypto.downloadDividedFile(oFile, iv, null, null, sParanoidEncryptedKey);
+				Crypto.downloadDividedFile(
+					oFile,
+					iv,
+					null,
+					null,
+					bIsSharedStorage ? sParanoidEncryptedKeyShared : sParanoidEncryptedKey
+				);
 			};
 		}
 	});
@@ -302,21 +316,40 @@ function StartModule (ModulesManager)
 		}
 	});
 	App.subscribeEvent('FilesWebclient::ParseFile::after', function (aParams) {
-
-		var
+		let
 			oFile = aParams[0],
-			bIsEncrypted = typeof(oFile.oExtendedProps) !== 'undefined' &&  typeof(oFile.oExtendedProps.InitializationVector) !== 'undefined',
-			iv = bIsEncrypted ? oFile.oExtendedProps.InitializationVector : false,
-			sParanoidEncryptedKey = (bIsEncrypted && oFile.oExtendedProps.ParanoidKey) ? oFile.oExtendedProps.ParanoidKey : false
+			oExtendedProps = 'oExtendedProps' in oFile ? oFile.oExtendedProps : false,
+			bIsEncrypted = typeof(oExtendedProps) !== 'undefined'
+				&& typeof(oExtendedProps.InitializationVector) !== 'undefined',
+			iv = bIsEncrypted && oExtendedProps && oExtendedProps.InitializationVector ?
+				oExtendedProps.InitializationVector
+				: false,
+			sParanoidEncryptedKey = bIsEncrypted && oExtendedProps && 'ParanoidKey' in oExtendedProps ?
+				oExtendedProps.ParanoidKey
+				: false,
+			sParanoidEncryptedKeyShared = bIsEncrypted && oExtendedProps && 'ParanoidKeyShared' in oExtendedProps ?
+				oExtendedProps.ParanoidKeyShared
+				: false,
+			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
+			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
+			bIsSharedStorage = oFile.storageType() === Enums.FileStorageType.Shared
 		;
 
 		if (bIsEncrypted)
 		{
 			oFile.thumbnailSrc('');
-			if (oFile.sOwnerName === App.getUserPublicId() && (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()) && Settings.EnableJscrypto())
+			if (
+				(bIsOwnFile || bIsSharedStorage)
+				&& bIsImage
+				&& Settings.EnableJscrypto()
+			)
 			{// change view action for images
 				oFile.oActionsData.view.Handler = () => {
-					Crypto.viewEncryptedImage(oFile, iv, sParanoidEncryptedKey);
+					Crypto.viewEncryptedImage(
+						oFile,
+						iv,
+						bIsSharedStorage ? sParanoidEncryptedKeyShared : sParanoidEncryptedKey
+					);
 				};
 			}
 			else
@@ -348,6 +381,83 @@ function StartModule (ModulesManager)
 		}
 	});
 
+	App.subscribeEvent('SharedFiles::UpdateShare::before', async oParams => {
+		const oFile = oParams.oFileItem;
+		const sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
+			('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : '')
+			: '';
+		const fUpdateParanoidKeyShared = ParanoidKeyShared => {
+			//Update file extended props
+			Ajax.send(
+				'Files',
+				'UpdateExtendedProps',
+				{
+					Type: oFile.storageType(),
+					Path: oFile.path(),
+					Name: oFile.fileName(),
+					ExtendedProps: { ParanoidKeyShared }
+				},
+				oResponse => {
+					if (oResponse.Result === true)
+					{
+						//continue sharing
+						oParams.OnSuccessCallback();
+					}
+					else
+					{
+						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_UPDATING_PRANOID_KEY'));
+					}
+				},
+				this
+			);
+		}
+		if (sParanoidEncryptedKey)
+		{//if file is encrypted
+			if (oParams.Shares.length)
+			{//if file was shared - encrypt Paranoid-key
+				//get OpenPGP public keys for users who must have access
+				const aSharesEmails = oParams.Shares.map(oShare => oShare.PublicId);
+				let aPublicKeys = aSharesEmails.length ?
+					OpenPgpEncryptor.findKeysByEmails(aSharesEmails, /*bIsPublic*/true)
+					: [];
+				if (aPublicKeys.length < aSharesEmails.length)
+				{//if not for all users the keys were found - show an error
+					let aEmailsFromKeys = aPublicKeys.map(oKey => oKey.getEmail());
+					let aDifference = aSharesEmails.filter(email => !aEmailsFromKeys.includes(email));
+					const sError = TextUtils.i18n('%MODULENAME%/ERROR_NO_PUBLIC_KEYS_FOR_USERS_PLURAL',
+						{'USERS': aDifference.join(', ')}, null, aDifference.length);
+					Screens.showError(sError);
+					oParams.OnErrorCallback();
+				}
+				else
+				{//encrypt Paranoid-key with found OpenPGP public keys
+					let sParanoidKey = await Crypto.decryptParanoidKey(sParanoidEncryptedKey);
+					if (!sParanoidKey)
+					{//user canceled password entry
+						oParams.OnErrorCallback();
+						return false;
+					}
+					const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(
+						sParanoidKey,
+						aPublicKeys
+					);
+					if (oPGPEncryptionResult.result)
+					{
+						let { data, password } = oPGPEncryptionResult.result;
+						fUpdateParanoidKeyShared(data);
+					}
+				}
+			}
+			else
+			{//remove ParanoidKeyShared if file was unshared
+				fUpdateParanoidKeyShared(null);
+			}
+		}
+		else
+		{//if file is not encrypted - continue sharing
+			oParams.OnSuccessCallback();
+		}
+	});
 }
 
 function getButtonView()
@@ -372,6 +482,7 @@ module.exports = function (oAppData) {
 		start: function (ModulesManager) {
 			Crypto = require('modules/%ModuleName%/js/CCrypto.js');
 			ModulesManager.run('FilesWebclient', 'registerToolbarButtons', [getButtonView()]);
+			OpenPgpEncryptor = ModulesManager.run('OpenPgpWebclient', 'getOpenPgpEncryptor');
 
 			var bBlobSavingEnable = window.Blob && window.URL && _.isFunction(window.URL.createObjectURL);
 			// Module can't work without saving blob and shouldn't be initialized.

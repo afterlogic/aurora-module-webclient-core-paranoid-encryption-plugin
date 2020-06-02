@@ -298,7 +298,6 @@ CCrypto.prototype.decryptParanoidKey = async function (sParanoidEncryptedKey)
 {
 	let sKey = '';
 
-	await OpenPgpEncryptor.initKeys();
 	let oPGPDecryptionResult = await OpenPgpEncryptor.decryptData(sParanoidEncryptedKey);
 	if (oPGPDecryptionResult.result)
 	{
