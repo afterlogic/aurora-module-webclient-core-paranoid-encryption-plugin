@@ -62,17 +62,16 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
 	this.oChunkQueue.isProcessed = true;
 	this.oKey = await JscryptoKey.generateKey();
 	const sKeyData = await JscryptoKey.convertKeyToString(this.oKey);
-	let oCurrentUserPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
+	const oCurrentUserPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
 	if (oCurrentUserPrivateKey && sKeyData)
 	{
-		let CurrentUserPublicKey = await OpenPgpEncryptor.getCurrentUserPublicKey();
+		const CurrentUserPublicKey = await OpenPgpEncryptor.getCurrentUserPublicKey();
 		if (CurrentUserPublicKey)
 		{
-			const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(sKeyData, [CurrentUserPublicKey]);
-			if (oPGPEncryptionResult.result)
+			const sEncryptedKey = await this.encryptParanoidKey(sKeyData, [CurrentUserPublicKey]);
+			if (sEncryptedKey)
 			{
-				let { data, password } = oPGPEncryptionResult.result;
-				await this.start(oFileInfo, data);
+				await this.start(oFileInfo, sEncryptedKey);
 				this.readChunk(sUid, fOnChunkEncryptCallback);
 			}
 		}
@@ -294,14 +293,61 @@ CCrypto.prototype.showOutdatedEncryptionMethodPopup = async function (sFileName)
 	return bResult;
 };
 
-CCrypto.prototype.decryptParanoidKey = async function (sParanoidEncryptedKey)
+CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys, sPassword = '')
+{
+	let sEncryptedKey = "";
+	const oPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
+
+	if (oPrivateKey)
+	{
+
+		const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(
+			sParanoidKey,
+			aPublicKeys,
+			[oPrivateKey],
+			false, /*bPasswordBasedEncryption*/
+			true, /*bSign*/
+			sPassword
+		);
+		if (oPGPEncryptionResult.result)
+		{
+			let { data, password } = oPGPEncryptionResult.result;
+			sEncryptedKey = data;
+		}
+	}
+
+	return sEncryptedKey;
+};
+
+CCrypto.prototype.decryptParanoidKey = async function (sParanoidEncryptedKey, sPassword = '')
 {
 	let sKey = '';
+	let oPGPDecryptionResult = await OpenPgpEncryptor.decryptData(
+		sParanoidEncryptedKey,
+		sPassword
+	);
 
-	let oPGPDecryptionResult = await OpenPgpEncryptor.decryptData(sParanoidEncryptedKey);
 	if (oPGPDecryptionResult.result)
 	{
 		sKey = oPGPDecryptionResult.result;
+		if (oPGPDecryptionResult.validKeyNames
+			&& oPGPDecryptionResult.validKeyNames.length
+		)
+		{
+			const oCurrentUserPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
+			if (!oCurrentUserPrivateKey
+				|| !oPGPDecryptionResult.validKeyNames.includes(oCurrentUserPrivateKey.getUser())
+			)
+			{//Paranoid-key was signed with a foreign key
+				const sReport = TextUtils.i18n('%MODULENAME%/REPORT_SUCCESSFULL_SIGNATURE_VERIFICATION')
+					+ oPGPDecryptionResult.validKeyNames.join(', ').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+				Screens.showReport(sReport)
+			}
+		}
+		else
+		{
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_SIGNATURE_NOT_VERIFIED'));
+		}
 	}
 	else if (oPGPDecryptionResult.hasErrors() || oPGPDecryptionResult.hasNotices())
 	{

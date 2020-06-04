@@ -431,20 +431,36 @@ function StartModule (ModulesManager)
 				}
 				else
 				{//encrypt Paranoid-key with found OpenPGP public keys
-					let sParanoidKey = await Crypto.decryptParanoidKey(sParanoidEncryptedKey);
-					if (!sParanoidKey)
-					{//user canceled password entry
-						oParams.OnErrorCallback();
-						return false;
-					}
-					const oPGPEncryptionResult = await OpenPgpEncryptor.encryptData(
-						sParanoidKey,
-						aPublicKeys
-					);
-					if (oPGPEncryptionResult.result)
+					const oPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
+					if (oPrivateKey)
 					{
-						let { data, password } = oPGPEncryptionResult.result;
-						fUpdateParanoidKeyShared(data);
+						//get a password for decryption and signature operations
+						let sPassword = await OpenPgpEncryptor.askForKeyPassword(oPrivateKey.getUser());
+						if (sPassword === false)
+						{//user cancel operation
+							oParams.OnErrorCallback();
+							return false;
+						}
+						//decrypt personal paranoid key
+						let sParanoidKey = await Crypto.decryptParanoidKey(
+							sParanoidEncryptedKey,
+							sPassword
+						);
+						if (!sParanoidKey)
+						{
+							oParams.OnErrorCallback();
+							return false;
+						}
+						//encrypt personal paranoid key with public keys
+						const sEncryptedSharedKey = await Crypto.encryptParanoidKey(
+							sParanoidKey,
+							aPublicKeys,
+							sPassword
+						);
+						if (sEncryptedSharedKey)
+						{
+							fUpdateParanoidKeyShared(sEncryptedSharedKey);
+						}
 					}
 				}
 			}
