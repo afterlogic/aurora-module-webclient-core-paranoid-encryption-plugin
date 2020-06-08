@@ -100,7 +100,9 @@ function StartModule (ModulesManager)
 					iv,
 					null,
 					null,
-					bIsSharedStorage ? sParanoidEncryptedKeyShared : sParanoidEncryptedKey
+					bIsSharedStorage && sParanoidEncryptedKeyShared
+						? sParanoidEncryptedKeyShared
+						: sParanoidEncryptedKey
 				);
 			};
 		}
@@ -348,7 +350,9 @@ function StartModule (ModulesManager)
 					Crypto.viewEncryptedImage(
 						oFile,
 						iv,
-						bIsSharedStorage ? sParanoidEncryptedKeyShared : sParanoidEncryptedKey
+						bIsSharedStorage && sParanoidEncryptedKeyShared
+							? sParanoidEncryptedKeyShared
+							: sParanoidEncryptedKey
 					);
 				};
 			}
