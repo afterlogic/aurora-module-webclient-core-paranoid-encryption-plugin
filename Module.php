@@ -21,6 +21,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	static $sStorageType = 'encrypted';
 	static $iStorageOrder = 10;
 	static $sPersonalStorageType = 'personal';
+	static $sSharedStorageType = 'shared';
 	static $sEncryptedFolder = '.encrypted';
 	protected $aRequireModules = ['PersonalFiles','S3Filestorage'];
 
@@ -36,30 +37,30 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			]
 		);
 
-		$this->subscribeEvent('Files::GetStorages::after', array($this, 'onAfterGetStorages'), 1);
-		$this->subscribeEvent('Files::FileItemtoResponseArray', array($this, 'onFileItemToResponseArray'));
+		$this->subscribeEvent('Files::GetStorages::after', [$this, 'onAfterGetStorages'], 1);
+		$this->subscribeEvent('Files::FileItemtoResponseArray', [$this, 'onFileItemToResponseArray']);
 
-		$this->subscribeEvent('Files::GetFile', array($this, 'onGetFile'));
-		$this->subscribeEvent('Files::CreateFile', array($this, 'onCreateFile'));
+		$this->subscribeEvent('Files::GetFile', [$this, 'onGetFile']);
+		$this->subscribeEvent('Files::CreateFile', [$this, 'onCreateFile']);
 
-		$this->subscribeEvent('Files::GetItems::before', array($this, 'onBeforeGetItems'));
-		$this->subscribeEvent('Files::GetItems::after', array($this, 'onAfterGetItems'));
-		$this->subscribeEvent('Files::Copy::before', array($this, 'onBeforeCopyOrMove'));
-		$this->subscribeEvent('Files::Move::before', array($this, 'onBeforeCopyOrMove'));
-		$this->subscribeEvent('Files::Delete::before', array($this, 'onBeforeDelete'));
+		$this->subscribeEvent('Files::GetItems::before', [$this, 'onBeforeGetItems']);
+		$this->subscribeEvent('Files::GetItems::after', [$this, 'onAfterGetItems'], 10001);
+		$this->subscribeEvent('Files::Copy::before', [$this, 'onBeforeCopyOrMove']);
+		$this->subscribeEvent('Files::Move::before', [$this, 'onBeforeCopyOrMove']);
+		$this->subscribeEvent('Files::Delete::before', [$this, 'onBeforeDelete']);
 
-		$this->subscribeEvent('Files::GetFileInfo::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::CreateFolder::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::Rename::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::GetQuota::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::CreateLink::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::GetFileContent::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::IsFileExists::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::CheckQuota::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::CreatePublicLink::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::DeletePublicLink::before', array($this, 'onBeforeMethod'));
-		$this->subscribeEvent('Files::GetPublicFiles::after', array($this, 'onAfterGetPublicFiles'));
-		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', array($this, 'onBeforeMethod'));
+		$this->subscribeEvent('Files::GetFileInfo::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::CreateFolder::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::Rename::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::GetQuota::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::CreateLink::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::GetFileContent::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::IsFileExists::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::CheckQuota::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::CreatePublicLink::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::DeletePublicLink::before', [$this, 'onBeforeMethod']);
+		$this->subscribeEvent('Files::GetPublicFiles::after', [$this, 'onAfterGetPublicFiles']);
+		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 	}
 
 	protected function getEncryptedPath($sPath)
@@ -155,6 +156,24 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 					{
 						unset($mResult[$iKey]);
 					}
+				}
+			}
+		}
+		//Encrypted files excluded from shared folders
+		if (
+			$aArgs['Type'] === self::$sSharedStorageType
+			&& is_array($mResult)
+			&& $aArgs['Path'] !== ''
+		)
+		{
+			foreach ($mResult as $iKey => $oFileItem)
+			{
+				if (
+					isset($oFileItem->ExtendedProps)
+					&& isset($oFileItem->ExtendedProps['InitializationVector'])
+				)
+				{
+					unset($mResult[$iKey]);
 				}
 			}
 		}
