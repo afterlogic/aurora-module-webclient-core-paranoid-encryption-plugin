@@ -80,7 +80,9 @@ function StartModule (ModulesManager)
 				oExtendedProps.ParanoidKeyShared
 				: false,
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bIsSharedStorage = oFile.storageType() === Enums.FileStorageType.Shared
+			bIsSharedStorage = "storageType" in oFile
+				? oFile.storageType() === Enums.FileStorageType.Shared
+				: false
 		;
 		//User can decrypt only own or shared files
 		if (!Settings.EnableJscrypto() || !iv
@@ -335,7 +337,9 @@ function StartModule (ModulesManager)
 				: false,
 			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bIsSharedStorage = oFile.storageType() === Enums.FileStorageType.Shared
+			bIsSharedStorage = "storageType" in oFile
+				? oFile.storageType() === Enums.FileStorageType.Shared
+				: false
 		;
 
 		if (bIsEncrypted)
