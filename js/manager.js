@@ -15,6 +15,7 @@ var
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
+	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false,
@@ -415,7 +416,7 @@ function StartModule (ModulesManager)
 				this
 			);
 		}
-		if (sParanoidEncryptedKey)
+		if (!oParams.IsDir && sParanoidEncryptedKey)
 		{//if file is encrypted
 			if (oParams.Shares.length)
 			{//if file was shared - encrypt Paranoid-key
@@ -472,6 +473,25 @@ function StartModule (ModulesManager)
 			{//remove ParanoidKeyShared if file was unshared
 				fUpdateParanoidKeyShared(null);
 			}
+		}
+		else if (oParams.IsDir && oParams.Shares.length)
+		{//if folder is been shared - check if folder contains encrypted files
+			Popups.showPopup(
+				ConfirmPopup,
+				[
+					TextUtils.i18n('%MODULENAME%/INFO_SHARING_FOLDER'),
+					bConfirmation => {
+						if (bConfirmation)
+						{
+							oParams.OnSuccessCallback();
+						}
+						else
+						{
+							oParams.OnErrorCallback();
+						}
+					}
+				]
+			);
 		}
 		else
 		{//if file is not encrypted - continue sharing
