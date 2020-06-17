@@ -5,7 +5,8 @@
 		"php": ">=5.4.0",
 		"afterlogic/aurora-framework": "~0.9.0",
 		"afterlogic/aurora-module-files": "~0.9.0",
-		"afterlogic/aurora-module-webclient-files": "~0.9.0"
+		"afterlogic/aurora-module-webclient-files": "~0.9.0",
+		"afterlogic/aurora-module-webclient-openpgp": "~0.9.0"
 	},
 	"extra": {
 		"installer-name": "CoreParanoidEncryptionWebclientPlugin"
