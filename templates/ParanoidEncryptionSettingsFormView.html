@@ -15,6 +15,11 @@
 				</label>
 				<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
 			</div>
+			<div
+				class="hint yellow-warning"
+				data-bind="i18n: {'key': '%MODULENAME%/WARNING_PGP_KEYS_REQUIREMENT'},
+					visible: !isPGPKeysAvailable()"
+			></div>
 			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_JSCRYPTO'}"></div>
 			<div class="row" data-bind="visible: allowChangeSettings()">
 				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>

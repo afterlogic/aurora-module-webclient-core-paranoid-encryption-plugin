@@ -17,7 +17,8 @@ var
 	GenerateKeyPopup = require('modules/%ModuleName%/js/popups/GenerateKeyPopup.js'),
 	ExportInformationPopup = require('modules/%ModuleName%/js/popups/ExportInformationPopup.js'),
 	DeleteKeyPopup = require('modules/%ModuleName%/js/popups/DeleteKeyPopup.js'),
-	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js')
+	HexUtils = require('modules/%ModuleName%/js/utils/Hex.js'),
+	OpenPgpEncryptor = ModulesManager.run('OpenPgpWebclient', 'getOpenPgpEncryptor')
 ;
 
 /**
@@ -34,6 +35,7 @@ function CParanoidEncryptionSettingsFormView()
 	this.allowChangeSettings = ko.observable(Settings.AllowChangeSettings);
 	this.isImporting = ko.observable(false);
 	this.exportKeyBound = _.bind(this.exportKey, this);
+	this.isPGPKeysAvailable = ko.observable(true);
 
 	if (ko.isObservable(JscryptoKey.keyName))
 	{
@@ -59,7 +61,7 @@ CParanoidEncryptionSettingsFormView.prototype.importStringKey = function ()
 
 CParanoidEncryptionSettingsFormView.prototype.readKeyFromFile = function ()
 {
-	var 
+	var
 		input = document.getElementById('import-key-file'),
 		file = input.files[0],
 		reader = new FileReader(),
@@ -152,6 +154,7 @@ CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 CParanoidEncryptionSettingsFormView.prototype.onShow = function ()
 {
 	JscryptoKey.loadKeyNameFromStorage();
+	this.isPGPKeysAvailable(OpenPgpEncryptor.isPrivateKeyAvailable());
 };
 
 CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
