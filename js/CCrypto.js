@@ -74,21 +74,19 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
 				await this.start(oFileInfo, sEncryptedKey);
 				this.readChunk(sUid, fOnChunkEncryptCallback);
 			}
-		}
-		else
-		{
-			if (_.isFunction(fCancelCallback))
+			else if (_.isFunction(fCancelCallback))
 			{
 				fCancelCallback();
 			}
 		}
-	}
-	else
-	{
-		if (_.isFunction(fCancelCallback))
+		else if (_.isFunction(fCancelCallback))
 		{
 			fCancelCallback();
 		}
+	}
+	else if (_.isFunction(fCancelCallback))
+	{
+		fCancelCallback();
 	}
 };
 
@@ -314,6 +312,14 @@ CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys
 			let { data, password } = oPGPEncryptionResult.result;
 			sEncryptedKey = data;
 		}
+		else if (oPGPEncryptionResult.hasErrors() || oPGPEncryptionResult.hasNotices())
+		{
+			OpenPgpEncryptor.showPgpErrorByCode(
+				oPGPEncryptionResult,
+				'',
+				TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')
+			);
+		}
 	}
 
 	return sEncryptedKey;
@@ -363,7 +369,11 @@ CCrypto.prototype.decryptParanoidKey = async function (sParanoidEncryptedKey, sP
 		}
 		else
 		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY'));
+			OpenPgpEncryptor.showPgpErrorByCode(
+				oPGPDecryptionResult,
+				'',
+				TextUtils.i18n('%MODULENAME%/ERROR_LOAD_KEY')
+			);
 		}
 	}
 

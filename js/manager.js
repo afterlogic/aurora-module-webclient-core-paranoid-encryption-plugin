@@ -68,16 +68,10 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 		var
 			oFile = oParams.File,
-			oExtendedProps = 'oExtendedProps' in oFile ? oFile.oExtendedProps : false,
-			iv = oExtendedProps && 'InitializationVector' in oExtendedProps ?
-				oExtendedProps.InitializationVector
-				: false,
-			sParanoidEncryptedKey = oExtendedProps && 'ParanoidKey' in oExtendedProps ?
-				oExtendedProps.ParanoidKey
-				: false,
-			sParanoidEncryptedKeyShared = oExtendedProps && 'ParanoidKeyShared' in oExtendedProps ?
-				oExtendedProps.ParanoidKeyShared
-				: false,
+			oExtendedProps = oFile?.oExtendedProps || false,
+			iv = oExtendedProps?.InitializationVector || false,
+			sParanoidEncryptedKey = oExtendedProps?.ParanoidKey || false,
+			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
 			bIsSharedStorage = "storageType" in oFile
 				? oFile.storageType() === Enums.FileStorageType.Shared
@@ -113,12 +107,8 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('OpenPgpFilesWebclient::DownloadSecureFile', function (oParams) {
 		var
 			oFile = oParams.File,
-			iv = 'oExtendedProps' in oFile ?
-				('InitializationVector' in oFile.oExtendedProps ? oFile.oExtendedProps.InitializationVector : false)
-				: false,
-			sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
-				('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : false)
-				: false,
+			iv = oFile?.oExtendedProps?.InitializationVector || false,
+			sParanoidEncryptedKey = oFile?.oExtendedProps?.ParanoidKey || false,
 			fProcessBlobCallback = oParams.fProcessBlobCallback,
 			fProcessBlobErrorCallback = oParams.fProcessBlobErrorCallback
 		;
@@ -322,18 +312,11 @@ function StartModule (ModulesManager)
 	App.subscribeEvent('FilesWebclient::ParseFile::after', function (aParams) {
 		let
 			oFile = aParams[0],
-			oExtendedProps = 'oExtendedProps' in oFile ? oFile.oExtendedProps : false,
-			bIsEncrypted = typeof(oExtendedProps) !== 'undefined'
-				&& typeof(oExtendedProps.InitializationVector) !== 'undefined',
-			iv = bIsEncrypted && oExtendedProps && oExtendedProps.InitializationVector ?
-				oExtendedProps.InitializationVector
-				: false,
-			sParanoidEncryptedKey = bIsEncrypted && oExtendedProps && 'ParanoidKey' in oExtendedProps ?
-				oExtendedProps.ParanoidKey
-				: false,
-			sParanoidEncryptedKeyShared = bIsEncrypted && oExtendedProps && 'ParanoidKeyShared' in oExtendedProps ?
-				oExtendedProps.ParanoidKeyShared
-				: false,
+			oExtendedProps = oFile?.oExtendedProps || false,
+			iv = oExtendedProps?.InitializationVector || false,
+			bIsEncrypted = !!iv,
+			sParanoidEncryptedKey = oExtendedProps?.ParanoidKey || false,
+			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
 			bIsSharedStorage = "storageType" in oFile
@@ -391,9 +374,7 @@ function StartModule (ModulesManager)
 
 	App.subscribeEvent('SharedFiles::UpdateShare::before', async oParams => {
 		const oFile = oParams.oFileItem;
-		const sParanoidEncryptedKey = 'oExtendedProps' in oFile ?
-			('ParanoidKey' in oFile.oExtendedProps ? oFile.oExtendedProps.ParanoidKey : '')
-			: '';
+		const sParanoidEncryptedKey = oFile?.oExtendedProps?.ParanoidKey || '';
 		const fUpdateParanoidKeyShared = ParanoidKeyShared => {
 			//Update file extended props
 			Ajax.send(
