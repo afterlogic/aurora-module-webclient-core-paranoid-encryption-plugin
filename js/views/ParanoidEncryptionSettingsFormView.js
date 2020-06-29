@@ -151,10 +151,11 @@ CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 	Settings.update(this.enableJscrypto(), this.encryptionMode());
 };
 
-CParanoidEncryptionSettingsFormView.prototype.onShow = function ()
+CParanoidEncryptionSettingsFormView.prototype.onShow = async function ()
 {
 	JscryptoKey.loadKeyNameFromStorage();
-	this.isPGPKeysAvailable(OpenPgpEncryptor.isPrivateKeyAvailable());
+	let bIsPrivateKeyAvailable = await OpenPgpEncryptor.isPrivateKeyAvailable();
+	this.isPGPKeysAvailable(bIsPrivateKeyAvailable);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
