@@ -395,11 +395,12 @@ function StartModule (ModulesManager)
 					else
 					{
 						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_UPDATING_PRANOID_KEY'));
+						oParams.OnErrorCallback();
 					}
 				},
 				this
 			);
-		}
+		};
 		if (!oParams.IsDir && sParanoidEncryptedKey)
 		{//if file is encrypted
 			if (oParams.Shares.length)

@@ -60,6 +60,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('Files::DeletePublicLink::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('Files::GetPublicFiles::after', [$this, 'onAfterGetPublicFiles']);
+		$this->subscribeEvent('Files::UpdateExtendedProps::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 	}
 
