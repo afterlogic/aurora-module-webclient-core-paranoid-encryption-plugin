@@ -13,6 +13,7 @@ var
 	OpenPgpEncryptor = null,
 	Settings = require('modules/%ModuleName%/js/Settings.js'),
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
+	AlertPopup = require('%PathToCoreWebclientModule%/js/popups/AlertPopup.js'),
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
 	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
@@ -349,6 +350,15 @@ function StartModule (ModulesManager)
 			}
 			oFile.removeAction('list');
 			oFile.bIsSecure(true);
+			//add onSecureIconClick action
+			oFile.onSecureIconClick = (oItem) => {
+				Popups.showPopup(AlertPopup, [
+					TextUtils.i18n(
+						'%MODULENAME%/LABEL_INITIALIZATION_VECTOR',
+						{ 'INITIALIZATIONVECTOR': iv }
+					)
+				]);
+			}
 		}
 	});
 	App.subscribeEvent('FileViewerWebclientPlugin::FilesCollection::after', function (oParams) {
