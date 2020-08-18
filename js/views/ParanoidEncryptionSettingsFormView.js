@@ -43,11 +43,24 @@ function CParanoidEncryptionSettingsFormView()
 			this.keyName(JscryptoKey.keyName());
 		}, this);
 	}
+	
+	this.allowKeysManagement = ko.observable(!!this.keyName());
+	this.keyName.subscribe(function () {
+		if (!!this.keyName())
+		{
+			this.allowKeysManagement(true);
+		}
+	}, this);
 }
 
 _.extendOwn(CParanoidEncryptionSettingsFormView.prototype, CAbstractSettingsFormView.prototype);
 
 CParanoidEncryptionSettingsFormView.prototype.ViewTemplate = '%ModuleName%_ParanoidEncryptionSettingsFormView';
+
+CParanoidEncryptionSettingsFormView.prototype.enableBackwardCompatibility = function ()
+{
+	this.allowKeysManagement(true);
+};
 
 CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
 {
@@ -156,6 +169,7 @@ CParanoidEncryptionSettingsFormView.prototype.onShow = async function ()
 	JscryptoKey.loadKeyNameFromStorage();
 	let bIsPrivateKeyAvailable = await OpenPgpEncryptor.isPrivateKeyAvailable();
 	this.isPGPKeysAvailable(bIsPrivateKeyAvailable);
+	this.allowKeysManagement(!!this.keyName());
 };
 
 CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()
