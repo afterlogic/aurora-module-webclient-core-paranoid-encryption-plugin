@@ -62,6 +62,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::GetPublicFiles::after', [$this, 'onAfterGetPublicFiles']);
 		$this->subscribeEvent('Files::UpdateExtendedProps::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
+		
+		$this->subscribeEvent('SharedFiles::UpdateShare::before', [$this, 'onBeforeUpdateShare']);
 	}
 
 	protected function getEncryptedPath($sPath)
@@ -244,6 +246,16 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			{
 				$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 			}
+		}
+	}
+	
+	public function onBeforeUpdateShare(&$aArgs, &$mResult)
+	{
+		if ($aArgs['Storage'] === self::$sStorageType)
+		{
+			$aArgs['Storage'] = self::$sPersonalStorageType;
+			$aArgs['Type'] = self::$sPersonalStorageType;
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 		}
 	}
 
