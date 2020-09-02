@@ -5,18 +5,24 @@ require('modules/%ModuleName%/js/enums.js');
 var
 	_ = require('underscore'),
 
-	App = require('%PathToCoreWebclientModule%/js/App.js'),
-	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
+	
+	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
+	App = require('%PathToCoreWebclientModule%/js/App.js'),
+	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
-	Crypto = null,
-	OpenPgpEncryptor = null,
-	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	AlertPopup = require('%PathToCoreWebclientModule%/js/popups/AlertPopup.js'),
+	
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
-	Browser = require('%PathToCoreWebclientModule%/js/Browser.js'),
+	InitializationVectorPopup = require('modules/%ModuleName%/js/popups/InitializationVectorPopup.js'),
+	
+	Settings = require('modules/%ModuleName%/js/Settings.js'),
+	
+	Crypto = null,
+	OpenPgpEncryptor = null,
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false,
 	oButtonsView = null,
@@ -350,15 +356,9 @@ function StartModule (ModulesManager)
 			}
 			oFile.removeAction('list');
 			oFile.bIsSecure(true);
-			//add onSecureIconClick action
 			oFile.onSecureIconClick = (oItem) => {
-				Popups.showPopup(AlertPopup, [
-					TextUtils.i18n(
-						'%MODULENAME%/LABEL_INITIALIZATION_VECTOR',
-						{ 'INITIALIZATIONVECTOR': iv }
-					)
-				]);
-			}
+				Popups.showPopup(InitializationVectorPopup, [oFile, iv]);
+			};
 		}
 	});
 	App.subscribeEvent('FileViewerWebclientPlugin::FilesCollection::after', function (oParams) {

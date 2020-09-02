@@ -1,0 +1,24 @@
+<div class="popup" style="display: none;">
+	<div class="mask"></div>
+	<div class="popup_panel">
+		<span class="close" data-bind="click: cancelPopup"></span>
+		<div class="popup_heading" data-bind="text: fileName"></div>
+		<div class="fields">
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_IV_FILE_ENCRYPTED'}"></div>
+			<div class="fieldset">
+				<div class="row">
+					<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_IV_INITIALIZATION_VECTOR'}"></span>
+					<span class="value" data-bind="text: iv"></span>
+				</div>
+			</div>
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_IV_DOWNLOAD_FILE'}"></div>
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_IV_GET_AES_KEY'}, visible: oldEncryptionMode"></div>
+			<div class="buttons">
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_IV_DOWNLOAD_FILE'}, click: downloadEncrypted"></span>
+				<span class="button" data-bind="i18n: {'key': '%MODULENAME%/ACTION_IV_GET_AES_KEY'}, click: getAesKey, visible: !oldEncryptionMode()"></span>
+				<span class="button secondary_button" data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_CLOSE'}, click: cancelPopup"></span>
+			</div>
+		</div>
+	</div>
+	<span class="helper"></span>
+</div>
