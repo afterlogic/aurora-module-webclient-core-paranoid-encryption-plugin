@@ -60,6 +60,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('Files::DeletePublicLink::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('Files::GetPublicFiles::after', [$this, 'onAfterGetPublicFiles']);
+		$this->subscribeEvent('Files::SaveFilesAsTempFiles::after', [$this, 'onAfterSaveFilesAsTempFiles']);
 		$this->subscribeEvent('Files::UpdateExtendedProps::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 		
@@ -275,7 +276,26 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
-
+	
+   public function onAfterSaveFilesAsTempFiles(&$aArgs, &$mResult)
+   {
+	   $aResult = [];
+	   foreach ($mResult as $oFileData) {
+		   foreach ($aArgs['Files'] as $oFileOrigData) {
+			   if ($oFileOrigData['Name'] === $oFileData['Name'])
+			   {
+				   if (isset($oFileOrigData['IsEncrypted']) && $oFileOrigData['IsEncrypted'])
+				   {
+						$oFileData['Actions'] = [];
+						$oFileData['ThumbnailUrl'] = '';
+				   }
+			   }
+		   }
+		   $aResult[] = $oFileData;
+	   }
+	   $mResult = $aResult;
+   }
+   
 	/**
 	* @param array $aArgs Arguments of event.
 	* @param mixed $mResult Is passed by reference.

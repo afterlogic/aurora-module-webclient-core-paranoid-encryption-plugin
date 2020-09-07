@@ -6,6 +6,7 @@ var
 	_ = require('underscore'),
 
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
+	Utils = require('%PathToCoreWebclientModule%/js/utils/Common.js'),
 	
 	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	App = require('%PathToCoreWebclientModule%/js/App.js'),
@@ -14,6 +15,7 @@ var
 	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
 	AlertPopup = require('%PathToCoreWebclientModule%/js/popups/AlertPopup.js'),
+	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
 	ConfirmUploadPopup = require('modules/%ModuleName%/js/popups/ConfirmUploadPopup.js'),
@@ -71,7 +73,7 @@ function StartModule (ModulesManager)
 		Settings.HashModuleName,
 		TextUtils.i18n('%MODULENAME%/LABEL_SETTINGS_TAB')
 	]);
-
+	
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
 		var
 			oFile = oParams.File,
@@ -379,6 +381,71 @@ function StartModule (ModulesManager)
 		if ('CFilesView' === oParams.Name)
 		{
 			FilesView = oParams.View;
+			var ComposeMessageWithAttachments = ModulesManager.run('MailWebclient', 'getComposeMessageWithAttachments');
+			if (_.isFunction(ComposeMessageWithAttachments))
+			{
+				FilesView.executeSend = function ()
+				{
+					var
+						aItems = this.selector.listCheckedAndSelected(),
+						aFileItems = _.filter(aItems, function (oItem) {
+							return oItem && oItem.IS_FILE;
+						}, this),
+						bHasEncrypted = false,
+						aFilesData = _.map(aFileItems, function (oItem) {
+							var bItemEncrypted = !!(oItem.oExtendedProps && oItem.oExtendedProps.InitializationVector)
+							bHasEncrypted = bHasEncrypted || bItemEncrypted;
+							return {
+								'Storage': oItem.storageType(),
+								'Path': oItem.path(),
+								'Name': oItem.fileName(),
+								'Id': oItem.id(),
+								'IsEncrypted': bItemEncrypted
+							};
+						})
+					;
+
+					if (this.bAllowSendEmails && aFileItems.length > 0)
+					{
+						if (bHasEncrypted)
+						{
+							Popups.showPopup(ConfirmPopup, [TextUtils.i18n('%MODULENAME%/ALERT_SEND_ENCRYPTED_FILES'), function (bSendAnyway) {
+								if (bSendAnyway)
+								{
+									Ajax.send('Files', 'SaveFilesAsTempFiles', { 'Files': aFilesData }, function (oResponse) {
+										if (oResponse.Result)
+										{
+											ComposeMessageWithAttachments(oResponse.Result);
+										}
+									}, this);
+								}
+							}.bind(this)]);
+						}
+						else
+						{
+							Ajax.send('Files', 'SaveFilesAsTempFiles', { 'Files': aFilesData }, function (oResponse) {
+								if (oResponse.Result)
+								{
+									ComposeMessageWithAttachments(oResponse.Result);
+								}
+							}, this);
+						}
+					}
+				};
+				FilesView.sendCommand = Utils.createCommand(FilesView, FilesView.executeSend, function () {
+					if (!this.isZipFolder() && this.checkedReadyForOperations())
+					{
+						var
+							aItems = this.selector.listCheckedAndSelected(),
+							aFileItems = _.filter(aItems, function (oItem) {
+								return oItem && oItem.IS_FILE;
+							}, this)
+						;
+						return (aFileItems.length > 0);
+					}
+					return false;
+				});
+			}
 		}
 	});
 
