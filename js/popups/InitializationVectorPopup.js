@@ -5,6 +5,7 @@ var
 	ko = require('knockout'),
 
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
+	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js'),
 	CAbstractPopup = require('%PathToCoreWebclientModule%/js/popups/CAbstractPopup.js'),
 	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
@@ -47,7 +48,10 @@ CInitializationVectorPopup.prototype.getAesKey = async function ()
 {
 	let Crypto = require('modules/%ModuleName%/js/CCrypto.js');
 	let sKey = await Crypto.decryptParanoidKey(this.oFile?.oExtendedProps?.ParanoidKey);
-	Popups.showPopup(AlertPopup, [sKey, null, TextUtils.i18n('%MODULENAME%/HEADING_IV_AES_KEY')]);
+	if (Types.isNonEmptyString(sKey))
+	{
+		Popups.showPopup(AlertPopup, [sKey, null, TextUtils.i18n('%MODULENAME%/HEADING_IV_AES_KEY')]);
+	}
 };
 
 module.exports = new CInitializationVectorPopup();
