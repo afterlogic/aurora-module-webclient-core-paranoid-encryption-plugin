@@ -11,9 +11,9 @@
 			<div class="row">
 				<label class="custom_checkbox" data-bind="css: {'checked': enableJscrypto}">
 					<span class="icon"></span>
-					<input type="checkbox" id="EnableJscrypto" data-bind="checked: enableJscrypto" />
+					<input type="checkbox" id="enableJscrypto" data-bind="checked: enableJscrypto" />
 				</label>
-				<label for="EnableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
+				<label for="enableJscrypto" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENABLE_JSCRYPTO'}"></label>
 			</div>
 			<div
 				class="hint yellow-warning"
@@ -21,34 +21,15 @@
 					visible: !isPGPKeysAvailable()"
 			></div>
 			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_JSCRYPTO'}"></div>
-			<div class="row" data-bind="visible: allowChangeSettings()">
-				<span class="label" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE'}"></span>
-				<span class="value">
-					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.AlwaysInEncryptedFolder, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
-						<span class="icon"></span>
-						<input type="radio" id="tab_always_in_encrypted_folder" data-bind="checked: bIsHttpsEnable && enableJscrypto() ?encryptionMode : false, attr: {'value': Enums.EncryptionMode.AlwaysInEncryptedFolder}" />
-					</label>
-					<label for="tab_always_in_encrypted_folder" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ALWAYS_IN_ENCRYPTED_FOLDER'}"></label>
-
-					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.Always, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
-						<span class="icon"></span>
-						<input type="radio" id="tab_always" data-bind="checked: bIsHttpsEnable && enableJscrypto() ? encryptionMode : false, attr: {'value': Enums.EncryptionMode.Always}" />
-					</label>
-					<label for="tab_always" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ALWAYS'}"></label>
-
-					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.AskMe, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
-						<span class="icon"></span>
-						<input type="radio" id="tab_askme" data-bind="checked: bIsHttpsEnable && enableJscrypto() ? encryptionMode : false, attr: {'value': Enums.EncryptionMode.AskMe}" />
-					</label>
-					<label for="tab_askme" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_ASK'}"></label>
-
-					<label class="custom_radio" data-bind="css: {'checked': encryptionMode() == Enums.EncryptionMode.Never, 'disabled': !bIsHttpsEnable || !enableJscrypto()}">
-						<span class="icon"></span>
-						<input type="radio" id="tab_never" data-bind="checked: bIsHttpsEnable && enableJscrypto() ?encryptionMode : false, attr: {'value': Enums.EncryptionMode.Never}" />
-					</label>
-					<label for="tab_never" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ENCRYPTION_MODE_NEVER'}"></label>
-				</span>
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ENCRYPTED_FOLDER'}"></div>
+			<div class="row" data-bind="visible: allowChangeSettings">
+				<label class="custom_checkbox" data-bind="css: {'checked': enableInPersonalStorage}">
+					<span class="icon"></span>
+					<input type="checkbox" id="enableInPersonalStorage" data-bind="checked: enableInPersonalStorage" />
+				</label>
+				<label for="enableInPersonalStorage" data-bind="i18n: {'key': '%MODULENAME%/LABEL_ALLOW_ENCRYPT_IN_PERSONAL_STORAGE'}"></label>
 			</div>
+			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ENCRYPT_IN_PERSONAL_STORAGE'}"></div>
 		</div>
 		<div class="buttons">
 			<span class="button" data-bind="click: save, visible: !isSaving()">

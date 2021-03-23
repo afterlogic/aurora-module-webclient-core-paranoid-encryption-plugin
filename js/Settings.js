@@ -11,10 +11,10 @@ module.exports = {
 	ServerModuleName: '%ModuleName%',
 	HashModuleName: 'paranoid-encryption',
 	EncryptionAllowedModules: ['Files'],
-	EncryptionAllowedStorages: ['personal', 'corporate'],
+	EncryptionAllowedStorages: ['personal'],
 
-	EnableJscrypto: ko.observable(true),
-	EncryptionMode: ko.observable(Enums.EncryptionMode.Always),
+	enableJscrypto: ko.observable(true),
+	EnableInPersonalStorage: false,
 	ChunkSizeMb: 5,
 	AllowMultiChunkUpload: true,
 	AllowChangeSettings: false,
@@ -31,9 +31,9 @@ module.exports = {
 
 		if (!_.isEmpty(oAppDataSection))
 		{
-			this.EnableJscrypto(Types.pBool(oAppDataSection.EnableModule, this.EnableJscrypto()));
+			this.enableJscrypto(Types.pBool(oAppDataSection.EnableModule, this.enableJscrypto()));
 			this.DontRemindMe(Types.pBool(oAppDataSection.DontRemindMe, this.DontRemindMe()));
-			this.EncryptionMode(Types.pEnum(oAppDataSection.EncryptionMode, Enums.EncryptionMode, this.EncryptionMode()));
+			this.EnableInPersonalStorage = Types.pBool(oAppDataSection.EnableInPersonalStorage, this.EnableInPersonalStorage);
 			this.ChunkSizeMb = Types.pInt(oAppDataSection.ChunkSizeMb, this.ChunkSizeMb);
 			this.AllowMultiChunkUpload = Types.pBool(oAppDataSection.AllowMultiChunkUpload, this.AllowMultiChunkUpload);
 			this.AllowChangeSettings = Types.pBool(oAppDataSection.AllowChangeSettings, this.AllowChangeSettings);
@@ -44,11 +44,11 @@ module.exports = {
 	 * Updates new settings values after saving on server.
 	 *
 	 * @param {boolean} bEnableJscrypto
-	 * @param {number} iEncryptionMode
+	 * @param {number} bEnableInPersonalStorage
 	 */
-	update: function (bEnableJscrypto, iEncryptionMode)
+	update: function (bEnableJscrypto, bEnableInPersonalStorage)
 	{
-		this.EnableJscrypto(bEnableJscrypto);
-		this.EncryptionMode(Types.pInt(iEncryptionMode));
+		this.enableJscrypto(bEnableJscrypto);
+		this.EnableInPersonalStorage = bEnableInPersonalStorage;
 	}
 };

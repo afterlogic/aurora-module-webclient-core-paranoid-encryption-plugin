@@ -11,9 +11,9 @@
 		false,
 		"bool"
 	],
-	"EncryptionModeByDefault": [
-		1,
-		"int"
+	"EnableInPersonalStorageByDefault": [
+		false,
+		"bool"
 	],
 	"ChunkSizeMb": [
 		5,
@@ -26,5 +26,5 @@
 	"AllowChangeSettings": [
 		true,
 		"bool"
-	]	
+	]
 }

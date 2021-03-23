@@ -28,10 +28,10 @@ function CParanoidEncryptionSettingsFormView()
 {
 	CAbstractSettingsFormView.call(this, Settings.ServerModuleName);
 
-	this.enableJscrypto = ko.observable(Settings.EnableJscrypto());
+	this.enableJscrypto = ko.observable(Settings.enableJscrypto());
+	this.enableInPersonalStorage = ko.observable(Settings.EnableInPersonalStorage);
 	this.keyName = ko.observable('');
 	this.bIsHttpsEnable = window.location.protocol === "https:";
-	this.encryptionMode = ko.observable(Settings.EncryptionMode());
 	this.allowChangeSettings = ko.observable(Settings.AllowChangeSettings);
 	this.isImporting = ko.observable(false);
 	this.exportKeyBound = _.bind(this.exportKey, this);
@@ -141,27 +141,27 @@ CParanoidEncryptionSettingsFormView.prototype.getCurrentValues = function ()
 {
 	return [
 		this.enableJscrypto(),
-		this.encryptionMode()
+		this.enableInPersonalStorage()
 	];
 };
 
 CParanoidEncryptionSettingsFormView.prototype.revertGlobalValues = function ()
 {
-	this.enableJscrypto(Settings.EnableJscrypto());
-	this.encryptionMode(Settings.EncryptionMode());
+	this.enableJscrypto(Settings.enableJscrypto());
+	this.enableInPersonalStorage(Settings.EnableInPersonalStorage);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.getParametersForSave = function ()
 {
 	return {
 		'EnableModule': this.enableJscrypto(),
-		'EncryptionMode': Types.pInt(this.encryptionMode())
+		'EnableInPersonalStorage': Types.pInt(this.enableInPersonalStorage())
 	};
 };
 
 CParanoidEncryptionSettingsFormView.prototype.applySavedValues = function ()
 {
-	Settings.update(this.enableJscrypto(), this.encryptionMode());
+	Settings.update(this.enableJscrypto(), this.enableInPersonalStorage());
 };
 
 CParanoidEncryptionSettingsFormView.prototype.onShow = async function ()

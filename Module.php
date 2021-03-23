@@ -30,10 +30,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		\Aurora\Modules\Core\Classes\User::extend(
 			self::GetName(),
 			[
-				'EnableModule' 			=> ['bool', $this->getConfig('EnabledByDefault', false)],
-				'EncryptionMode' 		=> ['int', $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe)],
-				'AllowChangeSettings'	=> ['bool', $this->getConfig('AllowChangeSettings', true)],
-				'DontRemindMe'			=> ['bool', false],
+				'EnableModule'				=> ['bool', $this->getConfig('EnabledByDefault', false)], // Enables encryption only in Encrypted folder
+				'EnableInPersonalStorage'	=> ['bool', $this->getConfig('EnableInPersonalStorageByDefault', false)],
+				'AllowChangeSettings'		=> ['bool', $this->getConfig('AllowChangeSettings', true)],
+				'DontRemindMe'				=> ['bool', false],
 			]
 		);
 
@@ -80,7 +80,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function onAfterGetStorages($aArgs, &$mResult)
 	{
 		$oUser = \Aurora\System\Api::getAuthenticatedUser();
-		if ($oUser->{$this->GetName() . '::EnableModule'} && $this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
+		if ($oUser->{$this->GetName() . '::EnableModule'})
 		{
 			array_unshift($mResult, [
 				'Type' => static::$sStorageType,
@@ -150,16 +150,13 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 */
 	public function onAfterGetItems(&$aArgs, &$mResult)
 	{
-		if ($this->getEncryptionMode() === Enums\EncryptionMode::AlwaysInEncryptedFolder)
+		if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
 		{
-			if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
+			foreach ($mResult as $iKey => $oFileItem)
 			{
-				foreach ($mResult as $iKey => $oFileItem)
+				if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
 				{
-					if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
-					{
-						unset($mResult[$iKey]);
-					}
+					unset($mResult[$iKey]);
 				}
 			}
 		}
@@ -314,25 +311,6 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		}
    }
 
-	protected function getEncryptionMode()
-	{
-		$mResult = false;
-		if ($this->getConfig('AllowChangeSettings', true))
-		{
-			$oUser = \Aurora\System\Api::getAuthenticatedUser();
-			if ($oUser instanceof \Aurora\Modules\Core\Classes\User)
-			{
-				$mResult = $oUser->{self::GetName().'::EncryptionMode'};
-			}
-		}
-		else
-		{
-			$mResult = $this->getConfig('EncryptionModeByDefault', Enums\EncryptionMode::AskMe);
-		}
-
-		return $mResult;
-	}
-
 	/**
 	 * Obtains list of module settings for authenticated user.
 	 *
@@ -350,8 +328,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
 				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
 				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
-				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true),
-				'EncryptionMode' 		=> $this->getEncryptionMode()
+				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true)
 			];
 		}
 
@@ -362,9 +339,10 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 * Updates settings of the Paranoid Encryption Module.
 	 *
 	 * @param boolean $EnableModule indicates if user turned on Paranoid Encryption Module.
+	 * @param boolean $EnableInPersonalStorage
 	 * @return boolean
 	 */
-	public function UpdateSettings($EnableModule, $EncryptionMode)
+	public function UpdateSettings($EnableModule, $EnableInPersonalStorage)
 	{
 		\Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::NormalUser);
 
@@ -373,7 +351,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		{
 			$oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserUnchecked($iUserId);
 			$oUser->{self::GetName().'::EnableModule'} = $EnableModule;
-			$oUser->{self::GetName().'::EncryptionMode'} = $EncryptionMode;
+			$oUser->{self::GetName().'::EnableInPersonalStorage'} = $EnableInPersonalStorage;
 			\Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
 		}
 		return true;

@@ -1,7 +1,5 @@
 'use strict';
 
-require('modules/%ModuleName%/js/enums.js');
-
 var
 	_ = require('underscore'),
 
@@ -87,7 +85,7 @@ function StartModule (ModulesManager)
 				: false
 		;
 		//User can decrypt only own or shared files
-		if (!Settings.EnableJscrypto() || !iv
+		if (!Settings.enableJscrypto() || !iv
 			|| !(bIsOwnFile || bIsSharedStorage))
 		{
 			//regular upload will start in Jua in this case
@@ -123,7 +121,7 @@ function StartModule (ModulesManager)
 		;
 
 		//User can decrypt only own files
-		if (!Settings.EnableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
+		if (!Settings.enableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 		{
 			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_СANT_DECRYPT_FILE'));
 			if (_.isFunction(fProcessBlobErrorCallback))
@@ -211,36 +209,31 @@ function StartModule (ModulesManager)
 			})
 		;
 
-		if (!Settings.EnableJscrypto()
-			|| (
-				Settings.EncryptionAllowedModules &&
-				Settings.EncryptionAllowedModules.length > 0 &&
-				!Settings.EncryptionAllowedModules.includes(sModuleName)
+		if (Settings.enableJscrypto() &&
+			Settings.EncryptionAllowedModules &&
+			Settings.EncryptionAllowedModules.length > 0 &&
+			Settings.EncryptionAllowedModules.includes(sModuleName) &&
+			(
+				oParams.sStorageType === 'encrypted' ||
+				oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage
 			)
-			|| (!Settings.EncryptionAllowedStorages.includes(oParams.sStorageType) && oParams.sStorageType !== 'encrypted')
-			|| Settings.EncryptionMode() === Enums.EncryptionMode.Never
-			|| (Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder && oParams.sStorageType !== 'encrypted')
 		)
 		{
-			fRegularUploadFileCallback(sUid, oFileInfo);
-		}
-		else if (!IsHttpsEnable())
-		{
-			if (Settings.EncryptionMode() === Enums.EncryptionMode.Always || Settings.EncryptionMode() === Enums.EncryptionMode.AlwaysInEncryptedFolder)
+			if (!IsHttpsEnable())
 			{
-				//for Always encryption mode show error
-				Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-				fCancelFunction(sUid);
+				if (oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
+				{
+					//for AskMe encryption mode show dialog with warning and regular upload button
+					ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+				}
+				else
+				{
+					//for Always encryption mode show error
+					Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
+					fCancelFunction(sUid);
+				}
 			}
-			else if (Settings.EncryptionMode() === Enums.EncryptionMode.AskMe)
-			{
-				//for AskMe encryption mode show dialog with warning and regular upload button
-				ShowUploadPopup(sUid, oFileInfo, fUpload, fCancel, TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-			}
-		}
-		else
-		{
-			if (Settings.EncryptionMode() === Enums.EncryptionMode.AskMe)
+			else if (oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
 			{
 				if (isConfirmPopupShown)
 				{
@@ -286,17 +279,21 @@ function StartModule (ModulesManager)
 				}
 			}
 		}
+		else
+		{
+			fRegularUploadFileCallback(sUid, oFileInfo);
+		}
 	});
 
 	App.subscribeEvent('CFilesView::FileDownloadCancel', function (oParams) {
-		if (Settings.EnableJscrypto() && IsHttpsEnable())
+		if (Settings.enableJscrypto() && IsHttpsEnable())
 		{
 			oParams.oFile.stopDownloading();
 		}
 	});
 
 	App.subscribeEvent('CFilesView::FileUploadCancel', function (oParams) {
-		if (Settings.EnableJscrypto() && IsHttpsEnable())
+		if (Settings.enableJscrypto() && IsHttpsEnable())
 		{
 			//clear queue
 			Crypto.oChunkQueue.aFiles.forEach(function (oData, index, array) {
@@ -312,7 +309,7 @@ function StartModule (ModulesManager)
 		}
 	});
 	App.subscribeEvent('Jua::FileUploadingError', function () {
-		if (Settings.EnableJscrypto() && IsHttpsEnable())
+		if (Settings.enableJscrypto() && IsHttpsEnable())
 		{
 			Crypto.oChunkQueue.isProcessed = false;
 			Crypto.checkQueue();
@@ -339,7 +336,7 @@ function StartModule (ModulesManager)
 			if (
 				(bIsOwnFile || bIsSharedStorage)
 				&& bIsImage
-				&& Settings.EnableJscrypto()
+				&& Settings.enableJscrypto()
 			)
 			{// change view action for images
 				oFile.oActionsData.view.Handler = () => {
@@ -369,8 +366,7 @@ function StartModule (ModulesManager)
 		}));
 	});
 
-
-	Settings.EnableJscrypto.subscribe(function(newValue) {
+	Settings.enableJscrypto.subscribe(function(newValue) {
 		if (FilesView !== null)
 		{
 			FilesView.requestStorages();
