@@ -63,7 +63,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::SaveFilesAsTempFiles::after', [$this, 'onAfterSaveFilesAsTempFiles']);
 		$this->subscribeEvent('Files::UpdateExtendedProps::before', [$this, 'onBeforeMethod']);
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
-		
+
 		$this->subscribeEvent('SharedFiles::UpdateShare::before', [$this, 'onBeforeUpdateShare']);
 	}
 
@@ -162,17 +162,15 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		}
 		//Encrypted files excluded from shared folders
 		if (
-			$aArgs['Type'] === self::$sSharedStorageType
+		    $this->oHttp->GetHeader('x-client') !== 'WebClient'
+		    && $aArgs['Type'] === self::$sPersonalStorageType
+			&& substr($aArgs['Path'], 1, 11) === self::$sEncryptedFolder
 			&& is_array($mResult)
-			&& $aArgs['Path'] !== ''
 		)
 		{
 			foreach ($mResult as $iKey => $oFileItem)
 			{
-				if (
-					isset($oFileItem->ExtendedProps)
-					&& isset($oFileItem->ExtendedProps['InitializationVector'])
-				)
+				if (isset($oFileItem->ExtendedProps) && isset($oFileItem->ExtendedProps['ParanoidKey']) && empty($oFileItem->ExtendedProps['ParanoidKey']))
 				{
 					unset($mResult[$iKey]);
 				}
@@ -246,7 +244,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
-	
+
 	public function onBeforeUpdateShare(&$aArgs, &$mResult)
 	{
 		if ($aArgs['Storage'] === self::$sStorageType)
@@ -273,7 +271,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			}
 		}
 	}
-	
+
    public function onAfterSaveFilesAsTempFiles(&$aArgs, &$mResult)
    {
 	   $aResult = [];
@@ -292,7 +290,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	   }
 	   $mResult = $aResult;
    }
-   
+
 	/**
 	* @param array $aArgs Arguments of event.
 	* @param mixed $mResult Is passed by reference.
