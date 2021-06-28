@@ -326,7 +326,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
 				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
 				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
-				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true)
+				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true),
+				'EncryptionMode' 		=> 3 //temporary brought back this setting for compatibility with current versions of mobile apps
 			];
 		}
 
