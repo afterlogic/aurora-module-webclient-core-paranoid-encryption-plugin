@@ -27,16 +27,6 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
 	public function init()
 	{
-		\Aurora\Modules\Core\Classes\User::extend(
-			self::GetName(),
-			[
-				'EnableModule'				=> ['bool', $this->getConfig('EnabledByDefault', false)], // Enables encryption only in Encrypted folder
-				'EnableInPersonalStorage'	=> ['bool', $this->getConfig('EnableInPersonalStorageByDefault', false)],
-				'AllowChangeSettings'		=> ['bool', $this->getConfig('AllowChangeSettings', true)],
-				'DontRemindMe'				=> ['bool', false],
-			]
-		);
-
 		$this->subscribeEvent('Files::GetStorages::after', [$this, 'onAfterGetStorages'], 1);
 		$this->subscribeEvent('Files::FileItemtoResponseArray', [$this, 'onFileItemToResponseArray']);
 
@@ -348,8 +338,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if (0 < $iUserId)
 		{
 			$oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserUnchecked($iUserId);
-			$oUser->{self::GetName().'::EnableModule'} = $EnableModule;
-			$oUser->{self::GetName().'::EnableInPersonalStorage'} = $EnableInPersonalStorage;
+			$oUser->setExtendedProp(self::GetName().'::EnableModule', $EnableModule);
+			$oUser->setExtendedProp(self::GetName().'::EnableInPersonalStorage', $EnableInPersonalStorage);
 			\Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
 		}
 		return true;
@@ -369,7 +359,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if (0 < $iUserId)
 		{
 			$oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserUnchecked($iUserId);
-			$oUser->{self::GetName().'::DontRemindMe'} = true;
+			$oUser->setExtendedProp(self::GetName().'::DontRemindMe', true);
 			$bResult = \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
 		}
 
