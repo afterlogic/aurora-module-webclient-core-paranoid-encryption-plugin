@@ -324,6 +324,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			$aSettings = [
 				'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
 				'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
+				'EnableInPersonalStorage' => $oUser->{self::GetName().'::EnableInPersonalStorage'},
 				'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
 				'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
 				'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true),

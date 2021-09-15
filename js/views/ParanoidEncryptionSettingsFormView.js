@@ -155,7 +155,7 @@ CParanoidEncryptionSettingsFormView.prototype.getParametersForSave = function ()
 {
 	return {
 		'EnableModule': this.enableJscrypto(),
-		'EnableInPersonalStorage': Types.pInt(this.enableInPersonalStorage())
+		'EnableInPersonalStorage': this.enableInPersonalStorage()
 	};
 };
 
