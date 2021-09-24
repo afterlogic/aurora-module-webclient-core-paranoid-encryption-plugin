@@ -123,7 +123,7 @@ function StartModule (ModulesManager)
 		//User can decrypt only own files
 		if (!Settings.enableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
 		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_СANT_DECRYPT_FILE'));
+			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_CANT_DECRYPT_FILE'));
 			if (_.isFunction(fProcessBlobErrorCallback))
 			{
 				fProcessBlobErrorCallback();
