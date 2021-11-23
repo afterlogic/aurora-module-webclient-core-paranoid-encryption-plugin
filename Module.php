@@ -34,7 +34,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('Files::CreateFile', [$this, 'onCreateFile']);
 
 		$this->subscribeEvent('Files::GetItems::before', [$this, 'onBeforeGetItems']);
-		$this->subscribeEvent('Files::GetItems::after', [$this, 'onAfterGetItems'], 10001);
+		$this->subscribeEvent('Files::GetItems', [$this, 'onGetItems'], 10001);
 		$this->subscribeEvent('Files::Copy::before', [$this, 'onBeforeCopyOrMove']);
 		$this->subscribeEvent('Files::Move::before', [$this, 'onBeforeCopyOrMove']);
 		$this->subscribeEvent('Files::Delete::before', [$this, 'onBeforeDelete']);
@@ -148,7 +148,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	 * @param array $aArgs Arguments of event.
 	 * @param mixed $mResult Is passed by reference.
 	 */
-	public function onAfterGetItems(&$aArgs, &$mResult)
+	public function onGetItems(&$aArgs, &$mResult)
 	{
 		if ($aArgs['Type'] === self::$sPersonalStorageType && $aArgs['Path'] === '' && is_array($mResult))
 		{
