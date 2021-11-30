@@ -429,7 +429,7 @@ function StartModule (ModulesManager)
 					}
 				};
 				FilesView.sendCommand = Utils.createCommand(FilesView, FilesView.executeSend, function () {
-					if (!this.isZipFolder() && this.checkedReadyForOperations())
+					if (!this.isZipFolder() && this.allSelectedFilesReady())
 					{
 						var
 							aItems = this.selector.listCheckedAndSelected(),
@@ -546,16 +546,6 @@ function StartModule (ModulesManager)
 	});
 }
 
-function getButtonView()
-{
-	if (!oButtonsView)
-	{
-		oButtonsView = require('modules/%ModuleName%/js/views/ButtonsView.js');
-	}
-
-	return oButtonsView;
-}
-
 module.exports = function (oAppData) {
 	Settings.init(oAppData);
 
@@ -567,7 +557,6 @@ module.exports = function (oAppData) {
 		 */
 		start: function (ModulesManager) {
 			Crypto = require('modules/%ModuleName%/js/CCrypto.js');
-			ModulesManager.run('FilesWebclient', 'registerToolbarButtons', [getButtonView()]);
 			OpenPgpEncryptor = ModulesManager.run('OpenPgpWebclient', 'getOpenPgpEncryptor');
 
 			var bBlobSavingEnable = window.Blob && window.URL && _.isFunction(window.URL.createObjectURL);
