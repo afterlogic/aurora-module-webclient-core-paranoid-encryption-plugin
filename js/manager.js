@@ -396,7 +396,6 @@ function StartModule (ModulesManager)
 								'Path': oItem.path(),
 								'Name': oItem.fileName(),
 								'Id': oItem.id(),
-								'Shared': oItem.bSharedWithMeFirstLevel,
 								'IsEncrypted': bItemEncrypted
 							};
 						})
