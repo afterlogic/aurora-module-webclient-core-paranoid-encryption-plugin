@@ -80,13 +80,11 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKey = oExtendedProps?.ParanoidKey || false,
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bIsSharedStorage = "storageType" in oFile
-				? oFile.storageType() === Enums.FileStorageType.Shared
-				: false
+			bSharedWithMe = oFile.bSharedWithMe
 		;
 		//User can decrypt only own or shared files
 		if (!Settings.enableJscrypto() || !iv
-			|| !(bIsOwnFile || bIsSharedStorage))
+			|| !(bIsOwnFile || bSharedWithMe))
 		{
 			//regular upload will start in Jua in this case
 		}
@@ -103,7 +101,7 @@ function StartModule (ModulesManager)
 					iv,
 					null,
 					null,
-					bIsSharedStorage && sParanoidEncryptedKeyShared
+					bSharedWithMe && sParanoidEncryptedKeyShared
 						? sParanoidEncryptedKeyShared
 						: sParanoidEncryptedKey
 				);
@@ -325,16 +323,14 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bIsSharedStorage = "storageType" in oFile
-				? oFile.storageType() === Enums.FileStorageType.Shared
-				: false
+			bSharedWithMe = oFile.bSharedWithMe
 		;
 
 		if (bIsEncrypted)
 		{
 			oFile.thumbnailSrc('');
 			if (
-				(bIsOwnFile || bIsSharedStorage)
+				(bIsOwnFile || bSharedWithMe)
 				&& bIsImage
 				&& Settings.enableJscrypto()
 			)
@@ -343,7 +339,7 @@ function StartModule (ModulesManager)
 					Crypto.viewEncryptedImage(
 						oFile,
 						iv,
-						bIsSharedStorage && sParanoidEncryptedKeyShared
+						bSharedWithMe && sParanoidEncryptedKeyShared
 							? sParanoidEncryptedKeyShared
 							: sParanoidEncryptedKey
 					);
