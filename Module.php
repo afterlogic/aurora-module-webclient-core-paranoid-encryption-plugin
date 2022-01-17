@@ -7,6 +7,9 @@
 
 namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 
+use Aurora\Modules\SharedFiles\Enums\ErrorCodes;
+use Aurora\System\Exceptions\ApiException;
+
 /**
  * Paranoid Encryption module allows you to encrypt files in File module using client-based functionality only.
  *
@@ -249,6 +252,9 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	{
 		if ($aArgs['Storage'] === self::$sStorageType)
 		{
+			if ($aArgs['IsDir']) {
+				throw new ApiException(ErrorCodes::NotPossibleToShareDirectoryInEcryptedStorage);
+			}
 			$aArgs['Storage'] = self::$sPersonalStorageType;
 			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
