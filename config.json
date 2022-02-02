@@ -26,5 +26,9 @@
 	"AllowChangeSettings": [
 		true,
 		"bool"
+	],
+	"IncludeInMobile": [
+		true,
+		"bool"
 	]
 }
