@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import EventBus from 'src/event-bus'
+import eventBus from 'src/event-bus'
 
 import settings from './settings'
 
@@ -39,10 +39,10 @@ export default {
   },
 
   initSubscriptions (appData) {
-    EventBus.$off('SettingsMobileWebclient::GetSettingsPageChildren', _getSettingsPageChildren)
-    EventBus.$on('SettingsMobileWebclient::GetSettingsPageChildren', _getSettingsPageChildren)
+    eventBus.$off('SettingsMobileWebclient::GetSettingsPageChildren', _getSettingsPageChildren)
+    eventBus.$on('SettingsMobileWebclient::GetSettingsPageChildren', _getSettingsPageChildren)
 
-    EventBus.$off('SettingsMobileWebclient::GetSettingsTabs', _getSettingsTabs)
-    EventBus.$on('SettingsMobileWebclient::GetSettingsTabs', _getSettingsTabs)
+    eventBus.$off('SettingsMobileWebclient::GetSettingsTabs', _getSettingsTabs)
+    eventBus.$on('SettingsMobileWebclient::GetSettingsTabs', _getSettingsTabs)
   },
 }
