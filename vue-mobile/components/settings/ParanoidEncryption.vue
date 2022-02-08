@@ -117,7 +117,7 @@
         :label="$t('COREWEBCLIENT.ACTION_SAVE')"
       />
     </div>
-    <import-key-from-stying
+    <import-key-from-string
       v-model="showImportKeyDialog"
       @close="showAesKey()"
     />
@@ -155,7 +155,7 @@ export default {
     this.aesKey = VueCookies.get('AesKey')
   },
   methods: {
-    ...mapActions('settings', ['asyncChangeParanoidEncryptionSettings']),
+    ...mapActions('coreparanoidencryptionplugin', ['asyncChangeParanoidEncryptionSettings']),
     async save() {
       const parameters = {
         EnableModule: this.enableModule,
