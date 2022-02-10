@@ -1,8 +1,15 @@
-// import typesUtils from 'src/utils/types'
+import types from 'src/utils/types'
 
 class CoreParanoidEncryptionSettings {
   constructor (appData) {
-    // const coreParanoidEncryptionWebclientPluginData = typesUtils.pObject(appData.CoreParanoidEncryptionWebclientPlugin)
+    const paranoidEncryptionData = types.pObject(appData.CoreParanoidEncryptionWebclientPlugin)
+    this.allowChangeSettings = types.pBool(paranoidEncryptionData.AllowChangeSettings)
+    this.allowMultiChunkUpload = types.pBool(paranoidEncryptionData.AllowMultiChunkUpload)
+    this.chunkSizeMb = types.pInt(paranoidEncryptionData.ChunkSizeMb)
+    this.dontRemindMe = types.pBool(paranoidEncryptionData.DontRemindMe)
+    this.enableInPersonalStorage = types.pBool(paranoidEncryptionData.EnableInPersonalStorage)
+    this.enableModule = types.pBool(paranoidEncryptionData.EnableModule)
+    this.encryptionMode = types.pInt(paranoidEncryptionData.EncryptionMode)
   }
 }
 
@@ -18,4 +25,9 @@ const getCoreParanoidEncryptionSettings = () => {
   return settings
 }
 
-export { getCoreParanoidEncryptionSettings }
+const setCoreParanoidEncryptionSettings = (enableModule, enableInPersonalStorage) => {
+  settings.enableModule = enableModule
+  settings.enableInPersonalStorage = enableInPersonalStorage
+}
+
+export { getCoreParanoidEncryptionSettings, setCoreParanoidEncryptionSettings }

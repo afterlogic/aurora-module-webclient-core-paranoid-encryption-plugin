@@ -5,14 +5,10 @@
         class="settings__label"
         v-model="enableModule"
         left-label
-        :label="
-          $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.LABEL_ENABLE_JSCRYPTO')
-        "
+        :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.LABEL_ENABLE_JSCRYPTO')"
       />
       <div class="settings__caption text-secondary q-mt-md">
-        <span>
-          {{ $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ABOUT_JSCRYPTO') }}
-        </span>
+        <span>{{ $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ABOUT_JSCRYPTO') }}</span>
       </div>
       <app-checkbox
         class="settings__label q-mt-md"
@@ -21,23 +17,13 @@
         label="Allow encrypting files in Personal Storage"
       />
       <div class="settings__caption text-secondary q-mt-md">
-        <span>
-          {{
-            $t(
-              'COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ENCRYPT_IN_PERSONAL_STORAGE'
-            )
-          }}
-        </span>
+        <span>{{$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ENCRYPT_IN_PERSONAL_STORAGE')}}</span>
       </div>
       <div>
         <div v-if="!enableBackwardCompatibility">
           <app-button
             @click="enableBackwardCompatibility = true"
-            :label="
-              $t(
-                'COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_ENABLE_BACKWARD_COMPATIBILITY'
-              )
-            "
+            :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_ENABLE_BACKWARD_COMPATIBILITY')"
             class="q-mt-lg"
           />
         </div>
@@ -56,17 +42,11 @@
             </p>
           </div>
           <app-button
-            :label="
-              $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_IMPORT_FILE_KEY')
-            "
+            :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_IMPORT_FILE_KEY')"
             class="q-mt-lg"
           />
           <app-button
-            :label="
-              $t(
-                'COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_IMPORT_STRING_KEY'
-              )
-            "
+            :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_IMPORT_STRING_KEY')"
             @click="showImportKeyDialog = true"
             class="q-mt-md"
           />
@@ -92,30 +72,14 @@
               key and import it on another device/browser.
             </p>
           </div>
-          <app-button
-            label="Share key"
-            class="q-mt-lg"
-            @click="showImportKeyDialog = true"
-          />
-          <app-button
-            label="Download key"
-            @click="showImportKeyDialog = true"
-            class="q-mt-md"
-          />
-          <app-button
-            label="Delete key"
-            @click="showImportKeyDialog = true"
-            class="q-my-md"
-          />
+          <app-button label="Share key" class="q-mt-lg" @click="showImportKeyDialog = true" />
+          <app-button label="Download key" @click="showImportKeyDialog = true" class="q-mt-md" />
+          <app-button label="Delete key" @click="showImportKeyDialog = true" class="q-my-md" />
         </div>
       </div>
     </div>
     <div class="full-width">
-      <app-button
-        class="settings__save-btn"
-        @click="save"
-        :label="$t('COREWEBCLIENT.ACTION_SAVE')"
-      />
+      <app-button class="settings__save-btn" @click="save" :label="$t('COREWEBCLIENT.ACTION_SAVE')" />
     </div>
     <import-key-from-string
       v-model="showImportKeyDialog"
@@ -128,7 +92,10 @@
 import { mapActions } from 'vuex'
 import VueCookies from 'vue-cookies'
 
-import settings from 'src/settings'
+import {
+  getCoreParanoidEncryptionSettings,
+  setCoreParanoidEncryptionSettings
+} from '../../settings'
 
 import AppCheckbox from 'src/components/common/AppCheckbox'
 import AppButton from 'src/components/common/AppButton'
@@ -136,11 +103,13 @@ import ImportKeyFromString from './dialogs/ImportKeyFromString'
 
 export default {
   name: 'ParanoidEncryption',
+
   components: {
     AppCheckbox,
     AppButton,
     ImportKeyFromString,
   },
+
   data: () => ({
     enableModule: false,
     enableInPersonalStorage: false,
@@ -148,12 +117,14 @@ export default {
     showImportKeyDialog: false,
     aesKey: null,
   }),
+
   mounted() {
-    const data = settings.getCoreParanoidEncryptionSettings()
+    const data = getCoreParanoidEncryptionSettings()
     this.enableModule = data.enableModule
     this.enableInPersonalStorage = data.enableInPersonalStorage
     this.aesKey = VueCookies.get('AesKey')
   },
+
   methods: {
     ...mapActions('coreparanoidencryptionplugin', ['asyncChangeParanoidEncryptionSettings']),
     async save() {
@@ -165,8 +136,7 @@ export default {
         parameters
       )
       if (result) {
-        settings.setEncryptFilesPersonalStorage(this.enableInPersonalStorage)
-        settings.setEnableParanoidEncryption(this.enableModule)
+        setCoreParanoidEncryptionSettings(this.enableModule, this.enableInPersonalStorage)
       }
     },
     showAesKey(dialog) {
