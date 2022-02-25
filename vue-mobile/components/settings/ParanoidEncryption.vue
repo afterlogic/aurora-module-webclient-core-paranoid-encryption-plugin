@@ -14,7 +14,7 @@
         class="settings__label q-mt-md"
         v-model="enableInPersonalStorage"
         left-label
-        label="Allow encrypting files in Personal Storage"
+        :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.LABEL_ALLOW_ENCRYPT_IN_PERSONAL_STORAGE')"
       />
       <div class="settings__caption text-secondary q-mt-md">
         <span>{{$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ENCRYPT_IN_PERSONAL_STORAGE')}}</span>
@@ -68,8 +68,7 @@
           </div>
           <div class="settings__caption q-mt-md text-secondary">
             <p>
-              To access encrypted files on other devices/browsers, export the
-              key and import it on another device/browser.
+              {{ $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ABOUT_KEY_EXPORT') }}
             </p>
           </div>
           <app-button label="Share key" class="q-mt-lg" @click="showImportKeyDialog = true" />

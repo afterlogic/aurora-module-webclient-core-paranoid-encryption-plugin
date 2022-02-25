@@ -1,5 +1,5 @@
 import _ from 'lodash'
-
+import { i18n } from "../../CoreMobileWebclient/vue-mobile/src/boot/i18n";
 import eventBus from 'src/event-bus'
 
 import settings from './settings'
@@ -36,7 +36,7 @@ const _getSettingsHeaderTitles = params => {
   params.settingsHeaderTitles = params.settingsHeaderTitles.concat([
     {
       settingsPath: '/settings/paranoid-encryption',
-      settingsTitle: 'Paranoid Encryption',
+      settingsTitle: i18n.global.t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.LABEL_SETTINGS_TAB'),
     },
   ])
 }
@@ -48,6 +48,10 @@ export default {
 
   init (appdata) {
     settings.init(appdata)
+
+    const fileOperations = require('./files/file-operations')
+    eventBus.$off('OnFileAdded', fileOperations.onContinueUploadingFiles)
+    eventBus.$on('OnFileAdded', fileOperations.onContinueUploadingFiles)
   },
 
   initSubscriptions (appData) {
@@ -59,5 +63,6 @@ export default {
 
     eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
     eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
+
   },
 }
