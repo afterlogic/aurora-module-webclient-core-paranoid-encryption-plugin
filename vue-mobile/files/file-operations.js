@@ -1,6 +1,6 @@
 import eventBus from 'src/event-bus'
 import { getCoreParanoidEncryptionSettings } from "../settings";
-import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobile/utils/utils";
+import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobile/utils";
 import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/utils/common";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import { getNewUid } from "./utils";
