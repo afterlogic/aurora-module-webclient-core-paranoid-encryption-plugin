@@ -10,14 +10,14 @@ import notification from "src/utils/notification";
 import axios from "axios";
 import VueCookies from "vue-cookies";
 
-const coreParanoidSettings = getCoreParanoidEncryptionSettings()
-
 /**
  * @constructor
  */
 function CCrypto () {
+  const settings =  getCoreParanoidEncryptionSettings()
+  console.log(settings, 'settings')
   this.iChunkNumber = 0
-  this.iChunkSize = coreParanoidSettings.chunkSize * 1024 * 1024
+  this.iChunkSize = settings.chunkSize * 1024 * 1024
   this.iCurrChunk = 0
   this.oChunk = null
   this.iv = null
