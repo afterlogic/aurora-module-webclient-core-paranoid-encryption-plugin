@@ -55,7 +55,7 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
   if (privateKey && sKeyData) {
     const CurrentUserPublicKey = publicKeys
     if (CurrentUserPublicKey) {
-      const sEncryptedKey = await this.encryptParanoidKey(sKeyData, [CurrentUserPublicKey], '', privateKey, currentAccountEmail, askOpenPgpKeyPassword, false, getParentComponent)
+      const sEncryptedKey = await this.encryptParanoidKey(sKeyData, [CurrentUserPublicKey], '', privateKey, currentAccountEmail, askOpenPgpKeyPassword, false, getParentComponent, oFileInfo)
       if (sEncryptedKey.data) {
         await this.start(oFileInfo, sEncryptedKey.data)
         await this.readChunk(sUid, this.fOnChunkReadyCallback, callBack)
@@ -169,7 +169,6 @@ CCrypto.prototype.encryptChunk = async function (sUid, fOnChunkEncryptCallback, 
    crypto.subtle.encrypt({name: 'AES-CBC', iv: this.iv}, this.oKey, this.oChunk)
   .then(_.bind(function (oEncryptedContent) {
     //delete padding for all chunks except last one
-
     oEncryptedContent = (this.iChunkNumber > 1 && this.iCurrChunk !== this.iChunkNumber) ? oEncryptedContent.slice(0, oEncryptedContent.byteLength - 16) : oEncryptedContent
     var
       oEncryptedFile = new Blob([oEncryptedContent], {type: 'text/plain', lastModified: new Date()}),
@@ -296,7 +295,6 @@ CCrypto.prototype.uploadTask = async function (sUid, oFileInfo, fCallback, bSkip
         }),
         TenantName: 'Default'
       }
-    console.log(oFileInfo, 'oFileInfo')
     const authToken = VueCookies.get('AuthToken')
     oXhr.open('POST', sAction, true)
     oXhr.setRequestHeader('Authorization', 'Bearer ' + authToken)
@@ -322,16 +320,15 @@ CCrypto.prototype.uploadTask = async function (sUid, oFileInfo, fCallback, bSkip
     oXhr.onload = () => {
       callBack()
     }
-    return true
+    fCallback(null, sUid)
+    //return true
   } catch (error) {
     notification.showError(error)
   }
-
-  fCallback(null, sUid)
   return false
 }
 
-CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys, sPassword = '', oPrivateKey, currentAccountEmail, askOpenPgpKeyPassword, bPasswordBasedEncryption = false, getParentComponent) {
+CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys, sPassword = '', oPrivateKey, currentAccountEmail, askOpenPgpKeyPassword, bPasswordBasedEncryption = false, getParentComponent, oFileInfo) {
   let oEncryptedKey = ''
   if (oPrivateKey) {
     await OpenPgp.encryptData(
@@ -353,6 +350,10 @@ CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys
         }
       } else if (oPGPEncryptionResult.sError) {
         notification.showError(oPGPEncryptionResult.sError)
+        store.dispatch('filesmobile/changeFileUploadProgress', {
+          item: oFileInfo.file,
+          value: 1,
+        })
       }
     })
   }
@@ -379,6 +380,7 @@ CCrypto.prototype.encryptParanoidKeyWithPassphrase = async function (sParanoidKe
         }
       } else if (oPGPEncryptionResult.hasErrors()) {
         notification.showError('Error load key')
+
       }
     })
   }
@@ -396,16 +398,16 @@ CCrypto.prototype.checkQueue = function () {
 }
 
 function CDownloadFile (oFile, iv, iChunkSize, fProcessBlobCallback, fProcessBlobErrorCallback, sKey = '') {
-  this.oWriter = new CWriter(oFile.Name, fProcessBlobCallback)
+  this.oWriter = new CWriter(oFile.name, fProcessBlobCallback)
   this.init(oFile, iv, iChunkSize, fProcessBlobErrorCallback, sKey)
 }
 
 CDownloadFile.prototype.init = async function (oFile, iv, iChunkSize, fProcessBlobErrorCallback, sKey ) {
   this.sHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
   this.oFile = oFile
-  this.sFileName = oFile.Name
-  this.iFileSize = oFile.Size
-  this.sDownloadLink = store.getters['main/getApiHost'] + '/' + oFile.DownloadUrl
+  this.sFileName = oFile.name
+  this.iFileSize = oFile.size
+  this.sDownloadLink = getApiHost() + oFile.downloadUrl
   this.iCurrChunk = 0
   this.iv = new Uint8Array(HexUtils.HexString2Array(iv))
   this.key = null
@@ -473,13 +475,11 @@ CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array) {
 
 CDownloadFile.prototype.decryptChunk = async function () {
   const CancelToken = axios.CancelToken
-  let sAuthToken = store.getters['user/getAuthToken']
+  let sAuthToken = VueCookies.get('AuthToken')
   const file = this.oFile
   let newUrl = ''
   let oHeaders = {
- 'Access-Control-Allow-Origin': '*',
-  'X-Client': 'WebClient',
-  'jua-post-type': 'ajax'
+    'Content-Type': 'multipart/form-data',
   }
   if (sAuthToken) {
     oHeaders['Authorization'] = 'Bearer ' + sAuthToken
@@ -490,23 +490,23 @@ CDownloadFile.prototype.decryptChunk = async function () {
     headers: oHeaders,
     responseType: 'arraybuffer',
     cancelToken : new CancelToken( function (c) {
-      file.getCancelCallback(c)
+      //file.getCancelCallback(c)
     }),
     onDownloadProgress: function (progressEvent) {
       if (file) {
-        let percentCompleted = Math.round((progressEvent.loaded * 100) / file.Size)
-        file.changePercentLoading(percentCompleted)
+        let percentCompleted = Math.round((progressEvent.loaded * 100) / file.size)
+        console.log(percentCompleted, 'percentCompleted')
+        //file.changePercentLoading(percentCompleted)
       }
     }
   })
   .then((response) => {
     this.onload(response)
-    file.changeDownloadingStatus(false)
+    //file.changeDownloadingStatus(false)
   })
   .catch(err => {
     newUrl = err?.request?.responseURL
   })
-
   if (newUrl) {
     axios({
       method: 'get',
@@ -518,24 +518,24 @@ CDownloadFile.prototype.decryptChunk = async function () {
       url: newUrl,
       responseType: 'arraybuffer',
       cancelToken : new CancelToken( function (c) {
-        file.getCancelCallback(c)
+        //file.getCancelCallback(c)
       }),
       onDownloadProgress: function (progressEvent) {
         if (file) {
           let percentCompleted = Math.round((progressEvent.loaded * 100) / file.Size)
-          file.changePercentLoading(percentCompleted)
+          //file.changePercentLoading(percentCompleted)
         }
       }
     })
     .then(response => {
       this.onload(response)
-      file.changeDownloadingStatus(false)
+      //file.changeDownloadingStatus(false)
     })
     .catch( response => {
-      file.changeDownloadingStatus(false)
+      //file.changeDownloadingStatus(false)
     })
   } else {
-    file.changeDownloadingStatus(false)
+    //file.changeDownloadingStatus(false)
   }
 }
 
@@ -635,14 +635,6 @@ CWriter.prototype.close = function () {
 function CBlobViewer(sFileName) {
 	this.sName = sFileName
 	this.aBuffer = []
-  const BrowserWindow = electron.remote.BrowserWindow
-	this.imgWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      webSecurity: false
-    }
-  })
 }
 
 CBlobViewer.prototype = Object.create(CWriter.prototype)
@@ -653,11 +645,11 @@ CBlobViewer.prototype.close = function () {
       file = new Blob(this.aBuffer),
       link = window.URL.createObjectURL(file),
       img = null
-
-    let sHtml = "<head><title>" + this.sName + '</title></head><body style="text-align: center"><img style="height: 90vh" class="decrypt-img" src="' + link + '" /></body>'
-    this.imgWindow.loadURL(("data:text/html;charset=utf-8," + encodeURI(sHtml)))
-    this.imgWindow.removeMenu()
-    this.imgWindow.setTitle(this.sName)
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: store.getters['filesmobile/currentFile'],
+      property: 'decryptViewUrl',
+      value: link
+    })
   } catch (err) {
     notification.showError(err)
   }

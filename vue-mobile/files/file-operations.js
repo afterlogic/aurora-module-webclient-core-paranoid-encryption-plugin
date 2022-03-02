@@ -1,4 +1,5 @@
 import eventBus from 'src/event-bus'
+import notification from "../../../CoreMobileWebclient/vue-mobile/src/utils/notification";
 import { getCoreParanoidEncryptionSettings } from "../settings";
 import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobile/utils";
 import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/utils/common";
@@ -12,13 +13,12 @@ let fileIndex = 0
 let data = null
 
 const finishUploadingFiles = async () => {
+    fileIndex = 0
     await store.dispatch('filesmobile/asyncGetFiles')
     await store.dispatch('filesmobile/removeUploadedFiles')
 }
 
 const cryptoUpload = async (params) => {
-    console.log(data, 'data')
-    console.log(params, 'params')
     const currentAccountEmail = store.getters['core/userPublicId']
     const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
     const publicKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
@@ -46,7 +46,6 @@ const uploadEncryptFiles = async () => {
     const downloadFiles = store.getters['filesmobile/downloadFiles']
     const currentPath = store.getters['filesmobile/currentPath']
     const currentStorage = store.getters['filesmobile/currentStorage']
-    console.log(fileIndex, 'fileIndex')
     if (fileIndex > downloadFiles.length - 1) {
         store.dispatch('filesmobile/removeUploadedFiles')
         store.dispatch('filesmobile/asyncGetFiles')
@@ -89,7 +88,6 @@ const onFileAdded = async (files, uploader) => {
 }
 
 const onSetUploadMethods = (methods) => {
-    console.log(231)
     eventBus.$emit('onUploadFiles', {
         factory: null,
         added: onFileAdded,
@@ -105,10 +103,51 @@ export const onContinueUploadingFiles = (params) => {
         console.log('fileUploadTypeSelectionDialog')
     } else {
         if (params.storage === 'encrypted') {
-            console.log(123)
             onSetUploadMethods(params.methods)
         } else {
             eventBus.$emit('onUploadFiles', params.methods)
         }
     }
 }
+
+
+const getAesKey = async (file, getParentComponent) => {
+    const currentAccountEmail = store.getters['core/userPublicId']
+    const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
+    let oPublicFromKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
+    let aPublicKeys = oPublicFromKey ? [oPublicFromKey] : []
+    if (privateKey) {
+        let paranoidKey = ''
+        if (store.getters['filesmobile/currentStorage'].Type === 'shared') {
+            paranoidKey = file.File?.ExtendedProps?.ParanoidKeyShared
+        } else {
+            paranoidKey = file.paranoidKey
+        }
+        const decryptData = await OpenPgp.decryptAndVerifyText(
+            paranoidKey,
+            privateKey,
+            aPublicKeys,
+            askOpenPgpKeyPassword,
+            getParentComponent
+        )
+        if (decryptData?.sError) {
+            notification.showError(decryptData.sError)
+            //file.changeDownloadingStatus(false)
+            return false
+        }
+        return decryptData.sDecryptedData
+    } else {
+        //file.changeDownloadingStatus(false)
+        notification.showError('No private key found for file decryption.')
+    }
+}
+
+export const viewEncryptFile = async (data) => {
+    const file = store.getters['filesmobile/currentFile']
+    let iv = file.initializationVector
+    let paranoidEncryptedKey = file.paranoidKey
+    const aesKey = await getAesKey(file, data.getParentComponent)
+    await Crypto.viewEncryptedImage(file, iv, paranoidEncryptedKey, aesKey)
+}
+
+

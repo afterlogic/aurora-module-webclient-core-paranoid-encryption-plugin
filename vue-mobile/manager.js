@@ -50,8 +50,12 @@ export default {
     settings.init(appdata)
 
     const fileOperations = require('./files/file-operations')
+
     eventBus.$off('OnFileAdded', fileOperations.onContinueUploadingFiles)
     eventBus.$on('OnFileAdded', fileOperations.onContinueUploadingFiles)
+
+    eventBus.$off('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
+    eventBus.$on('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
   },
 
   initSubscriptions (appData) {
@@ -63,6 +67,7 @@ export default {
 
     eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
     eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
+
 
   },
 }
