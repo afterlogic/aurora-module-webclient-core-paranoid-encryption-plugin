@@ -490,19 +490,32 @@ CDownloadFile.prototype.decryptChunk = async function () {
     headers: oHeaders,
     responseType: 'arraybuffer',
     cancelToken : new CancelToken( function (c) {
-      //file.getCancelCallback(c)
+      store.dispatch('filesmobile/changeItemProperty', {
+        item: file,
+        property: 'cancelToken',
+        value: c,
+      })
     }),
     onDownloadProgress: function (progressEvent) {
       if (file) {
-        let percentCompleted = Math.round((progressEvent.loaded * 100) / file.size)
-        console.log(percentCompleted, 'percentCompleted')
-        //file.changePercentLoading(percentCompleted)
+        let percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / file.size
+        )
+        store.dispatch('filesmobile/changeItemProperty', {
+          item: file,
+          property: 'percentDownloading',
+          value: percentCompleted,
+        })
       }
     }
   })
   .then((response) => {
     this.onload(response)
-    //file.changeDownloadingStatus(false)
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'downloading',
+      value: false,
+    })
   })
   .catch(err => {
     newUrl = err?.request?.responseURL

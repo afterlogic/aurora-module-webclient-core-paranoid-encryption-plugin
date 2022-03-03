@@ -4,6 +4,8 @@ import eventBus from 'src/event-bus'
 
 import settings from './settings'
 
+
+
 const _getSettingsTabs = params => {
   if (!_.isArray(params.settingsTabs)) {
     params.settingsTabs = []
@@ -56,6 +58,13 @@ export default {
 
     eventBus.$off('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
     eventBus.$on('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
+
+    eventBus.$off('CoreParanoidEncryptionWebclientPlugin::downloadEncryptedFile',
+        fileOperations.downloadEncryptedFile
+    )
+    eventBus.$on('CoreParanoidEncryptionWebclientPlugin::downloadEncryptedFile',
+        fileOperations.downloadEncryptedFile
+    )
   },
 
   initSubscriptions (appData) {
@@ -67,7 +76,5 @@ export default {
 
     eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
     eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
-
-
   },
 }
