@@ -477,7 +477,6 @@ CDownloadFile.prototype.decryptChunk = async function () {
   const CancelToken = axios.CancelToken
   let sAuthToken = VueCookies.get('AuthToken')
   const file = this.oFile
-  let newUrl = ''
   let oHeaders = {
     'Content-Type': 'multipart/form-data',
   }
@@ -516,40 +515,24 @@ CDownloadFile.prototype.decryptChunk = async function () {
       property: 'downloading',
       value: false,
     })
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'percentDownloading',
+      value: 0,
+    })
   })
-  .catch(err => {
-    newUrl = err?.request?.responseURL
+  .catch(() => {
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'percentDownloading',
+      value: 0,
+    })
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'downloading',
+      value: false,
+    })
   })
-  if (newUrl) {
-    axios({
-      method: 'get',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
-      url: newUrl,
-      responseType: 'arraybuffer',
-      cancelToken : new CancelToken( function (c) {
-        //file.getCancelCallback(c)
-      }),
-      onDownloadProgress: function (progressEvent) {
-        if (file) {
-          let percentCompleted = Math.round((progressEvent.loaded * 100) / file.Size)
-          //file.changePercentLoading(percentCompleted)
-        }
-      }
-    })
-    .then(response => {
-      this.onload(response)
-      //file.changeDownloadingStatus(false)
-    })
-    .catch( response => {
-      //file.changeDownloadingStatus(false)
-    })
-  } else {
-    //file.changeDownloadingStatus(false)
-  }
 }
 
 CDownloadFile.prototype.onload = function (oReq) {
