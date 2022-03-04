@@ -39,6 +39,7 @@ const getAesKey = async (file, getParentComponent) => {
     let oPublicFromKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
     let aPublicKeys = oPublicFromKey ? [oPublicFromKey] : []
     if (privateKey) {
+
         let paranoidKey = ''
         if (store.getters['filesmobile/currentStorage'].Type === 'shared') {
             paranoidKey = file.File?.ExtendedProps?.ParanoidKeyShared
@@ -56,6 +57,13 @@ const getAesKey = async (file, getParentComponent) => {
             notification.showError(decryptData.sError)
             return false
         }
+
+        store.dispatch('filesmobile/changeItemProperty', {
+            item: file,
+            property: 'decryptionProgress',
+            value: true
+        })
+
         return decryptData.sDecryptedData
     } else {
         notification.showError('No private key found for file decryption.')
@@ -67,12 +75,6 @@ export const viewEncryptFile = async (data) => {
     let iv = file.initializationVector
     let paranoidEncryptedKey = file.paranoidKey
     const aesKey = await getAesKey(file, data.getParentComponent)
-
-    store.dispatch('filesmobile/changeItemProperty', {
-        item: file,
-        property: 'decryptionProgress',
-        value: true
-    })
 
     await Crypto.viewEncryptedImage(file, iv, paranoidEncryptedKey, aesKey)
 }
