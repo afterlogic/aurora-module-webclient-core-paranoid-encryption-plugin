@@ -4,14 +4,21 @@ import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobil
 import { getNewUid } from "./utils";
 import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/utils/common";
 import store from "src/store";
+import _ from "lodash";
+import {getCoreParanoidEncryptionSettings} from "../settings";
 
 let fileIndex = 0
 let data = null
+let currentFiles = null
 
 const finishUploadingFiles = async () => {
     fileIndex = 0
     await store.dispatch('filesmobile/asyncGetFiles')
     await store.dispatch('filesmobile/removeUploadedFiles')
+    if (currentFiles) {
+        await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        currentFiles = null
+    }
 }
 
 const cryptoUpload = async (params) => {
@@ -83,6 +90,21 @@ export const onFileAdded = async (files, uploader) => {
             currentStorage.Type
         )
     })
+    currentFiles = parsedFiles
+
     await store.dispatch('filesmobile/addDownloadsFiles', parsedFiles)
-    await uploadEncryptFiles()
+    const settings = getCoreParanoidEncryptionSettings()
+    if (settings.enableInPersonalStorage && settings.enableParanoidEncryption && data.storage === 'personal') {
+        const parent = data.getParentComponent('App')
+        const fileUploadTypeSelectionDialog = parent.$refs.FileUploadTypeSelectionDialog
+        if (_.isArray(fileUploadTypeSelectionDialog)) {
+            fileUploadTypeSelectionDialog[0].openDialog(uploadEncryptFiles, data.methods, parsedFiles)
+        }
+        if (_.isObject(fileUploadTypeSelectionDialog) && !_.isArray(fileUploadTypeSelectionDialog)) {
+            fileUploadTypeSelectionDialog.openDialog(uploadEncryptFiles, data.methods, parsedFiles)
+        }
+
+    } else {
+        await uploadEncryptFiles()
+    }
 }

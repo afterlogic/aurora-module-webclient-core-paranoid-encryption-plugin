@@ -10,7 +10,7 @@ class CoreParanoidEncryptionSettings {
     this.enableInPersonalStorage = types.pBool(paranoidEncryptionData.EnableInPersonalStorage)
     this.enableModule = types.pBool(paranoidEncryptionData.EnableModule)
     this.encryptionMode = types.pInt(paranoidEncryptionData.EncryptionMode)
-    this.enableParanoidEncryption = types.pBool(paranoidEncryptionData.EnableParanoidEncryption)
+    this.enableParanoidEncryption = types.pBool(paranoidEncryptionData.EnableModule)
     this.chunkSize = types.pInt(paranoidEncryptionData.ChunkSizeMb)
   }
 }

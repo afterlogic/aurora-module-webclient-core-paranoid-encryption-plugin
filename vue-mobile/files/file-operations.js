@@ -5,6 +5,7 @@ import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobil
 import { onFileAdded, initUpload } from "./upload";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import store from "src/store";
+import _ from 'lodash'
 
 import Crypto from "../crypto/CCrypto";
 
@@ -17,17 +18,17 @@ const onSetUploadMethods = (methods) => {
     })
 }
 
-export const onContinueUploadingFiles = (params) => {
-    const settings = getCoreParanoidEncryptionSettings()
+export const onContinueUploadingFiles = async (params) => {
     initUpload(params)
-    if (settings.enableInPersonalStorage && settings.enableParanoidEncryption && params.storage === 'personal') {
-        console.log('fileUploadTypeSelectionDialog')
+    const settings = getCoreParanoidEncryptionSettings()
+
+    if (
+        params.storage === 'encrypted'
+        || settings.enableInPersonalStorage && settings.enableParanoidEncryption && params.storage === 'personal'
+    ) {
+        onSetUploadMethods(params.methods)
     } else {
-        if (params.storage === 'encrypted') {
-            onSetUploadMethods(params.methods)
-        } else {
-            eventBus.$emit('onUploadFiles', params.methods)
-        }
+        eventBus.$emit('onUploadFiles', params.methods)
     }
 }
 
@@ -66,6 +67,13 @@ export const viewEncryptFile = async (data) => {
     let iv = file.initializationVector
     let paranoidEncryptedKey = file.paranoidKey
     const aesKey = await getAesKey(file, data.getParentComponent)
+
+    store.dispatch('filesmobile/changeItemProperty', {
+        item: file,
+        property: 'decryptionProgress',
+        value: true
+    })
+
     await Crypto.viewEncryptedImage(file, iv, paranoidEncryptedKey, aesKey)
 }
 

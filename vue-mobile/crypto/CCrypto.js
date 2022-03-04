@@ -15,7 +15,6 @@ import VueCookies from "vue-cookies";
  */
 function CCrypto () {
   const settings =  getCoreParanoidEncryptionSettings()
-  console.log(settings, 'settings')
   this.iChunkNumber = 0
   this.iChunkSize = settings.chunkSize * 1024 * 1024
   this.iCurrChunk = 0
@@ -519,6 +518,11 @@ CDownloadFile.prototype.decryptChunk = async function () {
       item: file,
       property: 'percentDownloading',
       value: 0,
+    })
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'decryptionProgress',
+      value: false
     })
   })
   .catch(() => {
