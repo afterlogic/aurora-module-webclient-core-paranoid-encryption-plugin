@@ -6,4 +6,7 @@ export default {
       parameters
     )
   },
+  asyncCreatePublicLink: async ({}, parameters) => {
+    return await paranoidEncryptionWebApi.createPublicLink(parameters)
+  }
 }

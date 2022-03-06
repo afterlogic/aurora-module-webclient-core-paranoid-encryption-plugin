@@ -5,7 +5,6 @@ import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobil
 import { onFileAdded, initUpload } from "./upload";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import store from "src/store";
-import _ from 'lodash'
 
 import Crypto from "../crypto/CCrypto";
 

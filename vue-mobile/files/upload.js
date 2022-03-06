@@ -5,7 +5,7 @@ import { getNewUid } from "./utils";
 import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/utils/common";
 import store from "src/store";
 import _ from "lodash";
-import {getCoreParanoidEncryptionSettings} from "../settings";
+import { getCoreParanoidEncryptionSettings } from "../settings";
 
 let fileIndex = 0
 let data = null

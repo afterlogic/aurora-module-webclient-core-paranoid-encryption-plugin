@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { i18n } from "../../CoreMobileWebclient/vue-mobile/src/boot/i18n";
 import eventBus from 'src/event-bus'
+import { defineAsyncComponent, shallowRef } from 'vue'
 
 import settings from './settings'
 
@@ -43,6 +44,14 @@ const _getSettingsHeaderTitles = params => {
   ])
 }
 
+
+const _getEncryptedShareableLinkDialog = (callBack) => {
+  callBack({
+    head: shallowRef(defineAsyncComponent(() => import('./components/files/dialogs/encrypted-shareable-link/EncryptedShareableLinkHead'))),
+    actions: shallowRef(defineAsyncComponent(() => import('./components/files/dialogs/encrypted-shareable-link/EncryptedShareableLinkActions')))
+  })
+}
+
 export default {
   moduleName: 'CoreParanoidEncryptionWebclientPlugin',
 
@@ -76,5 +85,8 @@ export default {
 
     eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
     eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
+
+    eventBus.$off('FilesMobile::GetEncryptedShareableLinkDialog', _getEncryptedShareableLinkDialog)
+    eventBus.$on('FilesMobile::GetEncryptedShareableLinkDialog', _getEncryptedShareableLinkDialog)
   },
 }

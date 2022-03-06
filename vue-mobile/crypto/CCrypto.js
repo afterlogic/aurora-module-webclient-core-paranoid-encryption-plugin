@@ -69,18 +69,19 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
   }
 }
 CCrypto.prototype.getAesKey = async function (file, passphrase) {
-  const currentAccountEmail = store.getters['mail/getCurrentAccountEmail']
+  const currentAccountEmail = store.getters['core/userPublicId']
   const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
   let oPublicFromKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
   let aPublicKeys = oPublicFromKey ? [oPublicFromKey] : []
   if (privateKey) {
-    return await OpenPgp.decryptAndVerifyTextWithPassphrase(file.ParanoidKey, privateKey, passphrase, aPublicKeys)
+    return await OpenPgp.decryptAndVerifyTextWithPassphrase(file.paranoidKey, privateKey, passphrase, aPublicKeys)
   } else {
     return { sError: 'No private key found for file decryption.' }
   }
 }
 CCrypto.prototype.getEncryptedKey = async function ( file, privateKey, publicKey, currentAccountEmail,passphrase, cancelCallback, bPasswordBasedEncryption = false, aPrincipalsEmails = []) {
     const sKeyData = await this.getAesKey(file, passphrase)
+    console.log(sKeyData, 'sKeyData')
     if (sKeyData?.sError) {
       return sKeyData
     }
