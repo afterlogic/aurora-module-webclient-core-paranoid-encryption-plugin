@@ -1,16 +1,16 @@
 <template>
-  <app-dialog v-model="confirm" :close="cancel">
+  <app-dialog v-model="confirm" :close="cancel" align-actions="between">
     <template v-slot:head>
-      <div class="q-mx-md q-mt-md" style="color: #929292; font-size: 10pt">
+      <div class="q-mx-md q-mb-md">
         <div v-if="downloadFiles.length > 1">
-          <div class="q-mb-md">
+          <div class="q-mb-md dialog__title-text">
             {{ `Encrypt ${downloadFiles.length} files?` }}
           </div>
-          <div v-for="file in downloadFiles" :key="file.hash">
+          <div v-for="file in downloadFiles" :key="file.hash" class="text__caption q-mb-sm">
             <span>{{file.name}}</span>
           </div>
         </div>
-        <div v-if="downloadFiles.length === 1">
+        <div v-if="downloadFiles.length === 1" class="dialog__title-text">
           {{ `Encrypt "${downloadFiles[0].name}"?` }}
         </div>
       </div>
