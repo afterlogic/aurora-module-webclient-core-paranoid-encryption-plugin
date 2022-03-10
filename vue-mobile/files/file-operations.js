@@ -57,12 +57,6 @@ const getAesKey = async (file, getParentComponent) => {
             return false
         }
 
-        store.dispatch('filesmobile/changeItemProperty', {
-            item: file,
-            property: 'decryptionProgress',
-            value: true
-        })
-
         return decryptData.sDecryptedData
     } else {
         notification.showError('No private key found for file decryption.')
@@ -71,11 +65,26 @@ const getAesKey = async (file, getParentComponent) => {
 
 export const viewEncryptFile = async (data) => {
     const file = store.getters['filesmobile/currentFile']
+
+
     let iv = file.initializationVector
     let paranoidEncryptedKey = file.paranoidKey
+
     const aesKey = await getAesKey(file, data.getParentComponent)
 
+    store.dispatch('filesmobile/changeItemProperty', {
+        item: file,
+        property: 'decryptionProgress',
+        value: true
+    })
+
     await Crypto.viewEncryptedImage(file, iv, paranoidEncryptedKey, aesKey)
+
+    store.dispatch('filesmobile/changeItemProperty', {
+        item: file,
+        property: 'decryptionProgress',
+        value: false
+    })
 }
 
 export const downloadEncryptedFile = async (data) => {
