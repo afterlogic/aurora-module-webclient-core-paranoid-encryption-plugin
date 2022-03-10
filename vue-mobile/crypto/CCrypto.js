@@ -520,6 +520,11 @@ CDownloadFile.prototype.decryptChunk = async function () {
       property: 'percentDownloading',
       value: 0,
     })
+    store.dispatch('filesmobile/changeItemProperty', {
+      item: file,
+      property: 'decryptionProgress',
+      value: false
+    })
   })
   .catch(() => {
     store.dispatch('filesmobile/changeItemProperty', {

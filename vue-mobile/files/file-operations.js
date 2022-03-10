@@ -72,7 +72,7 @@ export const viewEncryptFile = async (data) => {
 
     const aesKey = await getAesKey(file, data.getParentComponent)
 
-    store.dispatch('filesmobile/changeItemProperty', {
+    await store.dispatch('filesmobile/changeItemProperty', {
         item: file,
         property: 'decryptionProgress',
         value: true
@@ -80,11 +80,6 @@ export const viewEncryptFile = async (data) => {
 
     await Crypto.viewEncryptedImage(file, iv, paranoidEncryptedKey, aesKey)
 
-    store.dispatch('filesmobile/changeItemProperty', {
-        item: file,
-        property: 'decryptionProgress',
-        value: false
-    })
 }
 
 export const downloadEncryptedFile = async (data) => {
