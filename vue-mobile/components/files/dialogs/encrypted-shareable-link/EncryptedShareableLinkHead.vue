@@ -62,7 +62,6 @@
             outlined
             dense
             class="q-mb-lg contact-search"
-            model-value=""
             debounce="400"
         />
         <div v-if="isWaitingContacts" class="flex items-center justify-center">
@@ -73,7 +72,7 @@
               class="q-ma-md"
           />
         </div>
-        <q-scroll-area v-else class="full-width" :thumb-style="{width: '0'}" style="height: 300px">
+        <q-scroll-area v-else class="full-width" :thumb-style="{ width: '0' }" style="height: 300px">
           <app-contact-item
               v-for="contact in foundContacts"
               :contact="contact"
@@ -162,6 +161,9 @@ export default {
       if (type === 'password') {
         this.shareableLinkParams.addDigitalSignature = false
       }
+      if (type === 'key') {
+        this.shareableLinkParams.addDigitalSignature = true
+      }
     }
   },
   methods: {
@@ -180,6 +182,7 @@ export default {
         encryptionType: 'password',
         addDigitalSignature: false,
       }
+      this.searchText = ''
       eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
     }
   },

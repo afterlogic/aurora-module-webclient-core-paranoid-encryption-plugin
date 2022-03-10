@@ -94,7 +94,7 @@ export default {
         Name: this.currentFile.name,
         Size: this.currentFile.size,
         IsFolder: this.currentFile.isFolder,
-        RecipientEmail: this.shareableLinkParams.recipient.email,
+        RecipientEmail: this.shareableLinkParams.recipient.ViewEmail,
         PgpEncryptionMode: this.shareableLinkParams.encryptionType,
         LifetimeHrs: 0
       }
