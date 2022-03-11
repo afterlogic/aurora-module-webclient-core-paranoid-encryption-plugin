@@ -81,7 +81,6 @@ CCrypto.prototype.getAesKey = async function (file, passphrase) {
 }
 CCrypto.prototype.getEncryptedKey = async function ( file, privateKey, publicKey, currentAccountEmail,passphrase, cancelCallback, bPasswordBasedEncryption = false, aPrincipalsEmails = []) {
     const sKeyData = await this.getAesKey(file, passphrase)
-    console.log(sKeyData, 'sKeyData')
     if (sKeyData?.sError) {
       return sKeyData
     }

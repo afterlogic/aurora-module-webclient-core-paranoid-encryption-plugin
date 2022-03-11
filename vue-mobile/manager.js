@@ -68,6 +68,9 @@ export default {
     eventBus.$off('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
     eventBus.$on('CoreMobileWebclient::viewFile', fileOperations.viewEncryptFile)
 
+    eventBus.$off('FilesMobileWebclient::ShareEncryptFile', fileOperations.onShareEncryptFile)
+    eventBus.$on('FilesMobileWebclient::ShareEncryptFile', fileOperations.onShareEncryptFile)
+
     eventBus.$off('CoreParanoidEncryptionWebclientPlugin::downloadEncryptedFile',
         fileOperations.downloadEncryptedFile
     )

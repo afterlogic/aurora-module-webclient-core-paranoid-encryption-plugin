@@ -3,10 +3,42 @@ import notification from "../../../CoreMobileWebclient/vue-mobile/src/utils/noti
 import { getCoreParanoidEncryptionSettings } from "../settings";
 import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobile/utils";
 import { onFileAdded, initUpload } from "./upload";
+import { updateExtendedProps, init } from "./share";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import store from "src/store";
 
 import Crypto from "../crypto/CCrypto";
+
+
+export const onShareEncryptFile = ({ contactsList, onContinueSaving, getParentComponent }) => {
+
+    const principalsEmails = []
+    contactsList.forEach( contact => {
+        if (!OpenPgp.getPublicKeyByEmail(contact.mail)) {
+            principalsEmails.push(contact)
+            notification.showError(`No public key found for ${contact.email} user.`)
+        }
+    })
+    console.log(principalsEmails, 'principalsEmails')
+    if (!principalsEmails.length) {
+
+        init({ contacts: contactsList, currentFile: store.getters['filesmobile/currentFile'], onContinueSaving })
+
+        const currentAccountEmail = store.getters['core/userPublicId']
+        const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
+        if (privateKey) {
+            let sPassphrase = privateKey?.getPassphrase()
+            if (sPassphrase) {
+                updateExtendedProps(sPassphrase)
+            } else {
+                askOpenPgpKeyPassword(currentAccountEmail, getParentComponent, updateExtendedProps)
+            }
+        } else {
+            notification.showError(`No private key found for file decryption.`)
+        }
+    }
+}
+
 
 const onSetUploadMethods = (methods) => {
     eventBus.$emit('onUploadFiles', {
