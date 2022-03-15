@@ -17,12 +17,12 @@
     </template>
     <template v-slot:actions>
       <button-dialog
-          :action="uploadAndEncrypt"
-          label="Encrypt"
+          :action="upload"
+          :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_DONT_ENCRYPT')"
       />
       <button-dialog
-          :action="upload"
-          label="Do not Encrypt"
+          :action="uploadAndEncrypt"
+          :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_ENCRYPT')"
       />
     </template>
   </app-dialog>
