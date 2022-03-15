@@ -1,7 +1,7 @@
 <template>
   <app-dialog v-model="confirm" :close="cancel" align-actions="between">
     <template v-slot:head>
-      <div class="q-mx-md q-mb-md">
+      <div class="q-mx-lg q-mt-lg q-mb-md">
         <div v-if="downloadFiles.length > 1">
           <div class="q-mb-md dialog__title-text">
             {{ `Encrypt ${downloadFiles.length} files?` }}
@@ -17,10 +17,12 @@
     </template>
     <template v-slot:actions>
       <button-dialog
+          class="q-ma-sm"
           :action="upload"
           :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_DONT_ENCRYPT')"
       />
       <button-dialog
+          class="q-ma-sm"
           :action="uploadAndEncrypt"
           :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_ENCRYPT')"
       />
