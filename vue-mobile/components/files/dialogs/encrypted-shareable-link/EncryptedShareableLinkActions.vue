@@ -1,10 +1,12 @@
 <template>
-  <button-dialog
-      v-if="shareableLinkParams && shareableLinkParams.recipient"
-      :saving="saving"
-      :action="encrypt"
-      :label="$t('OPENPGPFILESWEBCLIENT.ACTION_ENCRYPT')"
-  />
+  <div class="q-pa-sm">
+    <button-dialog
+        v-if="shareableLinkParams && shareableLinkParams.recipient"
+        :saving="saving"
+        :action="encrypt"
+        :label="$t('OPENPGPFILESWEBCLIENT.ACTION_ENCRYPT')"
+    />
+  </div>
 </template>
 
 <script>
