@@ -7,12 +7,12 @@
         </span>
       </div>
       <div class="q-mx-lg q-mb-sm recipient">
-        <span>Recepient:</span>
+        <span>{{ $t('OPENPGPFILESWEBCLIENT.LABEL_RECIPIENT') }}:</span>
       </div>
       <app-contact-item @click="changeRecipient" class="q-pb-md q-mx-lg" :contact="shareableLinkParams.recipient"/>
       <div class="q-px-lg">
         <span class="inscription">
-          Selected recipient has PGP key. The data can be encrypted using this key.
+          {{ contactInscription }}
         </span>
       </div>
       <div class="header q-mx-lg">
@@ -29,7 +29,7 @@
       </div>
       <div class="separator q-mt-md"/>
       <div class="q-my-md q-mx-lg">
-        <span class="inscription">{{ $t('OPENPGPFILESWEBCLIENT.HINT_KEY_BASED_ENCRYPTION') }}</span>
+        <span class="inscription">{{ encryptionTypeInscription }}</span>
       </div>
       <div class="q-mx-lg">
         <app-checkbox
@@ -104,7 +104,7 @@ export default {
   data: () => ({
     showSelectRecipientDialog: true,
     shareableLinkParams: {
-      recipient: null,
+      recipient: { FullName: 'Not Selected', empty: true },
       encryptionType: 'password',
       addDigitalSignature: false,
     },
@@ -130,6 +130,21 @@ export default {
         const index = contact.ViewEmail.indexOf(this.searchText)
         if (index + 1) return contact
       } )
+    },
+    contactInscription() {
+      if (this.shareableLinkParams.recipient?.empty){
+        return this.$t('OPENPGPFILESWEBCLIENT.HINT_ONLY_PASSWORD_BASED')
+      }
+      if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
+        return this.$t('OPENPGPFILESWEBCLIENT.HINT_KEY_RECIPIENT')
+      }
+      return this.$t('OPENPGPFILESWEBCLIENT.HINT_NO_KEY_RECIPIENT')
+    },
+    encryptionTypeInscription() {
+      if (this.shareableLinkParams.encryptionType === 'password') {
+        return this.$t('OPENPGPFILESWEBCLIENT.HINT_PASSWORD_BASED_ENCRYPTION')
+      }
+      return this.$t('OPENPGPFILESWEBCLIENT.HINT_KEY_BASED_ENCRYPTION')
     },
     encryptOptions() {
       return [
