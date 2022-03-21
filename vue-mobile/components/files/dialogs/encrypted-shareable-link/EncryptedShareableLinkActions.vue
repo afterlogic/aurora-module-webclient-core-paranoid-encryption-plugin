@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-sm">
     <button-dialog
-        v-if="shareableLinkParams && shareableLinkParams.recipient"
+        :disabled="!shareableLinkParams || shareableLinkParams.recipient?.empty"
         :saving="saving"
         :action="encrypt"
         :label="$t('OPENPGPFILESWEBCLIENT.ACTION_ENCRYPT')"
