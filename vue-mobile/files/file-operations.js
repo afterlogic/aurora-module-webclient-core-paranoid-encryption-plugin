@@ -19,7 +19,6 @@ export const onShareEncryptFile = ({ contactsList, onContinueSaving, getParentCo
             notification.showError(`No public key found for ${contact.email} user.`)
         }
     })
-    console.log(principalsEmails, 'principalsEmails')
     if (!principalsEmails.length) {
 
         init({ contacts: contactsList, currentFile: store.getters['filesmobile/currentFile'], onContinueSaving })

@@ -6,6 +6,7 @@ import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/util
 import store from "src/store";
 import _ from "lodash";
 import { getCoreParanoidEncryptionSettings } from "../settings";
+import notification from "src/utils/notification";
 
 let fileIndex = 0
 let data = null
@@ -40,8 +41,8 @@ const cryptoUpload = async (params) => {
             data.getParentComponent
         )
     } else {
-        this.downloadFiles = []
-        //notification.showError(`PGP key for ${currentAccountEmail} user is missing. Both public and private PGP keys are required.`)
+        await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        notification.showError(`PGP key for ${currentAccountEmail} user is missing. Both public and private PGP keys are required.`)
     }
 }
 
