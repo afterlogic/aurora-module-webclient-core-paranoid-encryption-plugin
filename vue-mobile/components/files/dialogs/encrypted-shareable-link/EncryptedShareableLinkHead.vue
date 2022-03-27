@@ -113,6 +113,7 @@ export default {
     searchText: ''
   }),
   async mounted() {
+    eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
     this.isWaitingContacts = true
     this.contacts = await this.getContacts({
       Search:"",

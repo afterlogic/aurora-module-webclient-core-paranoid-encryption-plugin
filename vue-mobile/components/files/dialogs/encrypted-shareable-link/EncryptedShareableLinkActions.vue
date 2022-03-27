@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-sm">
     <button-dialog
-        :disabled="!shareableLinkParams || shareableLinkParams.recipient?.empty"
+        :disabled="!shareableLinkParams"
         :saving="saving"
         :action="encrypt"
         :label="$t('OPENPGPFILESWEBCLIENT.ACTION_ENCRYPT')"
@@ -96,7 +96,7 @@ export default {
         Name: this.currentFile.name,
         Size: this.currentFile.size,
         IsFolder: this.currentFile.isFolder,
-        RecipientEmail: this.shareableLinkParams.recipient.ViewEmail,
+        RecipientEmail: this.shareableLinkParams.recipient?.empty ? '' : this.shareableLinkParams.recipient.ViewEmail,
         PgpEncryptionMode: this.shareableLinkParams.encryptionType,
         LifetimeHrs: 0
       }
