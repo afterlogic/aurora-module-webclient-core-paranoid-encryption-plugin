@@ -66,15 +66,15 @@ export default {
       this.passphrase = passPassphrase
 
       const privateKey = OpenPgp.getPrivateKeyByEmail(this.userPublicId)
-      let publicKey = null
+      const publicKey = OpenPgp.getPublicKeyByEmail(this.userPublicId)
+      const principalsEmails = []
       if(this.shareableLinkParams && this.shareableLinkParams?.recipient?.ViewEmail) {
-        publicKey = OpenPgp.getPublicKeyByEmail(this.shareableLinkParams.recipient.ViewEmail)
-      } else {
-        publicKey = OpenPgp.getPublicKeyByEmail(this.userPublicId)
+        principalsEmails.push(this.shareableLinkParams.recipient.ViewEmail)
       }
-      console.log(publicKey, 'publicKey')
+      console.log(principalsEmails, 'publicKey')
       const passwordBasedEncryption = this.shareableLinkParams?.encryptionType === 'password'
-      CCrypto.getEncryptedKey(this.currentFile, privateKey, publicKey, this.userPublicId, passPassphrase, null, passwordBasedEncryption).then( async (encryptKey) => {
+      CCrypto.getEncryptedKey(this.currentFile, privateKey, publicKey, this.userPublicId, passPassphrase, null, passwordBasedEncryption, principalsEmails).then( async (encryptKey) => {
+        console.log(encryptKey, 'encryptKey')
         if (encryptKey?.sError) {
           this.creating = false
           notification.showError(encryptKey.sError)
