@@ -1,11 +1,6 @@
 <template>
   <div>
     <div v-if="shareableLinkParams.recipient">
-      <div class="dialog__title-text q-mx-lg" @click="test">
-        <span>
-          {{ $t('OPENPGPFILESWEBCLIENT.HEADING_SEND_ENCRYPTED_FILE') }}
-        </span>
-      </div>
       <div class="q-mx-lg q-mb-sm recipient">
         <span>{{ $t('OPENPGPFILESWEBCLIENT.LABEL_RECIPIENT') }}:</span>
       </div>
@@ -20,6 +15,7 @@
       </div>
       <div class="q-mx-md q-mt-md">
         <q-option-group
+            class="encryption-type"
             v-model="shareableLinkParams.encryptionType"
             keep-color
             size="32px"
@@ -46,11 +42,6 @@
       </div>
     </div>
     <div v-else>
-      <div class="q-px-lg dialog__title-text">
-        <span>
-          {{ $t('OPENPGPFILESWEBCLIENT.HEADING_SEND_ENCRYPTED_FILE') }}
-        </span>
-      </div>
       <div class="q-px-lg" style="margin-top: 32px">
         <q-input
             v-model="searchText"
@@ -72,9 +63,9 @@
               class="q-ma-md"
           />
         </div>
-        <q-scroll-area v-else class="full-width" :thumb-style="{ width: '0' }" style="height: 300px">
+        <q-scroll-area v-else class="full-width" :content-active-style="{ width: '100%' }" :content-style="{ width: '100%' }" :thumb-style="{ width: '0' }" style="height: 300px">
           <app-contact-item
-              v-for="contact in foundContacts"
+              v-for="contact in contacts"
               :contact="contact"
               :key="contact.ETag"
               @click="selectContact(contact)"
@@ -113,7 +104,6 @@ export default {
     searchText: ''
   }),
   async mounted() {
-    eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
     this.isWaitingContacts = true
     this.contacts = await this.getContacts({
       Search:"",
@@ -124,14 +114,10 @@ export default {
       WithoutTeamContactsDuplicates:true
     })
     this.isWaitingContacts = false
+    eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
+    await this.asyncGetExternalsKeys()
   },
   computed: {
-    foundContacts() {
-      return this.contacts.filter( contact => {
-        const index = contact.ViewEmail.indexOf(this.searchText)
-        if (index + 1) return contact
-      } )
-    },
     contactInscription() {
       if (this.shareableLinkParams.recipient?.empty){
         return this.$t('OPENPGPFILESWEBCLIENT.HINT_ONLY_PASSWORD_BASED')
@@ -180,10 +166,21 @@ export default {
       if (type === 'key') {
         this.shareableLinkParams.addDigitalSignature = true
       }
+    },
+    async searchText(searchText) {
+      this.contacts = await this.getContacts({
+        Search: searchText,
+        Storage:"all",
+        SortField:3,
+        SortOrder:1,
+        WithGroups:false,
+        WithoutTeamContactsDuplicates:true
+      })
     }
   },
   methods: {
     ...mapActions('filesmobile', ['getContactSuggestions']),
+    ...mapActions('openpgpmobile', ['asyncGetExternalsKeys']),
     async getContacts(params) {
       return await this.getContactSuggestions(params)
     },
@@ -228,10 +225,12 @@ export default {
   padding: 0 4px !important;
 }
 .recipient {
-  margin-top: 32px;
   font-size: 14px;
   line-height: 16px;
   letter-spacing: 0.3px;
   color: #4B4A4A;
+}
+.encryption-type .q-radio.disabled {
+  opacity: 0.55 !important;
 }
 </style>

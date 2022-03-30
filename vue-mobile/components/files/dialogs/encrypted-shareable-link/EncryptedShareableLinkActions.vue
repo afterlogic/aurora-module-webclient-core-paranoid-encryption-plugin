@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-sm">
+  <div class="q-pa-sm" v-if="shareableLinkParams?.recipient">
     <button-dialog
         :disabled="!shareableLinkParams"
         :saving="saving"
@@ -25,7 +25,7 @@ export default {
   components: {
     ButtonDialog
   },
-  mounted() {
+  created() {
     eventBus.$on('CoreParanoidEncryptionWebclient::getShareableParams', this.getShareableParams)
   },
   computed: {
@@ -71,10 +71,8 @@ export default {
       if(this.shareableLinkParams && this.shareableLinkParams?.recipient?.ViewEmail) {
         principalsEmails.push(this.shareableLinkParams.recipient.ViewEmail)
       }
-      console.log(principalsEmails, 'publicKey')
       const passwordBasedEncryption = this.shareableLinkParams?.encryptionType === 'password'
       CCrypto.getEncryptedKey(this.currentFile, privateKey, publicKey, this.userPublicId, passPassphrase, null, passwordBasedEncryption, principalsEmails).then( async (encryptKey) => {
-        console.log(encryptKey, 'encryptKey')
         if (encryptKey?.sError) {
           this.creating = false
           notification.showError(encryptKey.sError)
@@ -92,6 +90,13 @@ export default {
           const result = await this.asyncUpdateExtendedProps(parameters)
           if (result) {
             await this.createEncryptPublicLink()
+            if (!this.shareableLinkParams?.recipient?.empty) {
+              eventBus.$emit('FilesMobile::SetRecipient', this.shareableLinkParams.recipient)
+              if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
+                eventBus.$emit('FilesMobile::SetSendLinkLabel', this.$root.$t('OPENPGPFILESWEBCLIENT.ACTION_SEND_ENCRYPTED_EMAIL'))
+              }
+            }
+            eventBus.$emit('FilesMobile::ShowRemoveAction', false)
           }
         }
       })
