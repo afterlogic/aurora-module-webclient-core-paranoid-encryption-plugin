@@ -7,6 +7,8 @@
 
 namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 
+use Aurora\Api;
+use Aurora\Modules\Files\Classes\FileItem;
 use Aurora\Modules\SharedFiles\Enums\ErrorCodes;
 use Aurora\System\Exceptions\ApiException;
 
@@ -58,6 +60,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('OpenPgpFilesWebclient::CreatePublicLink::before', [$this, 'onBeforeMethod']);
 
 		$this->subscribeEvent('SharedFiles::UpdateShare::before', [$this, 'onBeforeUpdateShare']);
+		$this->subscribeEvent('SharedFiles::CreateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
+		$this->subscribeEvent('SharedFiles::UpdateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 
 		\Aurora\Modules\Core\Classes\User::extend(
 			self::GetName(),
@@ -157,9 +161,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		{
 			foreach ($mResult as $iKey => $oFileItem)
 			{
-				if ($oFileItem instanceof \Aurora\Modules\Files\Classes\FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
+				if ($oFileItem instanceof FileItem && $oFileItem->IsFolder && $oFileItem->Name === self::$sEncryptedFolder)
 				{
 					unset($mResult[$iKey]);
+				}
+				if ($oFileItem->Shared) {
+//					\Aurora\Modules\SharedFiles\Models\SharedFile::where();
 				}
 			}
 		}
@@ -258,6 +265,20 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 			$aArgs['Storage'] = self::$sPersonalStorageType;
 			$aArgs['Type'] = self::$sPersonalStorageType;
 			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+		}
+	}
+
+	public function onCreateOrUpdateSharedFile(&$aArgs, &$mResult)
+	{
+		extract($aArgs);
+		$Share['ParanoidKeyShared'] = '11111111111111111111';
+		if (!empty($Share['ParanoidKeyShared'])) {
+			$oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $UserPrincipalUri)
+				->where('storage', $Storage)
+				->where('path', $FullPath)
+				->where('principaluri', 'principals/' . $Share['PublicId'])->first();
+			$oSharedFile->setExtendedProp('ParanoidKeyShared', $Share['ParanoidKeyShared']);
+			$oSharedFile->save();
 		}
 	}
 
