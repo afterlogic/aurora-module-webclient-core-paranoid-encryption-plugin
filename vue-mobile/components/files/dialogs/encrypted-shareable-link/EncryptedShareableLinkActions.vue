@@ -93,10 +93,10 @@ export default {
             if (!this.shareableLinkParams?.recipient?.empty) {
               eventBus.$emit('FilesMobile::SetRecipient', this.shareableLinkParams.recipient)
               if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
-                eventBus.$emit('FilesMobile::SetSendLinkLabel', this.$root.$t('OPENPGPFILESWEBCLIENT.ACTION_SEND_ENCRYPTED_EMAIL'))
+                eventBus.$emit('FilesMobile::IsRecipientDisabled')
               }
             }
-            eventBus.$emit('FilesMobile::ShowRemoveAction', false)
+            eventBus.$emit('FilesMobile::IsCreatingLink', true)
           }
         }
       })

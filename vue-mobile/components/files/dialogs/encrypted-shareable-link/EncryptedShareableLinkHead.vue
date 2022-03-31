@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="shareableLinkParams.recipient">
+    <div>
       <div class="q-mx-lg q-mb-sm recipient">
         <span>{{ $t('OPENPGPFILESWEBCLIENT.LABEL_RECIPIENT') }}:</span>
       </div>
@@ -41,39 +41,12 @@
         </span>
       </div>
     </div>
-    <div v-else>
-      <div class="q-px-lg" style="margin-top: 32px">
-        <q-input
-            v-model="searchText"
-            :style="{ height: '36px' }"
-            :input-style="{ height: '36px' }"
-            placeholder="Search"
-            autofocus
-            borderless
-            outlined
-            dense
-            class="q-mb-lg contact-search"
-            debounce="400"
-        />
-        <div v-if="isWaitingContacts" class="flex items-center justify-center">
-          <q-circular-progress
-              indeterminate
-              size="40px"
-              color="primary"
-              class="q-ma-md"
-          />
-        </div>
-        <q-scroll-area v-else class="full-width" :content-active-style="{ width: '100%' }" :content-style="{ width: '100%' }" :thumb-style="{ width: '0' }" style="height: 300px">
-          <app-contact-item
-              v-for="contact in contacts"
-              :contact="contact"
-              :key="contact.ETag"
-              @click="selectContact(contact)"
-              class="q-mb-md"
-          />
-        </q-scroll-area>
-      </div>
-    </div>
+    <select-recipient-dialog
+        v-model="showSelectRecipientDialog"
+        :onGetContacts="getContacts"
+        @selectContact="selectContact"
+        @close="showSelectRecipientDialog = false"
+    />
   </div>
 </template>
 
@@ -93,7 +66,7 @@ export default {
     AppCheckbox
   },
   data: () => ({
-    showSelectRecipientDialog: true,
+    showSelectRecipientDialog: false,
     shareableLinkParams: {
       recipient: { FullName: 'Not Selected', empty: true },
       encryptionType: 'password',
@@ -122,7 +95,7 @@ export default {
       if (this.shareableLinkParams.recipient?.empty){
         return this.$t('OPENPGPFILESWEBCLIENT.HINT_ONLY_PASSWORD_BASED')
       }
-      if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
+      if (this.shareableLinkParams?.recipient?.HasPgpPublicKey) {
         return this.$t('OPENPGPFILESWEBCLIENT.HINT_KEY_RECIPIENT')
       }
       return this.$t('OPENPGPFILESWEBCLIENT.HINT_NO_KEY_RECIPIENT')
@@ -139,7 +112,7 @@ export default {
           label: this.$t('OPENPGPFILESWEBCLIENT.LABEL_KEY_BASED_ENCRYPTION'),
           value: 'key',
           color: 'primary',
-          disable: !this.shareableLinkParams.recipient.HasPgpPublicKey
+          disable: !this.shareableLinkParams?.recipient?.HasPgpPublicKey
         },
         {
           label: this.$t('OPENPGPFILESWEBCLIENT.LABEL_PASSWORD_BASED_ENCRYPTION'),
@@ -190,13 +163,8 @@ export default {
       this.showSelectRecipientDialog = false
     },
     changeRecipient() {
-      this.shareableLinkParams = {
-        recipient: null,
-        encryptionType: 'password',
-        addDigitalSignature: false,
-      }
+      this.showSelectRecipientDialog = true
       this.searchText = ''
-      eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
     }
   },
 }
