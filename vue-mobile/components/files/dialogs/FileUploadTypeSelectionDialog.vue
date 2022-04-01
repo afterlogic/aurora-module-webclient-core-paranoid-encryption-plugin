@@ -1,6 +1,6 @@
 <template>
   <app-dialog v-model="confirm" :close="cancel" align-actions="between">
-    <template v-slot:head>
+    <template v-slot:content>
       <div class="q-mx-lg q-mt-lg q-mb-md">
         <div v-if="downloadFiles.length > 1">
           <div class="q-mb-md dialog__title-text">
