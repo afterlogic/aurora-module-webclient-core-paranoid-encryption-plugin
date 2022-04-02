@@ -4,7 +4,7 @@
       <div class="q-mx-lg q-mb-sm recipient">
         <span>{{ $t('OPENPGPFILESWEBCLIENT.LABEL_RECIPIENT') }}:</span>
       </div>
-      <app-contact-item @click="changeRecipient" class="q-pb-md q-mx-lg" :contact="shareableLinkParams.recipient"/>
+      <app-contact-item  @click="changeRecipient" class="q-pb-md q-mx-lg" :contact="recipient"/>
       <div class="q-px-lg">
         <span class="inscription">
           {{ contactInscription }}
@@ -41,61 +41,42 @@
         </span>
       </div>
     </div>
-    <select-recipient-dialog
-        v-model="showSelectRecipientDialog"
-        :onGetContacts="getContacts"
-        @selectContact="selectContact"
-        @close="showSelectRecipientDialog = false"
-    />
   </div>
 </template>
 
 <script>
 import eventBus from "src/event-bus";
 import { mapActions } from 'vuex'
-import SelectRecipientDialog
-  from "../../../../../../FilesMobileWebclient/vue-mobile/components/dialogs/SelectRecipientDialog";
 import AppContactItem from "components/common/AppContactItem";
 import AppCheckbox from "components/common/AppCheckbox";
 
 export default {
   name: "EncryptedShareableLinkHead",
   components: {
-    SelectRecipientDialog,
     AppContactItem,
     AppCheckbox
   },
+  props: {
+    recipient: { type: Object, default: () => ({ FullName: 'Not Selected', empty: true })}
+  },
   data: () => ({
-    showSelectRecipientDialog: false,
     shareableLinkParams: {
       recipient: { FullName: 'Not Selected', empty: true },
       encryptionType: 'password',
       addDigitalSignature: false,
     },
-    isWaitingContacts: false,
-    contacts: [],
-    searchText: ''
   }),
   async mounted() {
-    this.isWaitingContacts = true
-    this.contacts = await this.getContacts({
-      Search:"",
-      Storage:"all",
-      SortField:3,
-      SortOrder:1,
-      WithGroups:false,
-      WithoutTeamContactsDuplicates:true
-    })
-    this.isWaitingContacts = false
-    eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
+    eventBus.$on('CoreParanoidEncryptionWebclient::getShareableParams', this.sentShareableLinkParams)
     await this.asyncGetExternalsKeys()
   },
   computed: {
     contactInscription() {
-      if (this.shareableLinkParams.recipient?.empty){
+      console.log('contactInscription')
+      if (this.recipient?.empty){
         return this.$t('OPENPGPFILESWEBCLIENT.HINT_ONLY_PASSWORD_BASED')
       }
-      if (this.shareableLinkParams?.recipient?.HasPgpPublicKey) {
+      if (this.recipient?.HasPgpPublicKey) {
         return this.$t('OPENPGPFILESWEBCLIENT.HINT_KEY_RECIPIENT')
       }
       return this.$t('OPENPGPFILESWEBCLIENT.HINT_NO_KEY_RECIPIENT')
@@ -112,7 +93,7 @@ export default {
           label: this.$t('OPENPGPFILESWEBCLIENT.LABEL_KEY_BASED_ENCRYPTION'),
           value: 'key',
           color: 'primary',
-          disable: !this.shareableLinkParams?.recipient?.HasPgpPublicKey
+          disable: !this.recipient?.HasPgpPublicKey
         },
         {
           label: this.$t('OPENPGPFILESWEBCLIENT.LABEL_PASSWORD_BASED_ENCRYPTION'),
@@ -140,33 +121,23 @@ export default {
         this.shareableLinkParams.addDigitalSignature = true
       }
     },
-    async searchText(searchText) {
-      this.contacts = await this.getContacts({
-        Search: searchText,
-        Storage:"all",
-        SortField:3,
-        SortOrder:1,
-        WithGroups:false,
-        WithoutTeamContactsDuplicates:true
-      })
-    }
   },
   methods: {
     ...mapActions('filesmobile', ['getContactSuggestions']),
     ...mapActions('openpgpmobile', ['asyncGetExternalsKeys']),
-    async getContacts(params) {
-      return await this.getContactSuggestions(params)
-    },
-    selectContact(contact) {
-      this.shareableLinkParams.recipient = contact
-      eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.shareableLinkParams)
-      this.showSelectRecipientDialog = false
-    },
     changeRecipient() {
-      this.showSelectRecipientDialog = true
-      this.searchText = ''
+      this.$emit('selectRecipient')
+    },
+    sentShareableLinkParams(callback) {
+      if (callback) {
+        this.shareableLinkParams['recipient'] = this.recipient
+        callback(this.shareableLinkParams)
+      }
     }
   },
+  unmounted() {
+    eventBus.$off('CoreParanoidEncryptionWebclient::getShareableParams', this.sentShareableLinkParams)
+  }
 }
 </script>
 

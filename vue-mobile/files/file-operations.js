@@ -6,9 +6,22 @@ import { onFileAdded, initUpload } from "./upload";
 import { updateExtendedProps, init } from "./share";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import store from "src/store";
+import { defineAsyncComponent } from "vue";
+import { i18n } from "../../../CoreMobileWebclient/vue-mobile/src/boot/i18n";
 
 import Crypto from "../crypto/CCrypto";
 
+export const setFileActions = (actions) => {
+    console.log(i18n, 'i18n')
+    actions['createShareableLink'] = {
+        method: null,
+        name: 'createShareableLink',
+        component: defineAsyncComponent(() => import('../components/files/dialogs/EncryptedShareableLinkDialog')),
+        displayName: i18n.global.t('OPENPGPFILESWEBCLIENT.ACTION_SECURE_SHARE'),
+        icon: 'SecureLinkIcon',
+        isShowAction: () => true,
+    }
+}
 
 export const onShareEncryptFile = ({ contactsList, onContinueSaving, getParentComponent }) => {
 

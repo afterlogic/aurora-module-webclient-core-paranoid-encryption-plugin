@@ -77,6 +77,10 @@ export default {
     eventBus.$on('CoreParanoidEncryptionWebclientPlugin::downloadEncryptedFile',
         fileOperations.downloadEncryptedFile
     )
+
+    eventBus.$off('FilesMobileWebClient::getFileActionsList', fileOperations.setFileActions)
+    eventBus.$on('FilesMobileWebClient::getFileActionsList', fileOperations.setFileActions)
+
   },
 
   initSubscriptions (appData) {

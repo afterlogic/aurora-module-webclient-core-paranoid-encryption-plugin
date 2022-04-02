@@ -1,9 +1,8 @@
 <template>
-  <div class="q-pa-sm" v-if="shareableLinkParams?.recipient">
+  <div class="q-pa-sm" v-if="recipient">
     <button-dialog
-        :disabled="!shareableLinkParams"
         :saving="saving"
-        :action="encrypt"
+        :action="getShareableParams"
         :label="$t('OPENPGPFILESWEBCLIENT.ACTION_ENCRYPT')"
     />
   </div>
@@ -25,12 +24,12 @@ export default {
   components: {
     ButtonDialog
   },
-  created() {
-    eventBus.$on('CoreParanoidEncryptionWebclient::getShareableParams', this.getShareableParams)
-  },
   computed: {
     ...mapGetters('core', ['userPublicId']),
     ...mapGetters('filesmobile', ['currentPath', 'currentStorage', 'currentFile']),
+  },
+  props: {
+    recipient: { type: Object, default: () => ({ FullName: 'Not Selected', empty: true })}
   },
   data: () => ({
     shareableLinkParams: null,
@@ -43,8 +42,13 @@ export default {
   methods: {
     ...mapActions('filesmobile', ['asyncUpdateExtendedProps', 'changeItemProperty']),
     ...mapActions('coreparanoidencryptionplugin', ['asyncCreatePublicLink']),
-    getShareableParams(params) {
-      this.shareableLinkParams = params
+    getShareableParams() {
+      eventBus.$emit('CoreParanoidEncryptionWebclient::getShareableParams', this.onStartEncrypt)
+    },
+    onStartEncrypt(shareableLinkParams) {
+      console.log(shareableLinkParams, 'shareableLinkParams')
+      this.shareableLinkParams = shareableLinkParams
+      this.encrypt()
     },
     encrypt() {
         this.creating = true
@@ -91,12 +95,12 @@ export default {
           if (result) {
             await this.createEncryptPublicLink()
             if (!this.shareableLinkParams?.recipient?.empty) {
-              eventBus.$emit('FilesMobile::SetRecipient', this.shareableLinkParams.recipient)
+              //eventBus.$emit('FilesMobile::SetRecipient', this.shareableLinkParams.recipient)
               if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
-                eventBus.$emit('FilesMobile::IsRecipientDisabled')
+                //eventBus.$emit('FilesMobile::IsRecipientDisabled')
               }
             }
-            eventBus.$emit('FilesMobile::IsCreatingLink', true)
+            //eventBus.$emit('FilesMobile::IsCreatingLink', true)
           }
         }
       })
@@ -131,9 +135,6 @@ export default {
       }
     },
   },
-  unmounted() {
-    eventBus.$off('CoreParanoidEncryptionWebclient::getShareableParams', this.getShareableParams)
-  }
 }
 </script>
 
