@@ -174,12 +174,12 @@ CCrypto.prototype.encryptChunk = function (sUid, fOnChunkEncryptCallback)
 			}
 			else
 			{
-				delete this.oFileInfo.Hidden.ExtendedProps.FirstChunk;
+				this.oFileInfo.Hidden.ExtendedProps.FirstChunk = null;
 			}
 
 			if (this.iCurrChunk == this.iChunkNumber)
 			{ // unmark file as loading
-				delete this.oFileInfo.Hidden.ExtendedProps.Loading;
+				this.oFileInfo.Hidden.ExtendedProps.Loading = null;
 			}
 			else
 			{ // mark file as loading until upload doesn't finish
