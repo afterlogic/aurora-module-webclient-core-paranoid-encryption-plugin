@@ -271,7 +271,6 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function onCreateOrUpdateSharedFile(&$aArgs, &$mResult)
 	{
 		extract($aArgs);
-		$Share['ParanoidKeyShared'] = '11111111111111111111';
 		if (!empty($Share['ParanoidKeyShared'])) {
 			$oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $UserPrincipalUri)
 				->where('storage', $Storage)
