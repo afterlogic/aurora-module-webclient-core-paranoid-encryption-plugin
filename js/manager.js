@@ -78,7 +78,7 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKey = oExtendedProps?.ParanoidKey || false,
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bSharedWithMe = oFile.bSharedWithMe
+			bSharedWithMe = oFile.sharedWithMe()
 		;
 		//User can decrypt only own or shared files
 		if (!Settings.enableJscrypto() || !iv
@@ -321,7 +321,7 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bSharedWithMe = oFile.bSharedWithMe
+			bSharedWithMe = oFile.sharedWithMe()
 		;
 
 		if (bIsEncrypted)
