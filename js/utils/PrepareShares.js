@@ -102,15 +102,17 @@ async function onBeforeUpdateShare (params) {
 	// Encrypt paranoid key with public OpenPGP keys
 	for (const share of params.Shares) {
 		const publicOpenPgpKey = publicOpenPgpKeys.find(openPgpKey => openPgpKey.emailParts.email === share.PublicId);
-		const encryptedParanoidKeyShared = await Crypto.encryptParanoidKey(
-			decryptedParanoidKey,
-			[publicOpenPgpKey],
-			password
-		);
-		if (encryptedParanoidKeyShared) {
-			share.ParanoidKeyShared = encryptedParanoidKeyShared;
+		if (publicOpenPgpKey) {
+			const encryptedParanoidKeyShared = await Crypto.encryptParanoidKey(
+				decryptedParanoidKey,
+				[publicOpenPgpKey],
+				password
+			);
+			if (encryptedParanoidKeyShared) {
+				share.ParanoidKeyShared = encryptedParanoidKeyShared;
+			}
+			delete share.New;
 		}
-		delete share.New;
 	}
 
 	//continue sharing
