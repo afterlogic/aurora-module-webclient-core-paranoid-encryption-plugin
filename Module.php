@@ -63,6 +63,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('SharedFiles::CreateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 		$this->subscribeEvent('SharedFiles::UpdateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 
+		$this->subscribeEvent('Files::GetExtendedProps::before', [$this, 'onBeforeGetExtendedProps']);
+
 		\Aurora\Modules\Core\Classes\User::extend(
 			self::GetName(),
 			[
@@ -333,6 +335,12 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 				}
 			);
 		}
+   }
+
+   public function onBeforeGetExtendedProps(&$aArgs, &$mResult)
+   {
+		$aArgs['Type'] = self::$sPersonalStorageType;
+		$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
    }
 
 	/**
