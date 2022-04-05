@@ -339,8 +339,11 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
    public function onBeforeGetExtendedProps(&$aArgs, &$mResult)
    {
-		$aArgs['Type'] = self::$sPersonalStorageType;
-		$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = self::$sPersonalStorageType;
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+		}
    }
 
 	/**
