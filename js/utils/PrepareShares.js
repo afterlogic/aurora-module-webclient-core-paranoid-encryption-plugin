@@ -69,7 +69,7 @@ async function onBeforeUpdateShare (params) {
 	const
 		fileItem = params.FileItem,
 		extendedProps = fileItem && fileItem.oExtendedProps,
-		encryptedParanoidKey = extendedProps && extendedProps.ParanoidKey
+		encryptedParanoidKey = extendedProps && extendedProps.ParanoidKeyShared
 	;
 
 	if (!fileItem || !fileItem.IS_FILE || !encryptedParanoidKey || !_.isArray(params.Shares)) {
