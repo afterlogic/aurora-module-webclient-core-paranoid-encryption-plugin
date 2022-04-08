@@ -69,7 +69,8 @@ async function onBeforeUpdateShare (params) {
 	const
 		fileItem = params.FileItem,
 		extendedProps = fileItem && fileItem.oExtendedProps,
-		encryptedParanoidKey = extendedProps && extendedProps.ParanoidKeyShared
+		encryptedParanoidKey = extendedProps &&
+			(fileItem.sharedWithMe() ? extendedProps.ParanoidKeyShared : extendedProps.ParanoidKey)
 	;
 
 	if (!fileItem || !fileItem.IS_FILE || !encryptedParanoidKey || !_.isArray(params.Shares)) {
@@ -96,7 +97,7 @@ async function onBeforeUpdateShare (params) {
 	const { decryptedParanoidKey, password } = await getDecryptedParanoidKey(encryptedParanoidKey);
 	if (!decryptedParanoidKey) {
 		params.OnErrorCallback();
-		return false;
+		return;
 	}
 
 	// Encrypt paranoid key with public OpenPGP keys
