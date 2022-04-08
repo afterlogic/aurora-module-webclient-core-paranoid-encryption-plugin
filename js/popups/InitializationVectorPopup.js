@@ -22,6 +22,7 @@ function CInitializationVectorPopup()
 	this.fileName = ko.observable('');
 	this.iv = ko.observable('');
 	this.oldEncryptionMode = ko.observable(false);
+	this.encryptedParanoidKey = '';
 }
 
 _.extendOwn(CInitializationVectorPopup.prototype, CAbstractPopup.prototype);
@@ -33,7 +34,13 @@ CInitializationVectorPopup.prototype.onOpen = function (oFile, sIv)
 	this.oFile = oFile;
 	this.fileName(oFile.fileName());
 	this.iv(sIv);
-	this.oldEncryptionMode(!oFile?.oExtendedProps?.ParanoidKey);
+	const
+		extendedProps = oFile && oFile.oExtendedProps,
+		encryptedParanoidKey = extendedProps &&
+			(oFile.sharedWithMe() ? extendedProps.ParanoidKeyShared : extendedProps.ParanoidKey)
+	;
+	this.encryptedParanoidKey = encryptedParanoidKey;
+	this.oldEncryptionMode(!encryptedParanoidKey);
 };
 
 CInitializationVectorPopup.prototype.downloadEncrypted = function ()
@@ -47,7 +54,7 @@ CInitializationVectorPopup.prototype.downloadEncrypted = function ()
 CInitializationVectorPopup.prototype.getAesKey = async function ()
 {
 	let Crypto = require('modules/%ModuleName%/js/CCrypto.js');
-	let sKey = await Crypto.decryptParanoidKey(this.oFile?.oExtendedProps?.ParanoidKey);
+	let sKey = await Crypto.decryptParanoidKey(this.encryptedParanoidKey);
 	if (Types.isNonEmptyString(sKey))
 	{
 		Popups.showPopup(AlertPopup, [sKey, null, TextUtils.i18n('%MODULENAME%/HEADING_IV_AES_KEY')]);

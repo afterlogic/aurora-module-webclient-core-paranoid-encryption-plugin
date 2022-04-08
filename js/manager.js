@@ -107,39 +107,6 @@ function StartModule (ModulesManager)
 		}
 	});
 
-	App.subscribeEvent('OpenPgpFilesWebclient::DownloadSecureFile', function (oParams) {
-		var
-			oFile = oParams.File,
-			iv = oFile?.oExtendedProps?.InitializationVector || false,
-			sParanoidEncryptedKey = oFile?.oExtendedProps?.ParanoidKey || false,
-			fProcessBlobCallback = oParams.fProcessBlobCallback,
-			fProcessBlobErrorCallback = oParams.fProcessBlobErrorCallback
-		;
-
-		//User can decrypt only own files
-		if (!Settings.enableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_CANT_DECRYPT_FILE'));
-			if (_.isFunction(fProcessBlobErrorCallback))
-			{
-				fProcessBlobErrorCallback();
-			}
-		}
-		else if (!IsHttpsEnable())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-			oParams.CancelDownload = true;
-			if (_.isFunction(fProcessBlobErrorCallback))
-			{
-				fProcessBlobErrorCallback();
-			}
-		}
-		else
-		{
-			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey);
-		}
-	});
-
 	App.subscribeEvent('Jua::FileUpload::before', function (oParams) {
 		var
 			sUid = oParams.sUid,
