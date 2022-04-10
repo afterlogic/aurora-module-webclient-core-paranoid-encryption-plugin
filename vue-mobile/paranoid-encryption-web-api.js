@@ -6,23 +6,18 @@ export default {
       moduleName: 'CoreParanoidEncryptionWebclientPlugin',
       methodName: 'UpdateSettings',
       parameters: parameters,
-    }).then((result) => {
-      if (result) {
-        return result
-      }
-      return false
     })
+      .then(result => result)
+      .catch(error => false)
   },
+
   createPublicLink: async (parameters) => {
     return webApi.sendRequest({
       moduleName: 'OpenPgpFilesWebclient',
       methodName: 'CreatePublicLink',
       parameters: parameters,
-    }).then((result) => {
-      if (result) {
-        return result
-      }
-      return false
     })
+      .then(result => result)
+      .catch(error => false)
   },
 }
