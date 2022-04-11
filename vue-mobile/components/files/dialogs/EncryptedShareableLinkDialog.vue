@@ -105,7 +105,10 @@
         </div>
       </div>
       <div v-else>
-        <EncryptedShareableLinkActions :recipient="recipient"/>
+        <EncryptedShareableLinkActions
+            @onProhibitSelectionRecipient="isRecipientDisabled = true"
+            @isLinkCreated="isCreatingLink = true" :recipient="recipient"
+        />
       </div>
     </template>
   </app-dialog>
@@ -161,7 +164,7 @@ export default {
   computed: {
     ...mapGetters('filesmobile', ['currentFile']),
     sendLabel() {
-      return 'sendLabel'
+      return this.$t('OPENPGPFILESWEBCLIENT.ACTION_SEND_ENCRYPTED_EMAIL')
     },
     createBtnLabel() {
       return this.withPassword
@@ -170,11 +173,18 @@ export default {
     },
   },
   methods: {
-    ...mapActions('filesmobile', ['getContactSuggestions', 'asyncCreateShareableLink', 'asyncDeletePublicLink']),
+    ...mapActions('filesmobile', ['getContactSuggestions', 'asyncCreateShareableLink', 'asyncDeletePublicLink', 'changeItemProperty']),
     cancelDialog() {
       if (this.showSelectRecipient) {
         this.showSelectRecipient = false
       } else {
+        this.changeItemProperty({
+          item: this.currentFile,
+          property: 'linkPassword',
+          value: ''
+        })
+        this.isCreatingLink = false
+        this.isRecipientDisabled = false
         this.$emit('closeDialog')
       }
     },
@@ -194,6 +204,7 @@ export default {
       await this.asyncCreateShareableLink({ withPassword: this.withPassword })
       this.publicLink = this.currentFile.publicLink
       this.linkPassword = this.currentFile.linkPassword
+      this.isCreatingLink = true
     },
     async removeLink() {
       this.saving = true

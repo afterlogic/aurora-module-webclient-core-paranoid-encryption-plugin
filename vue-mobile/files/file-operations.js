@@ -19,7 +19,7 @@ export const setFileActions = (actions) => {
         component: defineAsyncComponent(() => import('../components/files/dialogs/EncryptedShareableLinkDialog')),
         displayName: i18n.global.t('OPENPGPFILESWEBCLIENT.ACTION_SECURE_SHARE'),
         icon: 'SecureLinkIcon',
-        isShowAction: () => true,
+        isShowAction: actions.createShareableLink.isShowAction,
     }
 }
 

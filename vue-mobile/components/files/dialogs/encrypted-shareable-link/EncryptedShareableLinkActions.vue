@@ -95,12 +95,11 @@ export default {
           if (result) {
             await this.createEncryptPublicLink()
             if (!this.shareableLinkParams?.recipient?.empty) {
-              //eventBus.$emit('FilesMobile::SetRecipient', this.shareableLinkParams.recipient)
               if (this.shareableLinkParams.recipient.HasPgpPublicKey) {
-                //eventBus.$emit('FilesMobile::IsRecipientDisabled')
+                this.$emit('onProhibitSelectionRecipient')
               }
             }
-            //eventBus.$emit('FilesMobile::IsCreatingLink', true)
+            this.$emit('isLinkCreated')
           }
         }
       })
