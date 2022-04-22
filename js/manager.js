@@ -71,6 +71,11 @@ function StartModule (ModulesManager)
 	]);
 	
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
+		if (!oParams.File || !oParams.File.IS_FILE) {
+			// it might be attachment, Paranoid doesn't work with them
+			return;
+		}
+
 		var
 			oFile = oParams.File,
 			oExtendedProps = oFile?.oExtendedProps || false,
