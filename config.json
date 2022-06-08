@@ -1,60 +1,60 @@
 {
-  "Disabled": [
-    false,
-    "bool"
-  ],
-  "Disabled_Description": [
-    "",
-    "string"
-  ],
-  "AvailableFor": [
-    [
-      "FilesWebclient"
-    ],
-    "array"
-  ],
-  "AvailableFor_Description": [
-    "",
-    "string"
-  ],
-  "EnabledByDefault": [
-    false,
-    "bool"
-  ],
-  "EnabledByDefault_Description": [
-    "",
-    "string"
-  ],
-  "EnableInPersonalStorageByDefault": [
-    false,
-    "bool"
-  ],
-  "EnableInPersonalStorageByDefault_Description": [
-    "",
-    "string"
-  ],
-  "ChunkSizeMb": [
-    5,
-    "int"
-  ],
-  "ChunkSizeMb_Description": [
-    "",
-    "string"
-  ],
-  "AllowMultiChunkUpload": [
-    true,
-    "bool"
-  ],
-  "AllowMultiChunkUpload_Description": [
-    "",
-    "string"
-  ],
-  "AllowChangeSettings": [
-    true,
-    "bool"
-  ],
-  "AllowChangeSettings_Description": [
-    "",
-    "string"
-  ]
+	"Disabled": [
+		false,
+		"bool"
+	],
+	"Disabled_Description": [
+		"",
+		"string"
+	],
+	"AvailableFor": [
+		[
+			"FilesWebclient"
+		],
+		"array"
+	],
+	"AvailableFor_Description": [
+		"",
+		"string"
+	],
+	"EnabledByDefault": [
+		false,
+		"bool"
+	],
+	"EnabledByDefault_Description": [
+		"",
+		"string"
+	],
+	"EnableInPersonalStorageByDefault": [
+		false,
+		"bool"
+	],
+	"EnableInPersonalStorageByDefault_Description": [
+		"",
+		"string"
+	],
+	"ChunkSizeMb": [
+		5,
+		"int"
+	],
+	"ChunkSizeMb_Description": [
+		"",
+		"string"
+	],
+	"AllowMultiChunkUpload": [
+		true,
+		"bool"
+	],
+	"AllowMultiChunkUpload_Description": [
+		"",
+		"string"
+	],
+	"AllowChangeSettings": [
+		true,
+		"bool"
+	],
+	"AllowChangeSettings_Description": [
+		"",
+		"string"
+	]
 }
