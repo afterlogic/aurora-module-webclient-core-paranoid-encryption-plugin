@@ -16,7 +16,7 @@ export const setFileActions = (actions) => {
     actions['createShareableLink'] = {
         method: null,
         name: 'createShareableLink',
-        component: defineAsyncComponent(() => import('../components/files/dialogs/EncryptedShareableLinkDialog')),
+        component: defineAsyncComponent(() => import('../../../OpenPgpFilesMobileWebclient/vue-mobile/components/files/dialogs/EncryptedShareableLinkDialog')),
         displayName: i18n.global.t('OPENPGPFILESWEBCLIENT.ACTION_SECURE_SHARE'),
         icon: 'SecureLinkIcon',
         isShowAction: actions.createShareableLink.isShowAction,
