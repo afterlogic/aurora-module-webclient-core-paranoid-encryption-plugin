@@ -4,7 +4,7 @@
 		"bool"
 	],
 	"Disabled_Description": [
-		"",
+		"Setting to true disables the module",
 		"string"
 	],
 	"AvailableFor": [
@@ -14,7 +14,7 @@
 		"array"
 	],
 	"AvailableFor_Description": [
-		"",
+		"Automatically provide this feature if one of the listed modules is requested by the entry point",
 		"string"
 	],
 	"EnabledByDefault": [
@@ -22,7 +22,7 @@
 		"bool"
 	],
 	"EnabledByDefault_Description": [
-		"",
+		"If true, the feature is enabled for new users",
 		"string"
 	],
 	"EnableInPersonalStorageByDefault": [
@@ -30,7 +30,7 @@
 		"bool"
 	],
 	"EnableInPersonalStorageByDefault_Description": [
-		"",
+		"If true, the feature is enabled for new users in personal storage by default",
 		"string"
 	],
 	"ChunkSizeMb": [
@@ -38,7 +38,7 @@
 		"int"
 	],
 	"ChunkSizeMb_Description": [
-		"",
+		"Sets a chunk size used for encrypting files, in Mbytes",
 		"string"
 	],
 	"AllowMultiChunkUpload": [
@@ -46,7 +46,7 @@
 		"bool"
 	],
 	"AllowMultiChunkUpload_Description": [
-		"",
+		"Defines whether the files can be uploaded in chunks or in full",
 		"string"
 	],
 	"AllowChangeSettings": [
