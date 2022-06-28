@@ -6,6 +6,7 @@ const
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
 	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js'),
 
+	Ajax = require('%PathToCoreWebclientModule%/js/Ajax.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 
@@ -14,28 +15,26 @@ const
 	Crypto = require('modules/%ModuleName%/js/CCrypto.js')
 ;
 
-function getPublicOpenPgpKeys (shares) {
-	//get OpenPGP public keys for users who must have access
+async function getPublicOpenPgpKeys (shares) {
+	//get OpenPGP public keys for users who should have access
 	const
-		sharesEmails = shares.map(oShare => oShare.PublicId),
-		publicOpenPgpKeys = sharesEmails.length
-			? OpenPgpEncryptor.findKeysByEmails(sharesEmails, /*bIsPublic*/true)
-			: []
+		contactUUIDs = shares.map(share => share.ContactUUID).filter(uuid => uuid),
+		emails = shares.map(oShare => oShare.PublicId)
 	;
-
-	if (publicOpenPgpKeys.length < sharesEmails.length) {
+	let allPublicKeys = await OpenPgpEncryptor.getPublicKeysByContactsAndEmails(contactUUIDs, emails);
+	if (allPublicKeys.length < emails.length) {
 		//if not for all users the keys were found - show an error
 		const
-			emailsFromKeys = publicOpenPgpKeys.map(oKey => oKey.getEmail()),
-			diffEmails = sharesEmails.filter(email => !emailsFromKeys.includes(email))
+			emailsFromKeys = allPublicKeys.map(key => key.getEmail()),
+			diffEmails = emails.filter(email => !emailsFromKeys.includes(email)),
+			errorText = TextUtils.i18n('%MODULENAME%/ERROR_NO_PUBLIC_KEYS_FOR_USERS_PLURAL',
+				{'USERS': diffEmails.join(', ')}, null, diffEmails.length
+			)
 		;
-		const errorText = TextUtils.i18n('%MODULENAME%/ERROR_NO_PUBLIC_KEYS_FOR_USERS_PLURAL',
-			{'USERS': diffEmails.join(', ')}, null, diffEmails.length);
 		Screens.showError(errorText);
-		return false;
+		allPublicKeys = false;
 	}
-
-	return publicOpenPgpKeys;
+	return allPublicKeys;
 }
 
 async function getDecryptedParanoidKey(encryptedParanoidKey) {
@@ -87,7 +86,7 @@ async function onBeforeUpdateShare (params) {
 	}
 
 	// Get OpenPGP public keys for users who must have access
-	const publicOpenPgpKeys = getPublicOpenPgpKeys(newShares);
+	const publicOpenPgpKeys = await getPublicOpenPgpKeys(newShares);
 	if (!publicOpenPgpKeys) {
 		params.OnErrorCallback();
 		return;
