@@ -201,7 +201,7 @@ function StartModule (ModulesManager)
 					fCancelFunction(sUid);
 				}
 			}
-			else if (oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
+			else if (!oFileInfo.EncryptWithoutConfirm && oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
 			{
 				if (isConfirmPopupShown)
 				{
@@ -461,6 +461,14 @@ module.exports = function (oAppData) {
 					// 	});
 				}
 			}
+		},
+
+		getConfirmEncryptionPopup () {
+			return Settings.EnableInPersonalStorage ? ConfirmEncryptionPopup : false;
+		},
+
+		isEnabled () {
+			return Settings.enableJscrypto() && IsHttpsEnable();
 		}
 	};
 };

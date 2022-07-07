@@ -31,6 +31,7 @@ function CCrypto()
 	// Queue of files awaiting upload
 	this.oChunkQueue = {
 		isProcessed: false,
+		privateKeyPassword: '',
 		aFiles: []
 	};
 	this.aStopList = [];
@@ -293,7 +294,10 @@ CCrypto.prototype.showOutdatedEncryptionMethodPopup = async function (sFileName)
 
 CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys, sPassword = '')
 {
-	let sEncryptedKey = "";
+	if (sPassword === '') {
+		sPassword = this.oChunkQueue.privateKeyPassword
+	}
+	let sEncryptedKey = '';
 	const oPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
 
 	if (oPrivateKey)
@@ -309,7 +313,8 @@ CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys
 		);
 		if (oPGPEncryptionResult.result)
 		{
-			let { data, password } = oPGPEncryptionResult.result;
+			let { data, passphrase } = oPGPEncryptionResult.result;
+			this.oChunkQueue.privateKeyPassword = passphrase;
 			sEncryptedKey = data;
 		}
 		else if (oPGPEncryptionResult.hasErrors() || oPGPEncryptionResult.hasNotices())
@@ -390,6 +395,8 @@ CCrypto.prototype.checkQueue = function ()
 	{
 		aNode = this.oChunkQueue.aFiles.shift();
 		aNode.fStartUploadCallback.apply(aNode.fStartUploadCallback, [aNode.oFileInfo, aNode.sUid, aNode.fOnChunkEncryptCallback]);
+	} else {
+		this.oChunkQueue.privateKeyPassword = '';
 	}
 };
 /**
