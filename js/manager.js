@@ -360,8 +360,7 @@ function StartModule (ModulesManager)
 							return {
 								'Storage': oItem.storageType(),
 								'Path': oItem.path(),
-								'Name': oItem.fileName(),
-								'Id': oItem.id(),
+								'Name': oItem.id() || oItem.fileName(),
 								'IsEncrypted': bItemEncrypted
 							};
 						})
