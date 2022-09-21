@@ -63,6 +63,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('SharedFiles::CreateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 		$this->subscribeEvent('SharedFiles::UpdateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 
+		$this->subscribeEvent('Files::GetExtendedProps::before', [$this, 'onBeforeGetExtendedProps']);
+
 		\Aurora\Modules\Core\Classes\User::extend(
 			self::GetName(),
 			[
@@ -271,7 +273,6 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function onCreateOrUpdateSharedFile(&$aArgs, &$mResult)
 	{
 		extract($aArgs);
-		$Share['ParanoidKeyShared'] = '11111111111111111111';
 		if (!empty($Share['ParanoidKeyShared'])) {
 			$oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $UserPrincipalUri)
 				->where('storage', $Storage)
@@ -333,6 +334,15 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 						|| !isset($FileItem->ExtendedProps['InitializationVector']);
 				}
 			);
+		}
+   }
+
+   public function onBeforeGetExtendedProps(&$aArgs, &$mResult)
+   {
+		if ($aArgs['Type'] === self::$sStorageType)
+		{
+			$aArgs['Type'] = self::$sPersonalStorageType;
+			$aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
 		}
    }
 

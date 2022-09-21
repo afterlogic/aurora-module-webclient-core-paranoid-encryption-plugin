@@ -12,7 +12,6 @@ var
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	
 	Popups = require('%PathToCoreWebclientModule%/js/Popups.js'),
-	AlertPopup = require('%PathToCoreWebclientModule%/js/popups/AlertPopup.js'),
 	ConfirmPopup = require('%PathToCoreWebclientModule%/js/popups/ConfirmPopup.js'),
 	
 	ConfirmEncryptionPopup = require('modules/%ModuleName%/js/popups/ConfirmEncryptionPopup.js'),
@@ -25,7 +24,6 @@ var
 	OpenPgpEncryptor = null,
 	AwaitConfirmationQueue = [],	//List of files waiting for the user to decide on encryption
 	isConfirmPopupShown = false,
-	oButtonsView = null,
 	FilesView = null
 ;
 
@@ -73,6 +71,11 @@ function StartModule (ModulesManager)
 	]);
 	
 	App.subscribeEvent('AbstractFileModel::FileDownload::before', function (oParams) {
+		if (!oParams.File || !oParams.File.IS_FILE) {
+			// it might be attachment, Paranoid doesn't work with them
+			return;
+		}
+
 		var
 			oFile = oParams.File,
 			oExtendedProps = oFile?.oExtendedProps || false,
@@ -80,7 +83,7 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKey = oExtendedProps?.ParanoidKey || false,
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bSharedWithMe = oFile.bSharedWithMe
+			bSharedWithMe = oFile.sharedWithMe()
 		;
 		//User can decrypt only own or shared files
 		if (!Settings.enableJscrypto() || !iv
@@ -106,39 +109,6 @@ function StartModule (ModulesManager)
 						: sParanoidEncryptedKey
 				);
 			};
-		}
-	});
-
-	App.subscribeEvent('OpenPgpFilesWebclient::DownloadSecureFile', function (oParams) {
-		var
-			oFile = oParams.File,
-			iv = oFile?.oExtendedProps?.InitializationVector || false,
-			sParanoidEncryptedKey = oFile?.oExtendedProps?.ParanoidKey || false,
-			fProcessBlobCallback = oParams.fProcessBlobCallback,
-			fProcessBlobErrorCallback = oParams.fProcessBlobErrorCallback
-		;
-
-		//User can decrypt only own files
-		if (!Settings.enableJscrypto() || !iv || oFile.sOwnerName !== App.getUserPublicId())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_CANT_DECRYPT_FILE'));
-			if (_.isFunction(fProcessBlobErrorCallback))
-			{
-				fProcessBlobErrorCallback();
-			}
-		}
-		else if (!IsHttpsEnable())
-		{
-			Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_HTTPS_NEEDED'));
-			oParams.CancelDownload = true;
-			if (_.isFunction(fProcessBlobErrorCallback))
-			{
-				fProcessBlobErrorCallback();
-			}
-		}
-		else
-		{
-			Crypto.downloadDividedFile(oFile, iv, fProcessBlobCallback, fProcessBlobErrorCallback, sParanoidEncryptedKey);
 		}
 	});
 
@@ -231,7 +201,7 @@ function StartModule (ModulesManager)
 					fCancelFunction(sUid);
 				}
 			}
-			else if (oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
+			else if (!oFileInfo.EncryptWithoutConfirm && oParams.sStorageType === 'personal' && Settings.EnableInPersonalStorage)
 			{
 				if (isConfirmPopupShown)
 				{
@@ -323,7 +293,7 @@ function StartModule (ModulesManager)
 			sParanoidEncryptedKeyShared = oExtendedProps?.ParanoidKeyShared || false,
 			bIsImage = (/\.(png|jpe?g|gif)$/).test(oFile.fileName().toLowerCase()),
 			bIsOwnFile = oFile.sOwnerName === App.getUserPublicId(),
-			bSharedWithMe = oFile.bSharedWithMe
+			bSharedWithMe = oFile.sharedWithMe()
 		;
 
 		if (bIsEncrypted)
@@ -390,8 +360,7 @@ function StartModule (ModulesManager)
 							return {
 								'Storage': oItem.storageType(),
 								'Path': oItem.path(),
-								'Name': oItem.fileName(),
-								'Id': oItem.id(),
+								'Name': oItem.id() || oItem.fileName(),
 								'IsEncrypted': bItemEncrypted
 							};
 						})
@@ -441,98 +410,8 @@ function StartModule (ModulesManager)
 		}
 	});
 
-	App.subscribeEvent('SharedFiles::UpdateShare::before', async oParams => {
-		const oFile = oParams.oFileItem;
-		const sParanoidEncryptedKey = oFile?.oExtendedProps?.ParanoidKey || '';
-		const fUpdateParanoidKeyShared = ParanoidKeyShared => {
-			//Update file extended props
-			Ajax.send(
-				'Files',
-				'UpdateExtendedProps',
-				{
-					Type: oFile.storageType(),
-					Path: oFile.path(),
-					Name: oFile.fileName(),
-					ExtendedProps: { ParanoidKeyShared }
-				},
-				oResponse => {
-					if (oResponse.Result === true)
-					{
-						//continue sharing
-						oParams.OnSuccessCallback();
-					}
-					else
-					{
-						Screens.showError(TextUtils.i18n('%MODULENAME%/ERROR_UPDATING_PRANOID_KEY'));
-						oParams.OnErrorCallback();
-					}
-				},
-				this
-			);
-		};
-		if (!oParams.IsDir && sParanoidEncryptedKey)
-		{//if file is encrypted
-			if (oParams.Shares.length)
-			{//if file was shared - encrypt Paranoid-key
-				//get OpenPGP public keys for users who must have access
-				const aSharesEmails = oParams.Shares.map(oShare => oShare.PublicId);
-				let aPublicKeys = aSharesEmails.length ?
-					OpenPgpEncryptor.findKeysByEmails(aSharesEmails, /*bIsPublic*/true)
-					: [];
-				if (aPublicKeys.length < aSharesEmails.length)
-				{//if not for all users the keys were found - show an error
-					let aEmailsFromKeys = aPublicKeys.map(oKey => oKey.getEmail());
-					let aDifference = aSharesEmails.filter(email => !aEmailsFromKeys.includes(email));
-					const sError = TextUtils.i18n('%MODULENAME%/ERROR_NO_PUBLIC_KEYS_FOR_USERS_PLURAL',
-						{'USERS': aDifference.join(', ')}, null, aDifference.length);
-					Screens.showError(sError);
-					oParams.OnErrorCallback();
-				}
-				else
-				{//encrypt Paranoid-key with found OpenPGP public keys
-					const oPrivateKey = await OpenPgpEncryptor.getCurrentUserPrivateKey();
-					if (oPrivateKey)
-					{
-						//get a password for decryption and signature operations
-						let sPassword = await OpenPgpEncryptor.askForKeyPassword(oPrivateKey.getUser());
-						if (sPassword === false)
-						{//user cancel operation
-							oParams.OnErrorCallback();
-							return false;
-						}
-						//decrypt personal paranoid key
-						let sParanoidKey = await Crypto.decryptParanoidKey(
-							sParanoidEncryptedKey,
-							sPassword
-						);
-						if (!sParanoidKey)
-						{
-							oParams.OnErrorCallback();
-							return false;
-						}
-						//encrypt personal paranoid key with public keys
-						const sEncryptedSharedKey = await Crypto.encryptParanoidKey(
-							sParanoidKey,
-							aPublicKeys,
-							sPassword
-						);
-						if (sEncryptedSharedKey)
-						{
-							fUpdateParanoidKeyShared(sEncryptedSharedKey);
-						}
-					}
-				}
-			}
-			else
-			{//remove ParanoidKeyShared if file was unshared
-				fUpdateParanoidKeyShared(null);
-			}
-		}
-		else
-		{//if file is not encrypted - continue sharing
-			oParams.OnSuccessCallback();
-		}
-	});
+	const PrepareShares = require('modules/%ModuleName%/js/utils/PrepareShares.js');
+	App.subscribeEvent('SharedFiles::UpdateShare::before', PrepareShares.onBeforeUpdateShare);
 
 	App.subscribeEvent('SharedFiles::OpenFilesSharePopup', oParams => {
 		if (oParams.IsDir)
@@ -581,6 +460,14 @@ module.exports = function (oAppData) {
 					// 	});
 				}
 			}
+		},
+
+		getConfirmEncryptionPopup () {
+			return Settings.EnableInPersonalStorage ? ConfirmEncryptionPopup : false;
+		},
+
+		isEnabled () {
+			return Settings.enableJscrypto() && IsHttpsEnable();
 		}
 	};
 };
