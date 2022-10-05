@@ -64,16 +64,6 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		$this->subscribeEvent('SharedFiles::UpdateSharedFile', [$this, 'onCreateOrUpdateSharedFile']);
 
 		$this->subscribeEvent('Files::GetExtendedProps::before', [$this, 'onBeforeGetExtendedProps']);
-
-		\Aurora\Modules\Core\Classes\User::extend(
-			self::GetName(),
-			[
-				'EnableModule'				=> ['bool', $this->getConfig('EnabledByDefault', false)], // Enables encryption only in Encrypted folder
-				'EnableInPersonalStorage'	=> ['bool', $this->getConfig('EnableInPersonalStorageByDefault', false)],
-				'AllowChangeSettings'		=> ['bool', $this->getConfig('AllowChangeSettings', true)],
-				'DontRemindMe'				=> ['bool', false],
-			]
-		);
 	}
 
 	protected function getEncryptedPath($sPath)
