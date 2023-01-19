@@ -9,7 +9,6 @@ namespace Aurora\Modules\CoreParanoidEncryptionWebclientPlugin;
 
 use Aurora\Api;
 use Aurora\Modules\Files\Classes\FileItem;
-use Aurora\Modules\SharedFiles\Enums\ErrorCodes;
 use Aurora\System\Exceptions\ApiException;
 
 /**
@@ -252,7 +251,11 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 		if ($aArgs['Storage'] === self::$sStorageType)
 		{
 			if ($aArgs['IsDir']) {
-				throw new ApiException(ErrorCodes::NotPossibleToShareDirectoryInEcryptedStorage);
+				$iErrorCode = 0;
+				if (class_exists('\Aurora\Modules\SharedFiles\Enums\ErrorCodes')) {
+					$iErrorCode = \Aurora\Modules\SharedFiles\Enums\ErrorCodes::NotPossibleToShareDirectoryInEcryptedStorage;
+				}
+				throw new ApiException($iErrorCode);
 			}
 			$aArgs['Storage'] = self::$sPersonalStorageType;
 			$aArgs['Type'] = self::$sPersonalStorageType;
@@ -263,7 +266,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 	public function onCreateOrUpdateSharedFile(&$aArgs, &$mResult)
 	{
 		extract($aArgs);
-		if (!empty($Share['ParanoidKeyShared'])) {
+		if (!empty($Share['ParanoidKeyShared']) && class_exists('\Aurora\Modules\SharedFiles\Models\SharedFile')) {
 			$oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $UserPrincipalUri)
 				->where('storage', $Storage)
 				->where('path', $FullPath)
