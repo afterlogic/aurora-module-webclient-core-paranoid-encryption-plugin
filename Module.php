@@ -244,19 +244,18 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
     public function onCreateOrUpdateSharedFile(&$aArgs, &$mResult)
     {
-        extract($aArgs);
-        if (!empty($Share['ParanoidKeyShared']) && class_exists('\Aurora\Modules\SharedFiles\Models\SharedFile')) {
-            $oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $UserPrincipalUri)
-                ->where('storage', $Storage)
-                ->where('path', $FullPath)
-                ->where('principaluri', 'principals/' . $Share['PublicId'])->first();
-            $oSharedFile->setExtendedProp('ParanoidKeyShared', $Share['ParanoidKeyShared']);
+        if (!empty($aArgs['Share']['ParanoidKeyShared']) && class_exists('\Aurora\Modules\SharedFiles\Models\SharedFile')) {
+            $oSharedFile = \Aurora\Modules\SharedFiles\Models\SharedFile::where('owner', $aArgs['UserPrincipalUri'])
+                ->where('storage', $aArgs['Storage'])
+                ->where('path', $aArgs['FullPath'])
+                ->where('principaluri', 'principals/' . $aArgs['Share']['PublicId'])->first();
+            $oSharedFile->setExtendedProp('ParanoidKeyShared', $aArgs['Share']['ParanoidKeyShared']);
             $oSharedFile->save();
         }
     }
 
     /**
-     * @param [type] $aArgs
+     * @param array $aArgs
      * @return void
      */
     public function onFileItemToResponseArray(&$aArgs)
@@ -322,7 +321,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         \Aurora\System\Api::checkUserRoleIsAtLeast(\Aurora\System\Enums\UserRole::Anonymous);
         $aSettings = null;
         $oUser = \Aurora\System\Api::getAuthenticatedUser();
-        if (!empty($oUser) && $oUser->isNormalOrTenant()) {
+        if ($oUser && $oUser->isNormalOrTenant()) {
             $aSettings = [
                 'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
                 'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
