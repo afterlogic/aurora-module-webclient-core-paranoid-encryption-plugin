@@ -65,6 +65,15 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $this->subscribeEvent('Files::GetExtendedProps::before', [$this, 'onBeforeGetExtendedProps']);
     }
 
+    /**
+     *
+     * @return Module
+     */
+    public static function Decorator()
+    {
+        return parent::Decorator();
+    }
+
     protected function getEncryptedPath($sPath)
     {
         return '/' . self::$sEncryptedFolder . \ltrim($sPath);
