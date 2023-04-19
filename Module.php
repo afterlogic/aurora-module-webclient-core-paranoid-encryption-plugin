@@ -18,6 +18,8 @@ use Aurora\System\Exceptions\ApiException;
  * @license https://afterlogic.com/products/common-licensing Afterlogic Software License
  * @copyright Copyright (c) 2023, Afterlogic Corp.
  *
+ * @property Settings $oModuleSettings
+ *
  * @package Modules
  */
 class Module extends \Aurora\System\Module\AbstractWebclientModule
@@ -344,9 +346,9 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
                 'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
                 'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
                 'EnableInPersonalStorage' => $oUser->{self::GetName().'::EnableInPersonalStorage'},
-                'ChunkSizeMb'			=> $this->getConfig('ChunkSizeMb', 5),
-                'AllowMultiChunkUpload'	=> $this->getConfig('AllowMultiChunkUpload', true),
-                'AllowChangeSettings' 	=> $this->getConfig('AllowChangeSettings', true),
+                'ChunkSizeMb'			=> $this->oModuleSettings->ChunkSizeMb,
+                'AllowMultiChunkUpload'	=> $this->oModuleSettings->AllowMultiChunkUpload,
+                'AllowChangeSettings' 	=> $this->oModuleSettings->AllowChangeSettings,
                 'EncryptionMode' 		=> 3 //temporary brought back this setting for compatibility with current versions of mobile apps
             ];
         }
