@@ -104,7 +104,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
     public function onAfterGetStorages($aArgs, &$mResult)
     {
         $oUser = \Aurora\System\Api::getAuthenticatedUser();
-        if ($oUser->{$this->GetName() . '::EnableModule'}) {
+        if ($oUser->getExtendedProp($this->GetName() . '::EnableModule')) {
             array_unshift($mResult, [
                 'Type' => static::$sStorageType,
                 'DisplayName' => $this->i18N('LABEL_STORAGE'),
@@ -349,9 +349,9 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $oUser = \Aurora\System\Api::getAuthenticatedUser();
         if ($oUser && $oUser->isNormalOrTenant()) {
             $aSettings = [
-                'EnableModule'			=> $oUser->{self::GetName().'::EnableModule'},
-                'DontRemindMe'			=> $oUser->{self::GetName().'::DontRemindMe'},
-                'EnableInPersonalStorage' => $oUser->{self::GetName().'::EnableInPersonalStorage'},
+                'EnableModule'			=> $oUser->getExtendedProp(self::GetName().'::EnableModule'),
+                'DontRemindMe'			=> $oUser->getExtendedProp(self::GetName().'::DontRemindMe'),
+                'EnableInPersonalStorage' => $oUser->getExtendedProp(self::GetName().'::EnableInPersonalStorage'),
                 'ChunkSizeMb'			=> $this->oModuleSettings->ChunkSizeMb,
                 'AllowMultiChunkUpload'	=> $this->oModuleSettings->AllowMultiChunkUpload,
                 'AllowChangeSettings' 	=> $this->oModuleSettings->AllowChangeSettings,
