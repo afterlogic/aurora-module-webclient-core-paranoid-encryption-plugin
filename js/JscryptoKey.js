@@ -19,14 +19,11 @@ var
  */
 function CJscryptoKey()
 {
-	this.sPrefix = 'user_' + (UserSettings.UserId || '0') + '_';
 	this.key = ko.observable();
 	this.keyName = ko.observable();
-	this.storageName = 'cryptoKeyEncrypted';
 }
 
 CJscryptoKey.prototype.key = null;
-CJscryptoKey.prototype.sPrefix = '';
 
 /**
  * Asynchronously read key from storage, decrypt and generate key-object
@@ -549,7 +546,8 @@ CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGe
 
 CJscryptoKey.prototype.getStorageName = function ()
 {
-	return this.sPrefix + this.storageName;
+	const userId = UserSettings.UserId || 0;
+	return `aurora_paranoid_user_${userId}_encrypted-crypto-key`;
 };
 
 module.exports = new CJscryptoKey();
