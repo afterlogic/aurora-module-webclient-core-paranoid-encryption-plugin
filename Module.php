@@ -295,47 +295,47 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         }
     }
 
-   public function onAfterSaveFilesAsTempFiles(&$aArgs, &$mResult)
-   {
-       $aResult = [];
-       foreach ($mResult as $oFileData) {
-           foreach ($aArgs['Files'] as $oFileOrigData) {
-               if ($oFileOrigData['Name'] === $oFileData['Name']) {
-                   if (isset($oFileOrigData['IsEncrypted']) && $oFileOrigData['IsEncrypted']) {
-                       $oFileData['Actions'] = [];
-                       $oFileData['ThumbnailUrl'] = '';
-                   }
-               }
-           }
-           $aResult[] = $oFileData;
-       }
-       $mResult = $aResult;
-   }
+    public function onAfterSaveFilesAsTempFiles(&$aArgs, &$mResult)
+    {
+        $aResult = [];
+        foreach ($mResult as $oFileData) {
+            foreach ($aArgs['Files'] as $oFileOrigData) {
+                if ($oFileOrigData['Name'] === $oFileData['Name']) {
+                    if (isset($oFileOrigData['IsEncrypted']) && $oFileOrigData['IsEncrypted']) {
+                        $oFileData['Actions'] = [];
+                        $oFileData['ThumbnailUrl'] = '';
+                    }
+                }
+            }
+            $aResult[] = $oFileData;
+        }
+        $mResult = $aResult;
+    }
 
     /**
     * @param array $aArgs Arguments of event.
     * @param mixed $mResult Is passed by reference.
     */
-   public function onAfterGetPublicFiles(&$aArgs, &$mResult)
-   {
-       if (is_array($mResult) && isset($mResult['Items']) && is_array($mResult['Items'])) { //remove from result all encrypted files
-           $mResult['Items'] = array_filter(
-               $mResult['Items'],
-               function ($FileItem) {
-                   return !isset($FileItem->ExtendedProps)
-                       || !isset($FileItem->ExtendedProps['InitializationVector']);
-               }
-           );
-       }
-   }
+    public function onAfterGetPublicFiles(&$aArgs, &$mResult)
+    {
+        if (is_array($mResult) && isset($mResult['Items']) && is_array($mResult['Items'])) { //remove from result all encrypted files
+            $mResult['Items'] = array_filter(
+                $mResult['Items'],
+                function ($FileItem) {
+                    return !isset($FileItem->ExtendedProps)
+                        || !isset($FileItem->ExtendedProps['InitializationVector']);
+                }
+            );
+        }
+    }
 
-   public function onBeforeGetExtendedProps(&$aArgs, &$mResult)
-   {
-       if ($aArgs['Type'] === self::$sStorageType) {
-           $aArgs['Type'] = self::$sPersonalStorageType;
-           $aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
-       }
-   }
+    public function onBeforeGetExtendedProps(&$aArgs, &$mResult)
+    {
+        if ($aArgs['Type'] === self::$sStorageType) {
+            $aArgs['Type'] = self::$sPersonalStorageType;
+            $aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+        }
+    }
 
     /**
      * Obtains list of module settings for authenticated user.
@@ -349,9 +349,9 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $oUser = \Aurora\System\Api::getAuthenticatedUser();
         if ($oUser && $oUser->isNormalOrTenant()) {
             $aSettings = [
-                'EnableModule'			=> $oUser->getExtendedProp(self::GetName().'::EnableModule'),
-                'DontRemindMe'			=> $oUser->getExtendedProp(self::GetName().'::DontRemindMe'),
-                'EnableInPersonalStorage' => $oUser->getExtendedProp(self::GetName().'::EnableInPersonalStorage'),
+                'EnableModule'			=> $oUser->getExtendedProp(self::GetName() . '::EnableModule'),
+                'DontRemindMe'			=> $oUser->getExtendedProp(self::GetName() . '::DontRemindMe'),
+                'EnableInPersonalStorage' => $oUser->getExtendedProp(self::GetName() . '::EnableInPersonalStorage'),
                 'ChunkSizeMb'			=> $this->oModuleSettings->ChunkSizeMb,
                 'AllowMultiChunkUpload'	=> $this->oModuleSettings->AllowMultiChunkUpload,
                 'AllowChangeSettings' 	=> $this->oModuleSettings->AllowChangeSettings,
@@ -376,8 +376,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $iUserId = \Aurora\System\Api::getAuthenticatedUserId();
         if (0 < $iUserId) {
             $oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserWithoutRoleCheck($iUserId);
-            $oUser->setExtendedProp(self::GetName().'::EnableModule', $EnableModule);
-            $oUser->setExtendedProp(self::GetName().'::EnableInPersonalStorage', $EnableInPersonalStorage);
+            $oUser->setExtendedProp(self::GetName() . '::EnableModule', $EnableModule);
+            $oUser->setExtendedProp(self::GetName() . '::EnableInPersonalStorage', $EnableInPersonalStorage);
             \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
         }
         return true;
@@ -396,7 +396,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $iUserId = \Aurora\System\Api::getAuthenticatedUserId();
         if (0 < $iUserId) {
             $oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserWithoutRoleCheck($iUserId);
-            $oUser->setExtendedProp(self::GetName().'::DontRemindMe', true);
+            $oUser->setExtendedProp(self::GetName() . '::DontRemindMe', true);
             $bResult = \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
         }
 
