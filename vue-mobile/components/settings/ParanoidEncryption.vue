@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions } from 'pinia'
 import VueCookies from 'vue-cookies'
 
 import {

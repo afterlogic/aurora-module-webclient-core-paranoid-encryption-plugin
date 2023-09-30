@@ -33,9 +33,8 @@
 <script>
 import AppDialog from "src/components/common/AppDialog";
 import ButtonDialog from "src/components/common/ButtonDialog";
-import { mapGetters } from "vuex";
 
-import { mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'pinia'
 
 export default {
   name: "FileUploadTypeSelectionDialog",
