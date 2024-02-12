@@ -3,10 +3,15 @@ import Crypto from "../crypto/CCrypto";
 import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobile/utils";
 import { getNewUid } from "./utils";
 import { parseUploadedFile } from "../../../FilesMobileWebclient/vue-mobile/utils/common";
-import store from "src/store";
+// import store from "src/store";
 import _ from "lodash";
 import { getCoreParanoidEncryptionSettings } from "../settings";
 import notification from "src/utils/notification";
+
+import { useCoreStore, useFilesStore } from 'src/stores/index-all'
+
+const coreStore = useCoreStore()
+const filesStore = useFilesStore()
 
 let fileIndex = 0
 let data = null
@@ -14,16 +19,20 @@ let currentFiles = null
 
 const finishUploadingFiles = async () => {
     fileIndex = 0
-    await store.dispatch('filesmobile/asyncGetFiles')
-    await store.dispatch('filesmobile/removeUploadedFiles')
+    // await store.dispatch('filesmobile/asyncGetFiles')
+    // await store.dispatch('filesmobile/removeUploadedFiles')
+    await filesStore.asyncGetFiles()
+    await filesStore.removeUploadedFiles()
     if (currentFiles) {
-        await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        // await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        await filesStore.removeSelectedUploadedFiles(currentFiles)
         currentFiles = null
     }
 }
 
 const cryptoUpload = async (params) => {
-    const currentAccountEmail = store.getters['core/userPublicId']
+    // const currentAccountEmail = store.getters['core/userPublicId']
+    const currentAccountEmail = coreStore.userPublicId
     const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
     const publicKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
     if (privateKey && publicKey) {
@@ -41,18 +50,24 @@ const cryptoUpload = async (params) => {
             data.getParentComponent
         )
     } else {
-        await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        // await store.dispatch('filesmobile/removeSelectedUploadedFiles', currentFiles)
+        await filesStore.removeSelectedUploadedFiles(currentFiles)
         notification.showError(`PGP key for ${currentAccountEmail} user is missing. Both public and private PGP keys are required.`)
     }
 }
 
 const uploadEncryptFiles = async () => {
-    const downloadFiles = store.getters['filesmobile/downloadFiles']
-    const currentPath = store.getters['filesmobile/currentPath']
-    const currentStorage = store.getters['filesmobile/currentStorage']
+    // const downloadFiles = store.getters['filesmobile/downloadFiles']
+    // const currentPath = store.getters['filesmobile/currentPath']
+    // const currentStorage = store.getters['filesmobile/currentStorage']
+    const downloadFiles = filesStore.downloadFiles
+    const currentPath = filesStore.currentPath
+    const currentStorage = filesStore.currentStorage
     if (fileIndex > downloadFiles.length - 1) {
-        store.dispatch('filesmobile/removeUploadedFiles')
-        store.dispatch('filesmobile/asyncGetFiles')
+        // store.dispatch('filesmobile/asyncGetFiles')
+        // store.dispatch('filesmobile/removeUploadedFiles')
+        filesStore.asyncGetFiles()
+        filesStore.removeUploadedFiles()
         fileIndex = 0
     } else {
         const fileInfo = {
@@ -82,8 +97,10 @@ export const initUpload = (params) => {
 }
 
 export const onFileAdded = async (files, uploader) => {
-    const currentPath = store.getters['filesmobile/currentPath']
-    const currentStorage = store.getters['filesmobile/currentStorage']
+    // const currentPath = store.getters['filesmobile/currentPath']
+    // const currentStorage = store.getters['filesmobile/currentStorage']
+    const currentPath = filesStore.currentPath
+    const currentStorage = filesStore.currentStorage
     const parsedFiles = files.map((file) => {
         return parseUploadedFile(
             file,
@@ -93,7 +110,8 @@ export const onFileAdded = async (files, uploader) => {
     })
     currentFiles = parsedFiles
 
-    await store.dispatch('filesmobile/addDownloadsFiles', parsedFiles)
+    // await store.dispatch('filesmobile/addDownloadsFiles', parsedFiles)
+    await filesStore.addDownloadsFiles(parsedFiles)
     const settings = getCoreParanoidEncryptionSettings()
     if (settings.enableInPersonalStorage && settings.enableParanoidEncryption && data.storage === 'personal') {
         const parent = data.getParentComponent('App')

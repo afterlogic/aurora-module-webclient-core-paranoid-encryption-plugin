@@ -3,13 +3,17 @@ import { getCoreParanoidEncryptionSettings } from "../settings";
 import { getApiHost } from "../../../CoreMobileWebclient/vue-mobile/src/api/helpers";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
 import _ from 'lodash'
-import store from 'src/store'
+// import store from 'src/store'
 import { saveAs } from 'file-saver'
 import types from 'src/utils/types'
 import notification from "src/utils/notification";
 import axios from "axios";
 import VueCookies from "vue-cookies";
 
+import { useCoreStore, useFilesStore } from 'src/stores/index-all'
+
+const coreStore = useCoreStore()
+const filesStore = useFilesStore()
 /**
  * @constructor
  */
@@ -69,7 +73,8 @@ CCrypto.prototype.startUpload = async function (oFileInfo, sUid, fOnChunkEncrypt
   }
 }
 CCrypto.prototype.getAesKey = async function (file, passphrase) {
-  const currentAccountEmail = store.getters['core/userPublicId']
+  // const currentAccountEmail = store.getters['core/userPublicId']
+  const currentAccountEmail = coreStore.userPublicId
   const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
   let oPublicFromKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
   let aPublicKeys = oPublicFromKey ? [oPublicFromKey] : []
@@ -282,7 +287,8 @@ CCrypto.prototype.uploadTask = async function (sUid, oFileInfo, fCallback, bSkip
         Method: 'UploadFile',
         Module: 'Files',
         Parameters: JSON.stringify({
-          'Type': store.getters['filesmobile/currentStorage'].Type,
+          // 'Type': store.getters['filesmobile/currentStorage'].Type,
+          'Type': filesStore.currentStorage?.Type,
           'SubPath': '',
           'Path': oFileInfo?.folder,
           'Overwrite': false,
@@ -299,7 +305,11 @@ CCrypto.prototype.uploadTask = async function (sUid, oFileInfo, fCallback, bSkip
     oXhr.setRequestHeader('Authorization', 'Bearer ' + authToken)
     oXhr.setRequestHeader('X-Client', 'WebClient')
     oXhr.upload.onprogress = function (event) {
-      store.dispatch('filesmobile/changeFileUploadProgress', {
+      // store.dispatch('filesmobile/changeFileUploadProgress', {
+      //   item: oFileInfo.file,
+      //   value: event.loaded / event.total
+      // })
+      filesStore.changeFileUploadProgress({
         item: oFileInfo.file,
         value: event.loaded / event.total
       })
@@ -349,7 +359,11 @@ CCrypto.prototype.encryptParanoidKey = async function (sParanoidKey, aPublicKeys
         }
       } else if (oPGPEncryptionResult.sError) {
         notification.showError(oPGPEncryptionResult.sError)
-        store.dispatch('filesmobile/changeFileUploadProgress', {
+        // store.dispatch('filesmobile/changeFileUploadProgress', {
+        //   item: oFileInfo.file,
+        //   value: 1,
+        // })
+        filesStore.changeFileUploadProgress({
           item: oFileInfo.file,
           value: 1,
         })
@@ -488,7 +502,12 @@ CDownloadFile.prototype.decryptChunk = async function () {
     headers: oHeaders,
     responseType: 'arraybuffer',
     cancelToken : new CancelToken( function (c) {
-      store.dispatch('filesmobile/changeItemProperty', {
+      // store.dispatch('filesmobile/changeItemProperty', {
+      //   item: file,
+      //   property: 'cancelToken',
+      //   value: c,
+      // })
+      filesStore.changeItemProperty({
         item: file,
         property: 'cancelToken',
         value: c,
@@ -499,7 +518,12 @@ CDownloadFile.prototype.decryptChunk = async function () {
         let percentCompleted = Math.round(
             (progressEvent.loaded * 100) / file.size
         )
-        store.dispatch('filesmobile/changeItemProperty', {
+        // store.dispatch('filesmobile/changeItemProperty', {
+        //   item: file,
+        //   property: 'percentDownloading',
+        //   value: percentCompleted,
+        // })
+        filesStore.changeItemProperty({
           item: file,
           property: 'percentDownloading',
           value: percentCompleted,
@@ -509,29 +533,54 @@ CDownloadFile.prototype.decryptChunk = async function () {
   })
   .then((response) => {
     this.onload(response)
-    store.dispatch('filesmobile/changeItemProperty', {
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: file,
+    //   property: 'downloading',
+    //   value: false,
+    // })
+    filesStore.changeItemProperty({
       item: file,
       property: 'downloading',
       value: false,
     })
-    store.dispatch('filesmobile/changeItemProperty', {
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: file,
+    //   property: 'percentDownloading',
+    //   value: 0,
+    // })
+    filesStore.changeItemProperty({
       item: file,
       property: 'percentDownloading',
       value: 0,
     })
-    store.dispatch('filesmobile/changeItemProperty', {
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: file,
+    //   property: 'decryptionProgress',
+    //   value: false
+    // })
+    filesStore.changeItemProperty({
       item: file,
       property: 'decryptionProgress',
       value: false
     })
   })
   .catch(() => {
-    store.dispatch('filesmobile/changeItemProperty', {
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: file,
+    //   property: 'percentDownloading',
+    //   value: 0,
+    // })
+    filesStore.changeItemProperty({
       item: file,
       property: 'percentDownloading',
       value: 0,
     })
-    store.dispatch('filesmobile/changeItemProperty', {
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: file,
+    //   property: 'downloading',
+    //   value: false,
+    // })
+    filesStore.changeItemProperty({
       item: file,
       property: 'downloading',
       value: false,
@@ -643,10 +692,15 @@ CBlobViewer.prototype.close = function () {
   try {
     var
       file = new Blob(this.aBuffer),
-      link = window.URL.createObjectURL(file),
-      img = null
-    store.dispatch('filesmobile/changeItemProperty', {
-      item: store.getters['filesmobile/currentFile'],
+      link = window.URL.createObjectURL(file)
+
+    // store.dispatch('filesmobile/changeItemProperty', {
+    //   item: store.getters['filesmobile/currentFile'],
+    //   property: 'decryptViewUrl',
+    //   value: link
+    // })
+    filesStore.changeItemProperty({
+      item: filesStore.currentFile,
       property: 'decryptViewUrl',
       value: link
     })

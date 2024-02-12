@@ -5,7 +5,12 @@ import { askOpenPgpKeyPassword } from "../../../OpenPgpMobileWebclient/vue-mobil
 import { onFileAdded, initUpload } from "./upload";
 import { updateExtendedProps, init } from "./share";
 import OpenPgp from "../../../OpenPgpMobileWebclient/vue-mobile/openpgp-helper";
-import store from "src/store";
+// import store from "src/store";
+
+import { useCoreStore, useFilesStore } from 'src/stores/index-all'
+
+const coreStore = useCoreStore()
+const filesStore = useFilesStore()
 
 import Crypto from "../crypto/CCrypto";
 
@@ -20,9 +25,11 @@ export const onShareEncryptFile = ({ contactsList, onContinueSaving, getParentCo
     })
     if (!principalsEmails.length) {
 
-        init({ contacts: contactsList, currentFile: store.getters['filesmobile/currentFile'], onContinueSaving })
+        // init({ contacts: contactsList, currentFile: store.getters['filesmobile/currentFile'], onContinueSaving })
+        init({ contacts: contactsList, currentFile: filesStore.currentFile, onContinueSaving })
 
-        const currentAccountEmail = store.getters['core/userPublicId']
+        // const currentAccountEmail = store.getters['core/userPublicId']
+        const currentAccountEmail = coreStore.userPublicId
         const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
         if (privateKey) {
             let sPassphrase = privateKey?.getPassphrase()
@@ -63,14 +70,16 @@ export const onContinueUploadingFiles = async (params) => {
 
 
 const getAesKey = async (file, getParentComponent) => {
-    const currentAccountEmail = store.getters['core/userPublicId']
+    // const currentAccountEmail = store.getters['core/userPublicId']
+    const currentAccountEmail = coreStore.userPublicId
     const privateKey = OpenPgp.getPrivateKeyByEmail(currentAccountEmail)
     let oPublicFromKey = OpenPgp.getPublicKeyByEmail(currentAccountEmail)
     let aPublicKeys = oPublicFromKey ? [oPublicFromKey] : []
     if (privateKey) {
 
         let paranoidKey = ''
-        if (store.getters['filesmobile/currentStorage'].Type === 'shared') {
+        // if (store.getters['filesmobile/currentStorage'].Type === 'shared') {
+        if (filesStore.currentStorage?.Type === 'shared') {
             paranoidKey = file.File?.ExtendedProps?.ParanoidKeyShared
         } else {
             paranoidKey = file.paranoidKey
@@ -87,7 +96,8 @@ const getAesKey = async (file, getParentComponent) => {
             return false
         }
 
-        await store.dispatch('filesmobile/changeItemProperty', {
+        // await store.dispatch('filesmobile/changeItemProperty', {
+        await filesStore.changeItemProperty({
             item: file,
             property: 'decryptionProgress',
             value: true
@@ -100,7 +110,8 @@ const getAesKey = async (file, getParentComponent) => {
 }
 
 export const viewEncryptFile = async (data) => {
-    const file = store.getters['filesmobile/currentFile']
+    // const file = store.getters['filesmobile/currentFile']
+    const file = filesStore.currentFile
 
 
     let iv = file.initializationVector
@@ -113,7 +124,8 @@ export const viewEncryptFile = async (data) => {
 }
 
 export const downloadEncryptedFile = async (data) => {
-    const file = store.getters['filesmobile/currentFile']
+    // const file = store.getters['filesmobile/currentFile']
+    const file = filesStore.currentFile
     let iv = file.initializationVector
     let paranoidEncryptedKey = file.paranoidKey
     const aesKey = await getAesKey(file, data.getParentComponent)

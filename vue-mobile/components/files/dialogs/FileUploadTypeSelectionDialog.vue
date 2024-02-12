@@ -35,6 +35,7 @@ import AppDialog from "src/components/common/AppDialog";
 import ButtonDialog from "src/components/common/ButtonDialog";
 
 import { mapGetters, mapActions } from 'pinia'
+import { useFilesStore } from 'src/stores/index-all'
 
 export default {
   name: "FileUploadTypeSelectionDialog",
@@ -43,7 +44,7 @@ export default {
     ButtonDialog
   },
   computed: {
-    ...mapGetters('filesmobile', ['downloadFiles'])
+    ...mapGetters(useFilesStore, ['downloadFiles'])
   },
   watch: {
     confirm(val) {
@@ -60,7 +61,7 @@ export default {
     files: []
   }),
   methods: {
-    ...mapActions('filesmobile', ['removeSelectedUploadedFiles']),
+    ...mapActions(useFilesStore, ['removeSelectedUploadedFiles']),
     openDialog (encryptMethod, noEncryptMethods, files) {
       this.confirm = true
       this.noEncryptMethods = noEncryptMethods

@@ -7,5 +7,5 @@ import actionsPinia from './actions-pinia'
 export const useParanoidEncryptionStore = defineStore('ParanoidEncryptionStore', {
   state: () => (state()),
   actions: actionsPinia,
-  getters: gettersPinia,
+  // getters: gettersPinia,
 })

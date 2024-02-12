@@ -89,6 +89,7 @@
 
 <script>
 import { mapActions } from 'pinia'
+import { useParanoidEncryptionStore } from 'src/stores/index-all'
 import VueCookies from 'vue-cookies'
 
 import {
@@ -125,7 +126,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('coreparanoidencryptionplugin', ['asyncChangeParanoidEncryptionSettings']),
+    ...mapActions(useParanoidEncryptionStore, ['asyncChangeParanoidEncryptionSettings']),
     async save() {
       const parameters = {
         EnableModule: this.enableModule,
