@@ -480,7 +480,6 @@ CJscryptoKey.prototype.encryptKeyData = function (sUserKeyData, sPassword)
 CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGetDerivedKeyCallback, fOnErrorCallback)
 {
 	var
-		sSalt = "the salt is this string",
 		convertStringToArrayBuffer = function (sData)
 		{
 			if (window.TextEncoder)
@@ -511,7 +510,7 @@ CJscryptoKey.prototype.deriveKeyFromPasswordPromise = function (sPassword, fOnGe
 		window.crypto.subtle.deriveKey(
 			{
 				"name": "PBKDF2",
-				"salt": convertStringToArrayBuffer(sSalt),
+				"salt": window.crypto.getRandomValues(new Uint8Array(16)),
 				"iterations": 100000,
 				"hash": "SHA-256"
 			},
