@@ -375,7 +375,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
         $iUserId = \Aurora\System\Api::getAuthenticatedUserId();
         if (0 < $iUserId) {
-            $oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserWithoutRoleCheck($iUserId);
+            $oUser = \Aurora\Api::getUserById($iUserId);
             $oUser->setExtendedProp(self::GetName() . '::EnableModule', $EnableModule);
             $oUser->setExtendedProp(self::GetName() . '::EnableInPersonalStorage', $EnableInPersonalStorage);
             \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
@@ -395,7 +395,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $bResult = false;
         $iUserId = \Aurora\System\Api::getAuthenticatedUserId();
         if (0 < $iUserId) {
-            $oUser = \Aurora\Modules\Core\Module::Decorator()->GetUserWithoutRoleCheck($iUserId);
+            $oUser = \Aurora\Api::getUserById($iUserId);
             $oUser->setExtendedProp(self::GetName() . '::DontRemindMe', true);
             $bResult = \Aurora\Modules\Core\Module::Decorator()->UpdateUserObject($oUser);
         }
