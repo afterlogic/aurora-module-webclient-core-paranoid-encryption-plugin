@@ -355,7 +355,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
                 'ChunkSizeMb'			=> $this->oModuleSettings->ChunkSizeMb,
                 'AllowMultiChunkUpload'	=> $this->oModuleSettings->AllowMultiChunkUpload,
                 'AllowChangeSettings' 	=> $this->oModuleSettings->AllowChangeSettings,
-                'EncryptionMode' 		=> 3 //temporary brought back this setting for compatibility with current versions of mobile apps
+                'EncryptionMode' 		=> 3, //temporary brought back this setting for compatibility with current versions of mobile apps
+                'AllowBackwardCompatibility' => $this->oModuleSettings->AllowBackwardCompatibility
             ];
         }
 
