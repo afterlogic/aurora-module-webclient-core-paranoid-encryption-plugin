@@ -36,7 +36,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $this->subscribeEvent('Files::GetStorages::after', [$this, 'onAfterGetStorages'], 1);
         $this->subscribeEvent('Files::FileItemtoResponseArray', [$this, 'onFileItemToResponseArray']);
 
-        $this->subscribeEvent('Files::GetFile', [$this, 'onGetFile']);
+        $this->subscribeEvent('Files::GetFile', [$this, 'onGetFile'], 20);
         $this->subscribeEvent('Files::CreateFile', [$this, 'onCreateFile']);
 
         $this->subscribeEvent('Files::GetItems::before', [$this, 'onBeforeGetItems']);
@@ -115,18 +115,16 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         }
     }
 
-    public function onGetFile($aArgs, &$mResult)
+    public function onGetFile(&$aArgs, &$mResult)
     {
         if ($aArgs['Type'] === self::$sStorageType) {
             $aArgs['Type'] = self::$sPersonalStorageType;
             $aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+        }
 
-            $this->GetModuleManager()->broadcastEvent(
-                'Files',
-                'GetFile',
-                $aArgs,
-                $mResult
-            );
+        $aExtendedProps = \Aurora\Modules\Files\Module::Decorator()->GetExtendedProps($aArgs['UserId'], $aArgs['Type'], $aArgs['Path'], $aArgs['Name']);
+        if (isset($aExtendedProps['InitializationVector'])) {
+            $aArgs['NoRedirect'] = true;
         }
     }
 
