@@ -282,7 +282,7 @@ CCrypto.prototype.showOutdatedEncryptionMethodPopup = async function (sFileName)
 		};
 		//showing popup
 		Popups.showPopup(OutdatedEncryptionMethodPopup, [
-			TextUtils.htmlToPlain(sFileName),
+			TextUtils.encodeHtml(sFileName),
 			fContinueCallback,
 			fCancellCallback
 		]);

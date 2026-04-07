@@ -175,7 +175,7 @@ CJscryptoKey.prototype.onKeyGenerateError = function (oError)
 {
 	if (oError && oError.message)
 	{
-		Screens.showError(oError.message);
+		Screens.showError(TextUtils.encodeHtml(oError.message));
 	}
 };
 
