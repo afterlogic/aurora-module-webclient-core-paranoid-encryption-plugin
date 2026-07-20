@@ -1,7 +1,8 @@
 <template>
-  <div class="q-pa-lg settings flex content-between">
+  <div class="q-pa-lg settings flex content-between" data-test-id="settings-paranoid">
     <div>
       <app-checkbox
+        data-test-id="settings-paranoid-enable"
         class="settings__label"
         v-model="enableModule"
         left-label
