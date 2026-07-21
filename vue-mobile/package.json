@@ -1,0 +1,16 @@
+{
+  "name": "paranoid-encryption-mobile-unit",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "vite": "^6",
+    "vitest": "^4.1.10"
+  }
+}
