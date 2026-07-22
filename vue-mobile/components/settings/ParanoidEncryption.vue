@@ -12,6 +12,7 @@
         <span>{{ $t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ABOUT_JSCRYPTO') }}</span>
       </div>
       <app-checkbox
+        data-test-id="settings-paranoid-personal"
         class="settings__label q-mt-md"
         v-model="enableInPersonalStorage"
         left-label
