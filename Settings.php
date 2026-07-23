@@ -17,6 +17,7 @@ use Aurora\System\SettingsProperty;
  * @property int $ChunkSizeMb
  * @property bool $AllowMultiChunkUpload
  * @property bool $AllowChangeSettings
+ * @property bool $AllowBackwardCompatibility
  */
 
 class Settings extends \Aurora\System\Module\Settings
@@ -67,6 +68,12 @@ class Settings extends \Aurora\System\Module\Settings
                 "bool",
                 null,
                 "",
+            ),
+            "AllowBackwardCompatibility" => new SettingsProperty(
+                true,
+                "bool",
+                null,
+                "Shows the backward compatibility option for the outdated encryption mode",
             ),
         ];
     }

@@ -36,7 +36,7 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         $this->subscribeEvent('Files::GetStorages::after', [$this, 'onAfterGetStorages'], 1);
         $this->subscribeEvent('Files::FileItemtoResponseArray', [$this, 'onFileItemToResponseArray']);
 
-        $this->subscribeEvent('Files::GetFile', [$this, 'onGetFile']);
+        $this->subscribeEvent('Files::GetFile', [$this, 'onGetFile'], 20);
         $this->subscribeEvent('Files::CreateFile', [$this, 'onCreateFile']);
 
         $this->subscribeEvent('Files::GetItems::before', [$this, 'onBeforeGetItems']);
@@ -115,18 +115,20 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
         }
     }
 
-    public function onGetFile($aArgs, &$mResult)
+    public function onGetFile(&$aArgs, &$mResult)
     {
         if ($aArgs['Type'] === self::$sStorageType) {
             $aArgs['Type'] = self::$sPersonalStorageType;
             $aArgs['Path'] = $this->getEncryptedPath($aArgs['Path']);
+        }
 
-            $this->GetModuleManager()->broadcastEvent(
-                'Files',
-                'GetFile',
-                $aArgs,
-                $mResult
-            );
+        //It's required to skip user rile check because this method involved for getting files via public links.
+        $prevState = Api::skipCheckUserRole(true);
+        $aExtendedProps = \Aurora\Modules\Files\Module::Decorator()->GetExtendedProps($aArgs['UserId'], $aArgs['Type'], $aArgs['Path'], $aArgs['Name']);
+        Api::skipCheckUserRole($prevState);
+        if (isset($aExtendedProps['InitializationVector'])) {
+            // Indicating NoRedirect is needed in case S3 filestorage is used
+            $aArgs['NoRedirect'] = true;
         }
     }
 
@@ -355,7 +357,8 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
                 'ChunkSizeMb'			=> $this->oModuleSettings->ChunkSizeMb,
                 'AllowMultiChunkUpload'	=> $this->oModuleSettings->AllowMultiChunkUpload,
                 'AllowChangeSettings' 	=> $this->oModuleSettings->AllowChangeSettings,
-                'EncryptionMode' 		=> 3 //temporary brought back this setting for compatibility with current versions of mobile apps
+                'EncryptionMode' 		=> 3, //temporary brought back this setting for compatibility with current versions of mobile apps
+                'AllowBackwardCompatibility' => $this->oModuleSettings->AllowBackwardCompatibility
             ];
         }
 

@@ -6,7 +6,6 @@ var
 	ko = require('knockout'),
 
 	TextUtils = require('%PathToCoreWebclientModule%/js/utils/Text.js'),
-	Types = require('%PathToCoreWebclientModule%/js/utils/Types.js'),
 	ModulesManager = require('%PathToCoreWebclientModule%/js/ModulesManager.js'),
 	Screens = require('%PathToCoreWebclientModule%/js/Screens.js'),
 	CAbstractSettingsFormView = ModulesManager.run('SettingsWebclient', 'getAbstractSettingsFormViewClass'),
@@ -44,11 +43,13 @@ function CParanoidEncryptionSettingsFormView()
 		}, this);
 	}
 	
-	this.allowKeysManagement = ko.observable(!!this.keyName());
+	this.allowKeysManagement = ko.observable(Settings.AllowBackwardCompatibility || !!this.keyName());
+	this.showKeysManagement = ko.observable(!!this.keyName());
 	this.keyName.subscribe(function () {
 		if (!!this.keyName())
 		{
 			this.allowKeysManagement(true);
+			this.showKeysManagement(true);
 		}
 	}, this);
 }
@@ -59,7 +60,7 @@ CParanoidEncryptionSettingsFormView.prototype.ViewTemplate = '%ModuleName%_Paran
 
 CParanoidEncryptionSettingsFormView.prototype.enableBackwardCompatibility = function ()
 {
-	this.allowKeysManagement(true);
+	this.showKeysManagement(true);
 };
 
 CParanoidEncryptionSettingsFormView.prototype.importFileKey = function ()
@@ -169,7 +170,7 @@ CParanoidEncryptionSettingsFormView.prototype.onShow = async function ()
 	JscryptoKey.loadKeyNameFromStorage();
 	let bIsPrivateKeyAvailable = await OpenPgpEncryptor.isPrivateKeyAvailable();
 	this.isPGPKeysAvailable(bIsPrivateKeyAvailable);
-	this.allowKeysManagement(!!this.keyName());
+	this.showKeysManagement(!!this.keyName());
 };
 
 CParanoidEncryptionSettingsFormView.prototype.exportKey= function ()

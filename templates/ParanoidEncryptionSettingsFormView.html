@@ -39,11 +39,12 @@
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE_IN_PROGRESS'}"></span>
 			</span>
 		</div>
+		<!-- ko if: allowKeysManagement, -->
 		<div class="fieldset keys" data-bind="visible: enableJscrypto">
-			<div class="row" data-bind="visible: allowKeysManagement() && !keyName()">
+			<div class="row" data-bind="visible: showKeysManagement() && !keyName()">
 				<span class="hint" data-bind="i18n: {'key': '%MODULENAME%/INFO_EMPTY_JSCRYPTO_KEY'}"></span>
 			</div>
-			<div class="row" data-bind="visible: allowKeysManagement() && keyName()">
+			<div class="row" data-bind="visible: showKeysManagement() && keyName()">
 				<span class="hint"  data-bind="i18n: {'key': '%MODULENAME%/HINT_ABOUT_KEY_EXPORT'}"></span>
 				<br /><br />
 				<div class="items_list folders">
@@ -57,12 +58,12 @@
 					</div>
 				</div>
 			</div>
-			<div class="buttons" data-bind="visible: !allowKeysManagement()">
+			<div class="buttons" data-bind="visible: !showKeysManagement()">
 				<span class="button" data-bind="click: enableBackwardCompatibility">
 					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_ENABLE_BACKWARD_COMPATIBILITY'}"></span>
 				</span>
 			</div>
-			<div class="buttons" data-bind="visible: allowKeysManagement()">
+			<div class="buttons" data-bind="visible: showKeysManagement()">
 				<span data-bind="click: (bIsHttpsEnable  && enableJscrypto())  ? exportKey : false, visible: keyName(), css: {'disabled': !bIsHttpsEnable || isImporting() || !enableJscrypto()}" class="button">
 					<span data-bind="i18n: {'key': '%MODULENAME%/ACTION_EXPORT_KEY'}"></span>
 				</span>
@@ -81,5 +82,6 @@
 				 </div>
 			</div>
 		</div>
+		<!-- /ko -->
 	</div>
 </div>

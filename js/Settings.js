@@ -19,6 +19,7 @@ module.exports = {
 	AllowMultiChunkUpload: true,
 	AllowChangeSettings: false,
 	DontRemindMe: ko.observable(false),
+	AllowBackwardCompatibility: true,
 
 	/**
 	 * Initializes settings from AppData object sections.
@@ -37,6 +38,7 @@ module.exports = {
 			this.ChunkSizeMb = Types.pInt(oAppDataSection.ChunkSizeMb, this.ChunkSizeMb);
 			this.AllowMultiChunkUpload = Types.pBool(oAppDataSection.AllowMultiChunkUpload, this.AllowMultiChunkUpload);
 			this.AllowChangeSettings = Types.pBool(oAppDataSection.AllowChangeSettings, this.AllowChangeSettings);
+			this.AllowBackwardCompatibility = Types.pBool(oAppDataSection.AllowBackwardCompatibility, this.AllowBackwardCompatibility);
 		}
 	},
 
