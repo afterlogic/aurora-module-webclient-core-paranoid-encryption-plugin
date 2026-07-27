@@ -21,15 +21,15 @@
       <div class="settings__caption text-secondary q-mt-md">
         <span>{{$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.HINT_ENCRYPT_IN_PERSONAL_STORAGE')}}</span>
       </div>
-      <div>
-        <div v-if="!enableBackwardCompatibility">
+      <div v-if="allowKeysManagement">
+        <div v-if="!showKeysManagement">
           <app-button
             @click="enableBackwardCompatibility = true"
             :label="$t('COREPARANOIDENCRYPTIONWEBCLIENTPLUGIN.ACTION_ENABLE_BACKWARD_COMPATIBILITY')"
             class="q-mt-lg"
           />
         </div>
-        <div v-if="enableBackwardCompatibility && !aesKey">
+        <div v-if="showKeysManagement && !aesKey">
           <div class="settings__label q-pt-md">
             <p>
               To start using encryption of uploaded files you need to set an
@@ -53,7 +53,7 @@
             class="q-mt-md"
           />
         </div>
-        <div v-if="enableBackwardCompatibility && aesKey">
+        <div v-if="showKeysManagement && aesKey">
           <div class="settings__label q-mt-md">
             <p>
               The AES key will be used only to decrypt the files that are
@@ -113,16 +113,33 @@ export default {
   data: () => ({
     enableModule: false,
     enableInPersonalStorage: false,
+    allowBackwardCompatibility: false,
     enableBackwardCompatibility: false,
     showImportKeyDialog: false,
     aesKey: null,
   }),
 
+  computed: {
+    allowKeysManagement () {
+      return this.allowBackwardCompatibility || !!this.aesKey
+    },
+    showKeysManagement () {
+      return this.enableBackwardCompatibility || !!this.aesKey
+    },
+  },
+
   mounted() {
     const data = getCoreParanoidEncryptionSettings()
+    if (!data) {
+      return
+    }
     this.enableModule = data.enableModule
     this.enableInPersonalStorage = data.enableInPersonalStorage
-    this.aesKey = VueCookies.get('AesKey')
+    this.allowBackwardCompatibility = data.allowBackwardCompatibility
+    this.aesKey = this.parseAesKey(VueCookies.get('AesKey'))
+    if (this.aesKey) {
+      this.enableBackwardCompatibility = true
+    }
 
     eventBus.$on('CoreParanoidEncryptionWebclientPlugin::SaveSettings', this.save)
   },
@@ -150,9 +167,28 @@ export default {
         eventBus.$emit('SettingsMobileWebclient::SetHeaderActionSaving', false)
       }
     },
-    showAesKey(dialog) {
-      this[dialog] = false
-      this.aesKey = VueCookies.get('AesKey')
+    showAesKey() {
+      this.showImportKeyDialog = false
+      this.aesKey = this.parseAesKey(VueCookies.get('AesKey'))
+      if (this.aesKey) {
+        this.enableBackwardCompatibility = true
+      }
+    },
+    parseAesKey(value) {
+      if (!value) {
+        return null
+      }
+      if (typeof value === 'object') {
+        return value
+      }
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch (e) {
+          return null
+        }
+      }
+      return null
     },
   },
 }

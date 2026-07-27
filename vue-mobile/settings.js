@@ -12,6 +12,7 @@ class CoreParanoidEncryptionSettings {
     this.encryptionMode = types.pInt(paranoidEncryptionData.EncryptionMode)
     this.enableParanoidEncryption = types.pBool(paranoidEncryptionData.EnableModule)
     this.chunkSize = types.pInt(paranoidEncryptionData.ChunkSizeMb)
+    this.allowBackwardCompatibility = types.pBool(paranoidEncryptionData.AllowBackwardCompatibility)
   }
 }
 

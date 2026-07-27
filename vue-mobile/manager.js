@@ -26,6 +26,7 @@ const _getSettingsPageChildren = params => {
   params.settingsPageChildren = params.settingsPageChildren.concat([
     {
       path: '/settings/paranoid-encryption',
+      name: 'settings-paranoid-encryption',
       component: () => import('./components/settings/ParanoidEncryption'),
     },
   ])

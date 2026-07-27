@@ -19,7 +19,7 @@ module.exports = {
 	AllowMultiChunkUpload: true,
 	AllowChangeSettings: false,
 	DontRemindMe: ko.observable(false),
-	AllowBackwardCompatibility: true,
+	AllowBackwardCompatibility: false,
 
 	/**
 	 * Initializes settings from AppData object sections.
