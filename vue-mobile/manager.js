@@ -43,6 +43,19 @@ const _getSettingsHeaderTitles = params => {
   ])
 }
 
+const _getSettingsHeaderActions = params => {
+  if (!_.isArray(params.settingsHeaderActions)) {
+    params.settingsHeaderActions = []
+  }
+  params.settingsHeaderActions = params.settingsHeaderActions.concat([
+    {
+      settingsPath: '/settings/paranoid-encryption',
+      labelLangConst: 'COREWEBCLIENT.ACTION_SAVE',
+      eventName: 'CoreParanoidEncryptionWebclientPlugin::SaveSettings',
+    },
+  ])
+}
+
 export default {
   moduleName: 'CoreParanoidEncryptionWebclientPlugin',
 
@@ -79,5 +92,8 @@ export default {
 
     eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
     eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderTitles', _getSettingsHeaderTitles)
+
+    eventBus.$off('SettingsMobileWebclient::GetSettingsHeaderActions', _getSettingsHeaderActions)
+    eventBus.$on('SettingsMobileWebclient::GetSettingsHeaderActions', _getSettingsHeaderActions)
   },
 }

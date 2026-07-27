@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-lg settings flex content-between" data-test-id="settings-paranoid">
+  <div class="q-pa-lg settings" data-test-id="settings-paranoid">
     <div>
       <app-checkbox
         data-test-id="settings-paranoid-enable"
@@ -79,9 +79,6 @@
         </div>
       </div>
     </div>
-    <div class="full-width">
-      <app-button class="settings__save-btn" @click="save" :label="$t('COREWEBCLIENT.ACTION_SAVE')" />
-    </div>
     <import-key-from-string
       v-model="showImportKeyDialog"
       @close="showAesKey()"
@@ -94,6 +91,7 @@ import { mapActions } from 'pinia'
 import { useParanoidEncryptionStore } from 'src/stores/index-all'
 import VueCookies from 'vue-cookies'
 
+import eventBus from 'src/event-bus'
 import {
   getCoreParanoidEncryptionSettings,
   setCoreParanoidEncryptionSettings
@@ -125,20 +123,31 @@ export default {
     this.enableModule = data.enableModule
     this.enableInPersonalStorage = data.enableInPersonalStorage
     this.aesKey = VueCookies.get('AesKey')
+
+    eventBus.$on('CoreParanoidEncryptionWebclientPlugin::SaveSettings', this.save)
+  },
+
+  beforeUnmount() {
+    eventBus.$off('CoreParanoidEncryptionWebclientPlugin::SaveSettings', this.save)
   },
 
   methods: {
     ...mapActions(useParanoidEncryptionStore, ['asyncChangeParanoidEncryptionSettings']),
     async save() {
-      const parameters = {
-        EnableModule: this.enableModule,
-        EnableInPersonalStorage: this.enableInPersonalStorage,
-      }
-      const result = await this.asyncChangeParanoidEncryptionSettings(
-        parameters
-      )
-      if (result) {
-        setCoreParanoidEncryptionSettings(this.enableModule, this.enableInPersonalStorage)
+      eventBus.$emit('SettingsMobileWebclient::SetHeaderActionSaving', true)
+      try {
+        const parameters = {
+          EnableModule: this.enableModule,
+          EnableInPersonalStorage: this.enableInPersonalStorage,
+        }
+        const result = await this.asyncChangeParanoidEncryptionSettings(
+          parameters
+        )
+        if (result) {
+          setCoreParanoidEncryptionSettings(this.enableModule, this.enableInPersonalStorage)
+        }
+      } finally {
+        eventBus.$emit('SettingsMobileWebclient::SetHeaderActionSaving', false)
       }
     },
     showAesKey(dialog) {
@@ -151,7 +160,6 @@ export default {
 
 <style lang="scss" scoped>
 .settings {
-  height: 86vh;
   &__label {
     font-size: 14px;
     line-height: 16px;
@@ -160,9 +168,6 @@ export default {
   &__caption {
     font-size: 12px;
     line-height: 14px;
-  }
-  &__save-btn {
-    margin-bottom: 40px;
   }
 }
 </style>
