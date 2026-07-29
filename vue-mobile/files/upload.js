@@ -115,11 +115,12 @@ export const onFileAdded = async (files, uploader) => {
     const settings = getCoreParanoidEncryptionSettings()
     if (settings.enableInPersonalStorage && settings.enableParanoidEncryption && data.storage === 'personal') {
         const parent = data.getParentComponent('App')
-        const fileUploadTypeSelectionDialog = parent.$refs.FileUploadTypeSelectionDialog
+        const fileUploadTypeSelectionDialog = parent?.getModuleRef
+            ? parent.getModuleRef('FileUploadTypeSelectionDialog')
+            : (parent?.moduleRefs?.FileUploadTypeSelectionDialog ?? parent?.$refs?.FileUploadTypeSelectionDialog)
         if (_.isArray(fileUploadTypeSelectionDialog)) {
             fileUploadTypeSelectionDialog[0].openDialog(uploadEncryptFiles, data.methods, parsedFiles)
-        }
-        if (_.isObject(fileUploadTypeSelectionDialog) && !_.isArray(fileUploadTypeSelectionDialog)) {
+        } else if (_.isObject(fileUploadTypeSelectionDialog) && _.isFunction(fileUploadTypeSelectionDialog.openDialog)) {
             fileUploadTypeSelectionDialog.openDialog(uploadEncryptFiles, data.methods, parsedFiles)
         }
 
