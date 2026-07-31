@@ -113,6 +113,8 @@ export default {
   data: () => ({
     enableModule: false,
     enableInPersonalStorage: false,
+    initialEnableModule: false,
+    initialEnableInPersonalStorage: false,
     allowBackwardCompatibility: false,
     enableBackwardCompatibility: false,
     showImportKeyDialog: false,
@@ -126,13 +128,31 @@ export default {
     showKeysManagement () {
       return this.enableBackwardCompatibility || !!this.aesKey
     },
+    hasChanges () {
+      return (
+        this.enableModule !== this.initialEnableModule ||
+        this.enableInPersonalStorage !== this.initialEnableInPersonalStorage
+      )
+    },
+  },
+
+  watch: {
+    hasChanges: {
+      immediate: true,
+      handler(hasChanges) {
+        eventBus.$emit('SettingsMobileWebclient::SetHeaderActionDisabled', !hasChanges)
+      },
+    },
   },
 
   mounted() {
     const data = getCoreParanoidEncryptionSettings()
     if (!data) {
+      eventBus.$on('CoreParanoidEncryptionWebclientPlugin::SaveSettings', this.save)
       return
     }
+    this.initialEnableModule = data.enableModule
+    this.initialEnableInPersonalStorage = data.enableInPersonalStorage
     this.enableModule = data.enableModule
     this.enableInPersonalStorage = data.enableInPersonalStorage
     this.allowBackwardCompatibility = data.allowBackwardCompatibility
@@ -146,11 +166,15 @@ export default {
 
   beforeUnmount() {
     eventBus.$off('CoreParanoidEncryptionWebclientPlugin::SaveSettings', this.save)
+    eventBus.$emit('SettingsMobileWebclient::SetHeaderActionDisabled', false)
   },
 
   methods: {
     ...mapActions(useParanoidEncryptionStore, ['asyncChangeParanoidEncryptionSettings']),
     async save() {
+      if (!this.hasChanges) {
+        return
+      }
       eventBus.$emit('SettingsMobileWebclient::SetHeaderActionSaving', true)
       try {
         const parameters = {
@@ -162,6 +186,8 @@ export default {
         )
         if (result) {
           setCoreParanoidEncryptionSettings(this.enableModule, this.enableInPersonalStorage)
+          this.initialEnableModule = this.enableModule
+          this.initialEnableInPersonalStorage = this.enableInPersonalStorage
         }
       } finally {
         eventBus.$emit('SettingsMobileWebclient::SetHeaderActionSaving', false)

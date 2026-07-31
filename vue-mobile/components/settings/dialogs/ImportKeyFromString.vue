@@ -21,6 +21,7 @@
       <q-card-actions align="right">
         <button-dialog
           :saving="saving"
+          :disabled="!canSave"
           :action="importKey"
           :label="$t('COREWEBCLIENT.ACTION_SAVE')"
         />
@@ -51,11 +52,19 @@ export default {
     keyName: '',
     key: '',
   }),
+  computed: {
+    canSave() {
+      return !!(this.keyName || '').trim() && !!(this.key || '').trim()
+    },
+  },
   methods: {
     importKey() {
+      if (!this.canSave) {
+        return
+      }
       const aesKey = {
-        keyName: this.keyName,
-        key: this.key,
+        keyName: this.keyName.trim(),
+        key: this.key.trim(),
       }
       VueCookies.set('AesKey', JSON.stringify(aesKey))
       this.$emit('close')
