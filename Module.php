@@ -124,8 +124,11 @@ class Module extends \Aurora\System\Module\AbstractWebclientModule
 
         //It's required to skip user rile check because this method involved for getting files via public links.
         $prevState = Api::skipCheckUserRole(true);
-        $aExtendedProps = \Aurora\Modules\Files\Module::Decorator()->GetExtendedProps($aArgs['UserId'], $aArgs['Type'], $aArgs['Path'], $aArgs['Name']);
-        Api::skipCheckUserRole($prevState);
+        try {
+            $aExtendedProps = \Aurora\Modules\Files\Module::Decorator()->GetExtendedProps($aArgs['UserId'], $aArgs['Type'], $aArgs['Path'], $aArgs['Name']);
+        } finally {
+            Api::skipCheckUserRole($prevState);
+        }
         if (isset($aExtendedProps['InitializationVector'])) {
             // Indicating NoRedirect is needed in case S3 filestorage is used
             $aArgs['NoRedirect'] = true;
