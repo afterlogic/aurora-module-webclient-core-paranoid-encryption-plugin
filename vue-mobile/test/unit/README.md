@@ -2,6 +2,6 @@
 
 ```bash
 cd modules/CoreParanoidEncryptionWebclientPlugin/vue-mobile
-yarn
-yarn test:unit
+npm install
+npm run test:unit
 ```
