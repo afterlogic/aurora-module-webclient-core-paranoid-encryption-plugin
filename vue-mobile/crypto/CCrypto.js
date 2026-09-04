@@ -300,10 +300,14 @@ CCrypto.prototype.uploadTask = async function (sUid, oFileInfo, fCallback, bSkip
         }),
         TenantName: 'Default'
       }
-    const authToken = VueCookies.get('AuthToken')
     oXhr.open('POST', sAction, true)
-    oXhr.setRequestHeader('Authorization', 'Bearer ' + authToken)
+    // Auth rides on the httpOnly AuthToken cookie the server set at login; the client no
+    // longer holds the token. withCredentials attaches it on the cross-origin dev API host.
+    oXhr.withCredentials = true
     oXhr.setRequestHeader('X-Client', 'WebClient')
+    // X-DeviceId is required on every Api entry when TwoFactorAuth AllowUsedDevices is on.
+    oXhr.setRequestHeader('X-DeviceId', VueCookies.get('DeviceId') || '')
+    oXhr.setRequestHeader('X-MobileApp', '1')
     oXhr.upload.onprogress = function (event) {
       // store.dispatch('filesmobile/changeFileUploadProgress', {
       //   item: oFileInfo.file,
@@ -488,18 +492,18 @@ CDownloadFile.prototype.writeChunk = function (oDecryptedUint8Array) {
 
 CDownloadFile.prototype.decryptChunk = async function () {
   const CancelToken = axios.CancelToken
-  let sAuthToken = VueCookies.get('AuthToken')
   const file = this.oFile
+  // Auth rides on the httpOnly AuthToken cookie; withCredentials attaches it on the
+  // cross-origin dev API host (same as web-api.js downloadByUrl).
   let oHeaders = {
     'Content-Type': 'multipart/form-data',
-  }
-  if (sAuthToken) {
-    oHeaders['Authorization'] = 'Bearer ' + sAuthToken
+    'X-Client': 'webclient',
   }
   await axios({
     method: 'get',
     url: this.getChunkLink(),
     headers: oHeaders,
+    withCredentials: true,
     responseType: 'arraybuffer',
     cancelToken : new CancelToken( function (c) {
       // store.dispatch('filesmobile/changeItemProperty', {

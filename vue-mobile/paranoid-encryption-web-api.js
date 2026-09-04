@@ -1,4 +1,7 @@
 import webApi from 'src/api/web-api'
+import modulesManager from 'src/modules-manager'
+
+const OPGP_FILES_MODULE = 'OpenPgpFilesWebclient'
 
 export default {
   setParanoidEncryptionSettings: async (parameters) => {
@@ -12,8 +15,11 @@ export default {
   },
 
   createPublicLink: async (parameters) => {
+    if (!modulesManager.isModuleAvailable(OPGP_FILES_MODULE)) {
+      return false
+    }
     return webApi.sendRequest({
-      moduleName: 'OpenPgpFilesWebclient',
+      moduleName: OPGP_FILES_MODULE,
       methodName: 'CreatePublicLink',
       parameters: parameters,
     })
