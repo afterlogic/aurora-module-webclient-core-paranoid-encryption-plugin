@@ -32,7 +32,7 @@
 			<div class="hint" data-bind="i18n: {'key': '%MODULENAME%/HINT_ENCRYPT_IN_PERSONAL_STORAGE'}"></div>
 		</div>
 		<div class="buttons">
-			<span class="button" data-bind="click: save, visible: !isSaving()">
+			<span class="button" data-test-id="settings-paranoid-save" data-bind="click: save, visible: !isSaving()">
 				<span data-bind="i18n: {'key': 'COREWEBCLIENT/ACTION_SAVE'}"></span>
 			</span>
 			<span class="button" data-bind="visible: isSaving()">
