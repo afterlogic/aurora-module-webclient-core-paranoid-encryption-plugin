@@ -19,8 +19,13 @@ const {
   openFileByName,
   deleteOpenedFile,
 } = moduleHelper('FilesWebclient', 'files')
+const { prepareOwnKeysForGenerate, cleanupOwnKeysInContacts } = moduleHelper(
+  'OpenPgpWebclient',
+  'openpgp-contacts'
+)
 
-const paranoidPassword = process.env.E2E_PARANOID_PASSWORD || 'e2e-paranoid-test'
+// Passphrase for the OpenPGP key the test generates; empty = a key without a passphrase.
+// Private keys live only in localStorage, so every test context starts without one.
 const openPgpPassword = process.env.E2E_OPENPGP_PASSWORD || ''
 
 async function startUploadViaFab(page, uniqueName) {
@@ -94,7 +99,7 @@ async function ensureOpenPgpKeys(page) {
   return true
 }
 
-/** OpenPGP passphrase and/or Paranoid key-password popups during encrypt upload. */
+/** OpenPGP passphrase popup during encrypt upload. */
 async function submitAnyKeyPassword(page, password) {
   const keyPopup = page
     .locator('.popup:visible')
@@ -219,16 +224,17 @@ async function openParanoidTab(page) {
 test.describe('Desktop Paranoid Encryption files', () => {
   test.skip(!hasCredentials(), 'Set E2E_LOGIN_PRIMARY in .env.e2e')
 
+  // Leave no own public key in contacts, whatever the test did or where it failed.
+  test.afterEach(async ({ page }) => {
+    await cleanupOwnKeysInContacts(page)
+  })
+
   test('uploads file with client-side encryption enabled', async ({ page }) => {
     test.setTimeout(T(360000))
     const uniqueName = `e2e-paranoid-${Date.now()}.txt`
 
-    test.skip(
-      !openPgpPassword,
-      'Set E2E_OPENPGP_PASSWORD — Paranoid upload wraps the AES key with OpenPGP'
-    )
-
     await gotoLoggedIn(page)
+    await prepareOwnKeysForGenerate(page)
 
     await step('Ensure OpenPGP keypair exists', async () => {
       const ok = await ensureOpenPgpKeys(page)
@@ -293,9 +299,10 @@ test.describe('Desktop Paranoid Encryption files', () => {
       await expect
         .poll(
           async () => {
-            // Passphrase may appear after Encrypt (OpenPGP); also handle Paranoid key UI.
+            // The OpenPGP passphrase prompt may appear after Encrypt. Upload wraps a
+            // fresh per-file AES key with OpenPGP; the legacy Paranoid key password
+            // (DecryptKeyPasswordPopup) is only used for downloading old-format files.
             await submitAnyKeyPassword(page, openPgpPassword)
-            await submitAnyKeyPassword(page, paranoidPassword)
 
             if (await item.isVisible().catch(() => false)) {
               return 'ok'
