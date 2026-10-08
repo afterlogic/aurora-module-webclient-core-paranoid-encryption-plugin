@@ -30,7 +30,11 @@ const openPgpPassword = process.env.E2E_OPENPGP_PASSWORD || ''
 
 async function startUploadViaFab(page, uniqueName) {
   await openNewItemsMenu(page)
-  const fileInput = page.locator('input[type="file"]').first()
+  // Not .first(): the Paranoid settings tab keeps its hidden "Import key" input
+  // (#import-key-file) in the DOM, and a file set there is read as a key.
+  const fileInput = page
+    .locator('input[type="file"]:not(#import-key-file)')
+    .first()
   const buffer = fs.readFileSync(fixturePath)
   if ((await fileInput.count()) > 0) {
     await fileInput.setInputFiles({
@@ -247,12 +251,26 @@ test.describe('Desktop Paranoid Encryption files', () => {
 
     await step('Enable Paranoid Encryption in settings', async () => {
       const pgpWarning = paranoidPanel(page).locator('.hint.yellow-warning')
-      // isPGPKeysAvailable() is async on tab show — wait before treating as a stand gate.
-      await expect(pgpWarning)
-        .toBeHidden({ timeout: T(30000) })
-        .catch(() => undefined)
+      // The tab checks for the private key once, on show, and the warning starts
+      // hidden. Right after Generate the key may not be stored yet, so that single
+      // check reports it missing for good: let the check finish, and re-open the
+      // tab (via the OpenPGP one) to run it again before treating it as a stand gate.
+      let keyMissing = true
+      for (let attempt = 0; attempt < 6 && keyMissing; attempt++) {
+        await page.waitForTimeout(3000)
+        keyMissing = await pgpWarning.isVisible().catch(() => false)
+        if (keyMissing) {
+          await clickReady(
+            page
+              .getByTestId('settings-tab')
+              .filter({ hasText: /openpgp|open.?pgp/i })
+              .first()
+          )
+          await openParanoidTab(page)
+        }
+      }
       test.skip(
-        await pgpWarning.isVisible().catch(() => false),
+        keyMissing,
         'OpenPGP private key still missing after generate (Paranoid cannot encrypt)'
       )
 
@@ -329,6 +347,10 @@ test.describe('Desktop Paranoid Encryption files', () => {
 
       await waitForListReady(page, listReadyOptions)
       console.log(`  → Encrypted upload finished: ${uniqueName}`)
+      // A file that silently went up in clear text must not pass as encrypted.
+      await expect(item.locator('.file_encrypted_icon')).toHaveCount(1, {
+        timeout: T(30000),
+      })
       await attachScreenshot(page, 'paranoid-files-02-uploaded')
     })
 
