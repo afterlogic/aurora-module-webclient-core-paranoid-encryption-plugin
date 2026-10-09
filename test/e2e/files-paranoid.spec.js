@@ -174,10 +174,10 @@ async function saveParanoidSettings(page) {
   await confirmOkIfVisible(page, 3000)
 }
 
-async function ensureCheckboxOn(page, { inputId, labelPattern }) {
+async function ensureCheckbox(page, { inputId, labelPattern, checked }) {
   const input = page.locator(`#${inputId}`)
   await expect(input).toBeAttached({ timeout: T(15000) })
-  if (await input.isChecked().catch(() => false)) {
+  if ((await input.isChecked().catch(() => false)) === checked) {
     return false
   }
   const label = page.locator(`label[for="${inputId}"]`).or(
@@ -185,6 +185,10 @@ async function ensureCheckboxOn(page, { inputId, labelPattern }) {
   )
   await clickReady(label.first())
   return true
+}
+
+function ensureCheckboxOn(page, options) {
+  return ensureCheckbox(page, { ...options, checked: true })
 }
 
 /**
@@ -225,12 +229,45 @@ async function openParanoidTab(page) {
   return paranoidTab
 }
 
+/**
+ * The test saves Paranoid settings on the shared test account, and they stay
+ * there: afterwards every upload to Personal storage in any other module's test
+ * opens the Encrypt / Do not Encrypt dialog. Put the account back to the
+ * default (both options off). Best effort: cleanup must not fail the test.
+ */
+async function restoreParanoidDefaults(page) {
+  try {
+    const tab = await openParanoidTab(page)
+    if (!tab) {
+      return
+    }
+    const turnedOff = [
+      await ensureCheckbox(page, {
+        inputId: 'enableInPersonalStorage',
+        labelPattern: /allow encrypting files in personal storage/i,
+        checked: false,
+      }).catch(() => false),
+      await ensureCheckbox(page, {
+        inputId: 'enableJscrypto',
+        labelPattern: /enable paranoid encryption/i,
+        checked: false,
+      }),
+    ]
+    if (turnedOff.some(Boolean)) {
+      await saveParanoidSettings(page)
+    }
+  } catch (err) {
+    console.log(`  → Could not restore Paranoid settings: ${err.message}`)
+  }
+}
+
 test.describe('Desktop Paranoid Encryption files', () => {
   test.skip(!hasCredentials(), 'Set E2E_LOGIN_PRIMARY in .env.e2e')
 
   // Leave no own public key in contacts, whatever the test did or where it failed.
   test.afterEach(async ({ page }) => {
     await cleanupOwnKeysInContacts(page)
+    await restoreParanoidDefaults(page)
   })
 
   test('uploads file with client-side encryption enabled', async ({ page }) => {
